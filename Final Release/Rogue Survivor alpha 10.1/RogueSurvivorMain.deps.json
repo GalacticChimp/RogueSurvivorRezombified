@@ -1,0 +1,417 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v3.1",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v3.1": {
+      "RogueSurvivorMain/1.0.0": {
+        "dependencies": {
+          "OpenTK": "4.0.1",
+          "SFML.Audio.NetCore": "1.0.0",
+          "SFML.Window.NetCore": "1.0.0",
+          "SoapFormatter": "1.0.11",
+          "System.Drawing.Common": "4.7.0",
+          "libsndfile-msvc-x86": "1.0.27.9902",
+          "Microsoft.DirectX.AudioVideoPlayback": "1.0.2902.0",
+          "Microsoft.DirectX.Direct3D": "1.0.2902.0",
+          "Microsoft.DirectX.Direct3DX": "1.0.2911.0",
+          "Microsoft.DirectX": "1.0.2902.0",
+          "Microsoft.VisualC": "10.0.0.0"
+        },
+        "runtime": {
+          "RogueSurvivorMain.dll": {}
+        }
+      },
+      "libsndfile-msvc-x86/1.0.27.9902": {},
+      "Microsoft.NETCore.Platforms/3.1.0": {},
+      "Microsoft.Win32.SystemEvents/4.7.0": {
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "3.1.0"
+        }
+      },
+      "OpenTK/4.0.1": {
+        "dependencies": {
+          "OpenTK.Compute": "4.0.1",
+          "OpenTK.Core": "4.0.1",
+          "OpenTK.Graphics": "4.0.1",
+          "OpenTK.Input": "4.0.1",
+          "OpenTK.Mathematics": "4.0.1",
+          "OpenTK.OpenAL": "4.0.1",
+          "OpenTK.Windowing.Common": "4.0.1",
+          "OpenTK.Windowing.Desktop": "4.0.1",
+          "OpenTK.Windowing.GraphicsLibraryFramework": "4.0.1"
+        }
+      },
+      "OpenTK.Compute/4.0.1": {
+        "runtime": {
+          "lib/netcoreapp3.1/OpenTK.Compute.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "OpenTK.Core/4.0.1": {
+        "runtime": {
+          "lib/netstandard2.1/OpenTK.Core.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "OpenTK.Graphics/4.0.1": {
+        "dependencies": {
+          "OpenTK.Core": "4.0.1",
+          "OpenTK.Mathematics": "4.0.1"
+        },
+        "runtime": {
+          "lib/netstandard2.1/OpenTK.Graphics.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "OpenTK.Input/4.0.1": {
+        "runtime": {
+          "lib/netstandard2.0/OpenTK.Input.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "OpenTK.Mathematics/4.0.1": {
+        "runtime": {
+          "lib/netstandard2.1/OpenTK.Mathematics.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "OpenTK.OpenAL/4.0.1": {
+        "dependencies": {
+          "OpenTK.Core": "4.0.1",
+          "OpenTK.Mathematics": "4.0.1"
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/OpenTK.OpenAL.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "OpenTK.redist.glfw/3.3.0-pre20200830200122": {
+        "runtimeTargets": {
+          "runtimes/linux-x64/native/libglfw.so.3.3": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/osx-x64/native/libglfw.3.dylib": {
+            "rid": "osx-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x64/native/glfw3.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x86/native/glfw3.dll": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "OpenTK.Windowing.Common/4.0.1": {
+        "dependencies": {
+          "OpenTK.Core": "4.0.1",
+          "OpenTK.Mathematics": "4.0.1"
+        },
+        "runtime": {
+          "lib/netstandard2.1/OpenTK.Windowing.Common.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "OpenTK.Windowing.Desktop/4.0.1": {
+        "dependencies": {
+          "OpenTK.Core": "4.0.1",
+          "OpenTK.Mathematics": "4.0.1",
+          "OpenTK.Windowing.Common": "4.0.1",
+          "OpenTK.Windowing.GraphicsLibraryFramework": "4.0.1"
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/OpenTK.Windowing.Desktop.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "OpenTK.Windowing.GraphicsLibraryFramework/4.0.1": {
+        "dependencies": {
+          "OpenTK.Core": "4.0.1",
+          "OpenTK.redist.glfw": "3.3.0-pre20200830200122"
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/OpenTK.Windowing.GraphicsLibraryFramework.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "SFML.Audio.NetCore/1.0.0": {
+        "dependencies": {
+          "SFML.System.NetCore": "1.0.0",
+          "SFML.Window.NetCore": "1.0.0"
+        },
+        "runtime": {
+          "lib/netcoreapp2.0/SFML.Audio.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "SFML.System.NetCore/1.0.0": {
+        "runtime": {
+          "lib/netcoreapp2.0/SFML.System.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "SFML.Window.NetCore/1.0.0": {
+        "dependencies": {
+          "SFML.System.NetCore": "1.0.0"
+        },
+        "runtime": {
+          "lib/netcoreapp2.0/SFML.Window.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "SoapFormatter/1.0.11": {
+        "runtime": {
+          "lib/netstandard2.0/SoapFormatter.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.11.18748"
+          }
+        }
+      },
+      "System.Drawing.Common/4.7.0": {
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "3.1.0",
+          "Microsoft.Win32.SystemEvents": "4.7.0"
+        }
+      },
+      "Microsoft.DirectX.AudioVideoPlayback/1.0.2902.0": {
+        "runtime": {
+          "Microsoft.DirectX.AudioVideoPlayback.dll": {
+            "assemblyVersion": "1.0.2902.0",
+            "fileVersion": "5.4.0.2904"
+          }
+        }
+      },
+      "Microsoft.DirectX.Direct3D/1.0.2902.0": {
+        "runtime": {
+          "Microsoft.DirectX.Direct3D.dll": {
+            "assemblyVersion": "1.0.2902.0",
+            "fileVersion": "9.5.132.0"
+          }
+        }
+      },
+      "Microsoft.DirectX.Direct3DX/1.0.2911.0": {
+        "runtime": {
+          "Microsoft.DirectX.Direct3DX.dll": {
+            "assemblyVersion": "1.0.2911.0",
+            "fileVersion": "9.12.589.0"
+          }
+        }
+      },
+      "Microsoft.DirectX/1.0.2902.0": {
+        "runtime": {
+          "Microsoft.DirectX.dll": {
+            "assemblyVersion": "1.0.2902.0",
+            "fileVersion": "5.4.0.2904"
+          }
+        }
+      },
+      "Microsoft.VisualC/10.0.0.0": {
+        "runtime": {
+          "Microsoft.VisualC.Dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "12.0.52519.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "RogueSurvivorMain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "libsndfile-msvc-x86/1.0.27.9902": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-pjBf91aSJFw/TTK1jSBVXN61hDlINKnfsjmwM3DyhOtnuJafBfQmV5bKv4yfIkZJPEO61LrCAzqMwoC2ESd9Kg==",
+      "path": "libsndfile-msvc-x86/1.0.27.9902",
+      "hashPath": "libsndfile-msvc-x86.1.0.27.9902.nupkg.sha512"
+    },
+    "Microsoft.NETCore.Platforms/3.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-z7aeg8oHln2CuNulfhiLYxCVMPEwBl3rzicjvIX+4sUuCwvXw5oXQEtbiU2c0z4qYL5L3Kmx0mMA/+t/SbY67w==",
+      "path": "microsoft.netcore.platforms/3.1.0",
+      "hashPath": "microsoft.netcore.platforms.3.1.0.nupkg.sha512"
+    },
+    "Microsoft.Win32.SystemEvents/4.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mtVirZr++rq+XCDITMUdnETD59XoeMxSpLRIII7JRI6Yj0LEDiO1pPn0ktlnIj12Ix8bfvQqQDMMIF9wC98oCA==",
+      "path": "microsoft.win32.systemevents/4.7.0",
+      "hashPath": "microsoft.win32.systemevents.4.7.0.nupkg.sha512"
+    },
+    "OpenTK/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-iSFVYK1euxlyYOtxnCQLTEmN/qHA35+tV5f0ndRSNF6qNBSRqG+vX5fzc50WI/wP64P8XUlzQHyhvI47dMj5Vg==",
+      "path": "opentk/4.0.1",
+      "hashPath": "opentk.4.0.1.nupkg.sha512"
+    },
+    "OpenTK.Compute/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Dgh43S5Atyah5WP0qVt5zApgJgxd2mHc1VLntH3H28tbZpUxkc+eh9OlcUGM9rT6D5Sx3X+P6UPipDBwYyqbKg==",
+      "path": "opentk.compute/4.0.1",
+      "hashPath": "opentk.compute.4.0.1.nupkg.sha512"
+    },
+    "OpenTK.Core/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-8b9xbbZr9WAewFTkILC1dYGA4kjwP/LYAyCQVDqwzaeQB883kILBZeNkcCQOEsSgcP7YnhHkQ42+CT4xOWYWWw==",
+      "path": "opentk.core/4.0.1",
+      "hashPath": "opentk.core.4.0.1.nupkg.sha512"
+    },
+    "OpenTK.Graphics/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-e2dk3ZKAk4X0rzwEzD+xwQjYS8SK67kt0vlFuFbzbwMfGQwrLLzT46dRBPapkbrQ8zmKB3DlZfk6hZd6s5f0Vg==",
+      "path": "opentk.graphics/4.0.1",
+      "hashPath": "opentk.graphics.4.0.1.nupkg.sha512"
+    },
+    "OpenTK.Input/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-wbjowFr7bjd9Gf5dR8UWkNwJbGZyOUA+F+Gin24buMsFM/MbH2534p6M7XFXbU5hA6S8FJ+wP5apq06NFclCpw==",
+      "path": "opentk.input/4.0.1",
+      "hashPath": "opentk.input.4.0.1.nupkg.sha512"
+    },
+    "OpenTK.Mathematics/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-VqMoVMmHEu9kfxwI+aMtyClRa/4Y+Y22u/h6Y3ehiNROUFvB1eU9iTr8bdaJVNm+4XCdXcEBRgf4M3F/lWbFaA==",
+      "path": "opentk.mathematics/4.0.1",
+      "hashPath": "opentk.mathematics.4.0.1.nupkg.sha512"
+    },
+    "OpenTK.OpenAL/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-oAWrPyif/3cqYBdI/Q8nicUxCHiyQZp9won8Ly90gNH/RCVCYcuEKLS/oAB3yyfxb0euApnGtuhUoJ0n3097fw==",
+      "path": "opentk.openal/4.0.1",
+      "hashPath": "opentk.openal.4.0.1.nupkg.sha512"
+    },
+    "OpenTK.redist.glfw/3.3.0-pre20200830200122": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-EKE9pJCFHScbqOv/t0zG1h5Eh24nWr44SXYnpYtAWDhJhzAoUoI8TwDRXGvTGhDeCBp8ONEaVsq9xRC+OQIxQA==",
+      "path": "opentk.redist.glfw/3.3.0-pre20200830200122",
+      "hashPath": "opentk.redist.glfw.3.3.0-pre20200830200122.nupkg.sha512"
+    },
+    "OpenTK.Windowing.Common/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-HRzNvGUoW2VXjDQUbg/gDePHC958OFGzN8VUr297x0uE4Xm4p6HtrjoYe3aGn9/tuMUlcpq639dUZlLrCPW3dg==",
+      "path": "opentk.windowing.common/4.0.1",
+      "hashPath": "opentk.windowing.common.4.0.1.nupkg.sha512"
+    },
+    "OpenTK.Windowing.Desktop/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-TjSzj6Y8W4uZ4hK2g898d0rWvxwJHoTHybi0ZPVsdy7kiTZKlB8mv4f/rv9hYhqU6JqHotMrJutMUKT+nCHzMA==",
+      "path": "opentk.windowing.desktop/4.0.1",
+      "hashPath": "opentk.windowing.desktop.4.0.1.nupkg.sha512"
+    },
+    "OpenTK.Windowing.GraphicsLibraryFramework/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-c3C9ub83ssL/q7WSxJ0l4lWY6gbdrITYHKygqk8nPA8WLvpsjKiGW0uN9RVjbQUZD3spY1DkVuKRi06m6jKYuw==",
+      "path": "opentk.windowing.graphicslibraryframework/4.0.1",
+      "hashPath": "opentk.windowing.graphicslibraryframework.4.0.1.nupkg.sha512"
+    },
+    "SFML.Audio.NetCore/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-9HiSKwhB8fRKF+YngFmgKSRFKBUlx3CuqAVU9Oi4Yv+xB7GvrUOldg4F/AuG1niG6tR7ECaCKM5mquyOTj0gJQ==",
+      "path": "sfml.audio.netcore/1.0.0",
+      "hashPath": "sfml.audio.netcore.1.0.0.nupkg.sha512"
+    },
+    "SFML.System.NetCore/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-eBM/0BIQL0CIZRipK7y0W+r8EkWJPUd0HYMiIO9FcnXWxtRK23VTAMXxFrOI4J//+poMjBqtC8Agoi+lIVUvQA==",
+      "path": "sfml.system.netcore/1.0.0",
+      "hashPath": "sfml.system.netcore.1.0.0.nupkg.sha512"
+    },
+    "SFML.Window.NetCore/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-jpaPh1Y6hBNosyDObm5vRc8cS5S/cKHW8qLurWwK7rjxX2bjrXjyYUuFoUpYcb05JPWZfD/k7qC+ifqtwunUxg==",
+      "path": "sfml.window.netcore/1.0.0",
+      "hashPath": "sfml.window.netcore.1.0.0.nupkg.sha512"
+    },
+    "SoapFormatter/1.0.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zE2HkP26lkOcXvEVasjcQT7f4lZWPF+ThBLRLLWQaBz5Kabyr0rQUyBM0BSw7g6JddEqSK/BzhpVitJ0vAu4XA==",
+      "path": "soapformatter/1.0.11",
+      "hashPath": "soapformatter.1.0.11.nupkg.sha512"
+    },
+    "System.Drawing.Common/4.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-v+XbyYHaZjDfn0ENmJEV1VYLgGgCTx1gnfOBcppowbpOAriglYgGCvFCPr2EEZyBvXlpxbEsTwkOlInl107ahA==",
+      "path": "system.drawing.common/4.7.0",
+      "hashPath": "system.drawing.common.4.7.0.nupkg.sha512"
+    },
+    "Microsoft.DirectX.AudioVideoPlayback/1.0.2902.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.DirectX.Direct3D/1.0.2902.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.DirectX.Direct3DX/1.0.2911.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.DirectX/1.0.2902.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.VisualC/10.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
