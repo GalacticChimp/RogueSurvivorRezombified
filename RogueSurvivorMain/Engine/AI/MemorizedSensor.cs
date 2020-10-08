@@ -14,20 +14,15 @@ namespace djack.RogueSurvivor.Engine.AI
     /// </summary>
     class MemorizedSensor : Sensor
     {
-        #region Fields
         Sensor m_Sensor;
         List<Percept> m_Percepts = new List<Percept>();
         int m_Persistance;
-        #endregion
 
-        #region Properties
         public Sensor Sensor
         {
             get { return m_Sensor; }
         }
-        #endregion
 
-        #region Init
         /// <summary>
         /// 
         /// </summary>
@@ -41,16 +36,12 @@ namespace djack.RogueSurvivor.Engine.AI
             m_Sensor = noMemorySensor;
             m_Persistance = persistance;
         }
-        #endregion
 
-        #region Clear memory
         public void Clear()
         {
             m_Percepts.Clear();
         }
-        #endregion
 
-        #region Sensor
         public override List<Percept> Sense(RogueGame game, Actor actor)
         {
             // Forget aged percepts
@@ -110,6 +101,5 @@ namespace djack.RogueSurvivor.Engine.AI
             // Return updated percepts.
             return m_Percepts;
         }
-        #endregion
     }
 }

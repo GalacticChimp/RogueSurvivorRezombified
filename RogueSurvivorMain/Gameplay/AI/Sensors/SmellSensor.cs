@@ -13,7 +13,6 @@ namespace djack.RogueSurvivor.Gameplay.AI.Sensors
     [Serializable]
     class SmellSensor : Sensor
     {
-        #region Types
         [Serializable]
         public class AIScent
         {
@@ -26,28 +25,20 @@ namespace djack.RogueSurvivor.Gameplay.AI.Sensors
                 this.Strength = strength;
             }
         }
-        #endregion
 
-        #region Fields
         Odor m_OdorToSmell;
         List<Percept> m_List;
-        #endregion
 
-        #region Properties
         public List<Percept> Scents
         {
             get { return m_List; }
         }
-        #endregion
 
-
-        #region Init
         public SmellSensor(Odor odorToSmell)
         {
             m_OdorToSmell = odorToSmell;
             m_List = new List<Percept>(9);
         }
-        #endregion
 
         #region Sensor
         public override List<Percept> Sense(RogueGame game, Actor actor)

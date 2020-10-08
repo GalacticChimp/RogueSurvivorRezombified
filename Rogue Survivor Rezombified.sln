@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RogueSurvivorMain", "RogueS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Config", "Config\Config.csproj", "{84198FC5-DB62-4AC0-B692-F91836CE148A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RogueSurvivor.Data", "RogueSurvivor.Models\RogueSurvivor.Data.csproj", "{2EEF55C2-F917-45EE-8B85-07187CE11037}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RogueSurvivor.Data", "RogueSurvivor.Data\RogueSurvivor.Data.csproj", "{2EEF55C2-F917-45EE-8B85-07187CE11037}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
