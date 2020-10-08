@@ -9,6 +9,7 @@ using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
 using djack.RogueSurvivor.Gameplay.AI.Sensors;
 using djack.RogueSurvivor.Gameplay.AI.Tools;
+using djack.RogueSurvivor.Data.Enums;
 
 namespace djack.RogueSurvivor.Gameplay.AI
 {
@@ -72,7 +73,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 if(target != null && target.Location.Map == m_Actor.Location.Map)
                 {
                     // emote: bark
-                    game.DoSay(m_Actor, target, "GRRRRRR WAF WAF", RogueGame.Sayflags.IS_FREE_ACTION | RogueGame.Sayflags.IS_DANGER);
+                    m_Actor.DoSay(target, "GRRRRRR WAF WAF", Sayflags.IS_FREE_ACTION | Sayflags.IS_DANGER);
                     // charge.
                     ActorAction chargeEnemy = BehaviorStupidBumpToward(game, target.Location.Position, true, false);
                     if (chargeEnemy != null)
@@ -146,12 +147,12 @@ namespace djack.RogueSurvivor.Gameplay.AI
             if (game.Rules.IsActorTired(m_Actor))
             {
                 m_Actor.Activity = Activity.IDLE;
-                return new ActionWait(m_Actor, game);
+                return new ActionWait(m_Actor);
             }
             if (game.Rules.IsActorSleepy(m_Actor))
             {
                 m_Actor.Activity = Activity.SLEEPING;
-                return new ActionSleep(m_Actor, game);
+                return new ActionSleep(m_Actor);
             }
             #endregion
 

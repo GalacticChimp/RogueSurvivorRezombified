@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Text;
 
 using djack.RogueSurvivor.Data;
+using djack.RogueSurvivor.Data.Enums;
 using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
 using djack.RogueSurvivor.Engine.Items;
-using djack.RogueSurvivor.Engine.MapObjects;
 using djack.RogueSurvivor.Gameplay.AI.Sensors;
 
 namespace djack.RogueSurvivor.Gameplay.AI
@@ -93,7 +93,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             DoorWindow door = location.Map.GetMapObjectAt(location.Position) as DoorWindow;
             if (door == null)
                 return null;
-            if (!game.Rules.CanActorBarricadeDoor(m_Actor, door))
+            if (!m_Actor.CanActorBarricadeDoor(door,out string reason))
                 return null;
 
             // 2. Perform.
@@ -103,7 +103,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 2.1 If adjacent, barricade.
             if (game.Rules.IsAdjacent(m_Actor.Location.Position, location.Position))
             {
-                ActorAction barricadeAction = new ActionBarricadeDoor(m_Actor, game, door);
+                ActorAction barricadeAction = new ActionBarricadeDoor(m_Actor, door);
                 if (barricadeAction.IsLegal())
                 {
                     if (!toTheMax)
@@ -139,7 +139,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 1. Check validity.
             if (m_Actor.Location.Map != location.Map)
                 return null;
-            if (!game.Rules.CanActorBuildFortification(m_Actor, location.Position, isLarge))
+            if (!m_Actor.CanActorBuildFortification(location.Position, isLarge, out string reason))
                 return null;
 
             // 2. Perform.
@@ -149,7 +149,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 2.1 If adjacent, build.
             if (game.Rules.IsAdjacent(m_Actor.Location.Position, location.Position))
             {
-                ActorAction buildAction = new ActionBuildFortification(m_Actor, game, location.Position, isLarge);
+                ActorAction buildAction = new ActionBuildFortification(m_Actor, location.Position, isLarge);
                 if (buildAction.IsLegal())
                 {
                     SetOrder(null);
@@ -188,7 +188,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 Actor nearestEnemy = FilterNearest(game, enemies).Percepted as Actor;
                 if (nearestEnemy == null)
                     throw new InvalidOperationException("null nearest enemy");
-                return new ActionShout(m_Actor, game, String.Format("{0} sighted!!", nearestEnemy.Name));
+                return new ActionShout(m_Actor, String.Format("{0} sighted!!", nearestEnemy.Name));
             }
 
             //////////////////////////////
@@ -246,7 +246,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 5. Wait.
             m_Actor.Activity = Activity.IDLE;
-            return new ActionWait(m_Actor, game);
+            return new ActionWait(m_Actor);
         }
         #endregion
 
@@ -267,7 +267,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 Actor nearestEnemy = FilterNearest(game, enemies).Percepted as Actor;
                 if (nearestEnemy == null)
                     throw new InvalidOperationException("null nearest enemy");
-                return new ActionShout(m_Actor, game, String.Format("{0} sighted!!", nearestEnemy.Name));
+                return new ActionShout(m_Actor, String.Format("{0} sighted!!", nearestEnemy.Name));
             }
 
             //////////////////////////////
@@ -395,7 +395,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 Actor nearestEnemy = FilterNearest(game, enemies).Percepted as Actor;
                 if (nearestEnemy == null)
                     throw new InvalidOperationException("null nearest enemy");
-                return new ActionShout(m_Actor, game, String.Format("{0} sighted!!", nearestEnemy.Name));
+                return new ActionShout(m_Actor, String.Format("{0} sighted!!", nearestEnemy.Name));
             }
 
             //////////////////////
@@ -410,7 +410,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     if (m_LastRaidHeard != null)
                         reportAction = BehaviorTellFriendAboutPercept(game, m_LastRaidHeard);
                     else
-                        reportAction = new ActionSay(m_Actor, game, m_Actor.Leader, "No raids heard.", RogueGame.Sayflags.NONE);
+                        reportAction = new ActionSay(m_Actor, m_Actor.Leader, "No raids heard.", Sayflags.NONE);
 
                     ++m_ReportStage;
                     break;
@@ -419,7 +419,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     if (m_LastEnemySaw != null)
                         reportAction = BehaviorTellFriendAboutPercept(game, m_LastEnemySaw);
                     else
-                        reportAction = new ActionSay(m_Actor, game, m_Actor.Leader, "No enemies sighted.", RogueGame.Sayflags.NONE);
+                        reportAction = new ActionSay(m_Actor, m_Actor.Leader, "No enemies sighted.", Sayflags.NONE);
 
                     ++m_ReportStage;
                     break;
@@ -428,7 +428,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     if (m_LastItemsSaw != null)
                         reportAction = BehaviorTellFriendAboutPercept(game, m_LastItemsSaw);
                     else
-                        reportAction = new ActionSay(m_Actor, game, m_Actor.Leader, "No items sighted.", RogueGame.Sayflags.NONE);
+                        reportAction = new ActionSay(m_Actor, m_Actor.Leader, "No items sighted.", Sayflags.NONE);
 
                     ++m_ReportStage;
                     break;
@@ -437,14 +437,14 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     if (m_LastSoldierSaw != null)
                         reportAction = BehaviorTellFriendAboutPercept(game, m_LastSoldierSaw);
                     else
-                        reportAction = new ActionSay(m_Actor, game, m_Actor.Leader, "No soldiers sighted.", RogueGame.Sayflags.NONE);
+                        reportAction = new ActionSay(m_Actor, m_Actor.Leader, "No soldiers sighted.", Sayflags.NONE);
 
                     ++m_ReportStage;
                     break;
 
                 case 4: // end of report.
                     isReportDone = true;
-                    reportAction = new ActionSay(m_Actor, game, m_Actor.Leader, "That's it.", RogueGame.Sayflags.NONE);
+                    reportAction = new ActionSay(m_Actor, m_Actor.Leader, "That's it.", Sayflags.NONE);
                     break;
 
             }
@@ -454,7 +454,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             if (reportAction != null)
                 return reportAction;
             else
-                return new ActionSay(m_Actor, game, m_Actor.Leader, "Let me think...", RogueGame.Sayflags.NONE);
+                return new ActionSay(m_Actor, m_Actor.Leader, "Let me think...", Sayflags.NONE);
         }
         #endregion
 
@@ -470,24 +470,24 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 Actor nearestEnemy = FilterNearest(game, enemies).Percepted as Actor;
                 if (nearestEnemy == null)
                     throw new InvalidOperationException("null nearest enemy");
-                return new ActionShout(m_Actor, game, String.Format("{0} sighted!!", nearestEnemy.Name));
+                return new ActionShout(m_Actor, String.Format("{0} sighted!!", nearestEnemy.Name));
             }
 
             // try to sleep.
             string reason;
-            if (game.Rules.CanActorSleep(m_Actor, out reason))
+            if (m_Actor.CanActorSleep(out reason))
             {
                 // start sleeping only one even turns so the player has at least one turn to cancel the order...
                 if (m_Actor.Location.Map.LocalTime.TurnCounter % 2 == 0)
-                    return new ActionSleep(m_Actor, game);
+                    return new ActionSleep(m_Actor);
                 else
-                    return new ActionWait(m_Actor, game);
+                    return new ActionWait(m_Actor);
             }
             else
             {
                 SetOrder(null);
                 game.DoEmote(m_Actor, String.Format("I can't sleep now : {0}.", reason));
-                return new ActionWait(m_Actor, game);
+                return new ActionWait(m_Actor);
             }
         }
         #endregion
@@ -503,7 +503,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // emote.
             game.DoEmote(m_Actor, DontFollowLeader ? "OK I'll do my stuff, see you soon!" : "I'm ready!");
-            return new ActionWait(m_Actor, game);
+            return new ActionWait(m_Actor);
         }
         #endregion
 
@@ -515,7 +515,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // do it.
             string reportTxt = String.Format("I'm in {0} at {1},{2}.", m_Actor.Location.Map.Name, m_Actor.Location.Position.X, m_Actor.Location.Position.Y);
-            return new ActionSay(m_Actor, game, m_Actor.Leader, reportTxt, RogueGame.Sayflags.NONE);
+            return new ActionSay(m_Actor, m_Actor.Leader, reportTxt, Sayflags.NONE);
         }
         #endregion
 

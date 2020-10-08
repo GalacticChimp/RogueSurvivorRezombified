@@ -1,20 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-using djack.RogueSurvivor.Data;
-
-namespace djack.RogueSurvivor.Engine.Items
+﻿namespace djack.RogueSurvivor.Data.Items
 {
-    class ItemSprayScentModel : ItemModel
+    public class ItemSprayScentModel : ItemModel
     {
-        #region Fields
         int m_MaxSprayQuantity;
         Odor m_Odor;
         int m_Strength;
-        #endregion
 
-        #region Properties
         public int MaxSprayQuantity
         {
             get { return m_MaxSprayQuantity;}
@@ -30,9 +21,6 @@ namespace djack.RogueSurvivor.Engine.Items
             get { return m_Odor;}
         }
 
-        #endregion
-
-        #region Init
         public ItemSprayScentModel(string aName, string theNames, string imageID, int sprayQuantity, Odor odor, int strength)
             : base(aName, theNames, imageID)
         {
@@ -40,6 +28,5 @@ namespace djack.RogueSurvivor.Engine.Items
             m_Odor = odor;
             m_Strength = strength;
         }
-        #endregion
     }
 }

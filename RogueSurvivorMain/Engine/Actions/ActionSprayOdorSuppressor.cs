@@ -1,21 +1,18 @@
 ﻿using System;
 
 using djack.RogueSurvivor.Data;
-using djack.RogueSurvivor.Engine.Items;
+using djack.RogueSurvivor.Data.Items;
 
 namespace djack.RogueSurvivor.Engine.Actions
 {
     // alpha10
     class ActionSprayOdorSuppressor : ActorAction
     {
-        #region Fields
         readonly ItemSprayScent m_Spray;
         readonly Actor m_SprayOn;
-        #endregion
 
-        #region Init
-        public ActionSprayOdorSuppressor(Actor actor, RogueGame game, ItemSprayScent spray, Actor sprayOn)
-            : base(actor, game)
+        public ActionSprayOdorSuppressor(Actor actor, ItemSprayScent spray, Actor sprayOn)
+            : base(actor)
         {
             if (sprayOn == null)
                 throw new ArgumentNullException("target");
@@ -23,18 +20,15 @@ namespace djack.RogueSurvivor.Engine.Actions
             m_Spray = spray;
             m_SprayOn = sprayOn;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorSprayOdorSuppressor(m_Actor, m_Spray, m_SprayOn, out m_FailReason);
+            return m_Actor.CanActorSprayOdorSuppressor(m_Spray, m_SprayOn, out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoSprayOdorSuppressor(m_Actor, m_Spray, m_SprayOn);
+            m_Actor.DoSprayOdorSuppressor(m_Spray, m_SprayOn);
         }
-        #endregion
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 
 namespace djack.RogueSurvivor.Data
 {
@@ -244,6 +245,49 @@ namespace djack.RogueSurvivor.Data
             m_FireState = burnable;
             if (breakable != Break.UNBREAKABLE || burnable != Fire.UNINFLAMMABLE)
                 m_HitPoints = m_MaxHitPoints = hitPoints;
+        }
+
+        public bool CanPushObjectTo(Point toPos, out string reason)
+        {
+            ///////////////////////////
+            // Not pushable there:
+            // 1. Out of bounds.
+            // 2. Not walkable.
+            // 3. Another object there.
+            // 4. An actor there.
+            ///////////////////////////
+
+            // 1. Out of bounds.
+            if (!Location.Map.IsInBounds(toPos))
+            {
+                reason = "out of map";
+                return false;
+            }
+
+            // 2. Not walkable.
+            if (!Location.Map.GetTileAt(toPos.X, toPos.Y).Model.IsWalkable)
+            {
+                reason = "blocked by an obstacle";
+                return false;
+            }
+
+            // 3. Another object there.
+            if (Location.Map.GetMapObjectAt(toPos) != null)
+            {
+                reason = "blocked by an object";
+                return false;
+            }
+
+            // 4. An actor there.
+            if (Location.Map.GetActorAt(toPos) != null)
+            {
+                reason = "blocked by someone";
+                return false;
+            }
+
+            // all clear.
+            reason = "";
+            return true;
         }
 
         private bool GetFlag(Flags f) { return (m_Flags & f) != 0; }

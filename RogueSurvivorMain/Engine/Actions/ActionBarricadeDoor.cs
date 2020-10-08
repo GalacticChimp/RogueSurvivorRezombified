@@ -8,8 +8,8 @@ namespace djack.RogueSurvivor.Engine.Actions
     {
         DoorWindow m_Door;
 
-        public ActionBarricadeDoor(Actor actor, RogueGame game, DoorWindow door)
-            : base(actor,game)
+        public ActionBarricadeDoor(Actor actor, DoorWindow door)
+            : base(actor)
         {
             if (door == null)
                 throw new ArgumentNullException("door");
@@ -19,7 +19,7 @@ namespace djack.RogueSurvivor.Engine.Actions
 
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorBarricadeDoor(m_Actor, m_Door, out m_FailReason);
+            return m_Actor.CanActorBarricadeDoor(m_Door, out m_FailReason);
         }
 
         public override void Perform()

@@ -9,14 +9,11 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionWait : ActorAction
     {
-        #region Init
-        public ActionWait(Actor actor, RogueGame game)
-            : base(actor, game)
+        public ActionWait(Actor actor)
+            : base(actor)
         {
         }
-        #endregion
 
-        #region Implementation
         public override bool IsLegal()
         {
             return true;
@@ -24,8 +21,7 @@ namespace djack.RogueSurvivor.Engine.Actions
 
         public override void Perform()
         {
-            m_Game.DoWait(m_Actor);
+            m_Actor.DoWait();
         }
-        #endregion
     }
 }

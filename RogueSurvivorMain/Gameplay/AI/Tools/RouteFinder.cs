@@ -1,6 +1,5 @@
 ﻿using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Engine;
-using djack.RogueSurvivor.Engine.MapObjects;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -246,6 +245,7 @@ namespace djack.RogueSurvivor.Gameplay.AI.Tools
         /// <see cref="AllowedActions"/>
         bool CanMoveIn(RogueGame game, Actor a, Map map, Point pos)
         {
+            string reason;
             // check tile & mapobj
             if (map.IsWalkable(pos))
                 return true;
@@ -264,10 +264,10 @@ namespace djack.RogueSurvivor.Gameplay.AI.Tools
                 if (door != null)
                 {
                     // open?
-                    if (game.Rules.IsOpenableFor(a, door))
+                    if (a.IsOpenableFor(door, out reason))
                         return true;
                     // break?
-                    if (((AllowedActions & SpecialActions.BREAK) != 0) && game.Rules.IsBreakableFor(a, door))
+                    if (((AllowedActions & SpecialActions.BREAK) != 0) && a.IsBreakableFor(door, out reason))
                         return true;
                     // nope, blocked by door
                     return false;
@@ -279,11 +279,11 @@ namespace djack.RogueSurvivor.Gameplay.AI.Tools
                 return true;
 
             //... a pushable?
-            if (((AllowedActions & SpecialActions.PUSH) != 0) && game.Rules.CanActorPush(a, mobj))
+            if (((AllowedActions & SpecialActions.PUSH) != 0) && a.CanActorPush(mobj, out reason))
                 return true;
 
             //... a breakable?
-            if (((AllowedActions & SpecialActions.BREAK) != 0) && game.Rules.IsBreakableFor(a, mobj))
+            if (((AllowedActions & SpecialActions.BREAK) != 0) && a.IsBreakableFor(mobj, out reason))
                 return true;
 
             // blocked by a mapobject we can't handle.

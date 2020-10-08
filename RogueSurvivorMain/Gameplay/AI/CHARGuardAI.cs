@@ -10,6 +10,7 @@ using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
 using djack.RogueSurvivor.Gameplay.AI.Sensors;
 using djack.RogueSurvivor.Gameplay.AI.Tools;
+using djack.RogueSurvivor.Data.Enums;
 
 namespace djack.RogueSurvivor.Gameplay.AI
 {
@@ -178,7 +179,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
                     m_Actor.Activity = Activity.FIGHTING;
                     m_Actor.TargetActor = trespasser;
-                    return new ActionSay(m_Actor, game, trespasser, "Hey YOU!", RogueGame.Sayflags.IS_IMPORTANT | RogueGame.Sayflags.IS_DANGER);
+                    return new ActionSay(m_Actor, trespasser, "Hey YOU!", Sayflags.IS_IMPORTANT | Sayflags.IS_DANGER);
                 }
             }
 
@@ -201,7 +202,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             if (restAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
-                return new ActionWait(m_Actor, game);
+                return new ActionWait(m_Actor);
             }
 
             // 8 charge/chase enemy

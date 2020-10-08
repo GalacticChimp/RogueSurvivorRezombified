@@ -7,10 +7,10 @@ using System.Drawing;
 using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Engine.Items;
-using djack.RogueSurvivor.Engine.MapObjects;
 using djack.RogueSurvivor.Gameplay;
 using djack.RogueSurvivor.Gameplay.AI;
 using djack.RogueSurvivor.UI;
+using djack.RogueSurvivor.Data.Items;
 
 namespace djack.RogueSurvivor.Gameplay.Generators
 {
@@ -1369,7 +1369,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             // barricade certain shops types.
             if (shopType == ShopType.GUNSHOP)
             {
-                BarricadeDoors(map, b.BuildingRect, Rules.BARRICADING_MAX);
+                BarricadeDoors(map, b.BuildingRect, Actor.BARRICADING_MAX);
             }
 
             #endregion
@@ -1737,7 +1737,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             DecorateOutsideWalls(map, b.BuildingRect, (x, y) => map.GetMapObjectAt(x, y) == null && CountAdjDoors(map, x, y) >= 1 ? officeImage : null);
 
             // barricade entry doors.
-            BarricadeDoors(map, b.BuildingRect, Rules.BARRICADING_MAX);
+            BarricadeDoors(map, b.BuildingRect, Actor.BARRICADING_MAX);
             #endregion
 
             ///////////////////////
@@ -2588,7 +2588,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             }
             // add the door.
             PlaceDoor(map, doorX, doorY, m_Game.GameTiles.FLOOR_CONCRETE, MakeObjIronDoor());
-            BarricadeDoors(map, b.BuildingRect, Rules.BARRICADING_MAX);
+            BarricadeDoors(map, b.BuildingRect, Actor.BARRICADING_MAX);
             #endregion
 
             /////////////////////////////////
@@ -3893,7 +3893,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         return;
                     surfaceMap.RemoveMapObjectAt(pt.X, pt.Y);
                     door = MakeObjIronDoor();
-                    door.BarricadePoints = Rules.BARRICADING_MAX;
+                    door.BarricadePoints = Actor.BARRICADING_MAX;
                     surfaceMap.PlaceMapObjectAt(door, pt);
                 });
 

@@ -10,31 +10,25 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionEquipItem : ActorAction
     {
-        #region Fields
         Item m_Item;
-        #endregion
 
-        #region Init
-        public ActionEquipItem(Actor actor, RogueGame game, Item it)
-            : base(actor, game)
+        public ActionEquipItem(Actor actor, Item it)
+            : base(actor)
         {
             if (it == null)
                 throw new ArgumentNullException("item");
 
             m_Item = it;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorEquipItem(m_Actor, m_Item, out m_FailReason);
+            return m_Actor.CanActorEquipItem(m_Item, out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoEquipItem(m_Actor, m_Item);
+            m_Actor.DoEquipItem(m_Item);
         }
-        #endregion
     }
 }

@@ -2,9 +2,9 @@
 using System.Drawing;
 
 using djack.RogueSurvivor.Data;
+using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Engine.Items;
-using djack.RogueSurvivor.Engine.MapObjects;
 
 namespace djack.RogueSurvivor.Gameplay.Generators
 {
@@ -984,7 +984,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         #region Common tasks
         protected void BarricadeDoors(Map map, Rectangle rect, int barricadeLevel)
         {
-            barricadeLevel = Math.Min(Rules.BARRICADING_MAX, barricadeLevel);
+            barricadeLevel = Math.Min(Actor.BARRICADING_MAX, barricadeLevel);
 
             for (int x = rect.Left; x < rect.Right; x++)
                 for (int y = rect.Top; y < rect.Bottom; y++)

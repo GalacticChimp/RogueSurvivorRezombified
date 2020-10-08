@@ -10,35 +10,27 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionLeaveMap : ActorAction
     {
-        #region Fields
         Point m_ExitPoint;
-        #endregion
 
-        #region Properties
         public Point ExitPoint
         {
             get { return m_ExitPoint; }
         }
-        #endregion
 
-        #region Init
-        public ActionLeaveMap(Actor actor, RogueGame game, Point exitPoint)
-            : base(actor, game)
+        public ActionLeaveMap(Actor actor, Point exitPoint)
+            : base(actor)
         {
             m_ExitPoint = exitPoint;
         }
-        #endregion
 
-        #region ActorAction implementation
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorLeaveMap(m_Actor, out m_FailReason);
+            return m_Actor.CanActorLeaveMap(out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoLeaveMap(m_Actor, m_ExitPoint, true);
+            m_Actor.DoLeaveMap(m_ExitPoint, true);
         }
-        #endregion
     }
 }

@@ -9,28 +9,22 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionUseExit : ActorAction
     {
-        #region Fields
         Point m_ExitPoint;
-        #endregion
 
-        #region Init
-        public ActionUseExit(Actor actor, Point exitPoint, RogueGame game)
-            : base(actor, game)
+        public ActionUseExit(Actor actor, Point exitPoint)
+            : base(actor)
         {
             m_ExitPoint = exitPoint;
         }
-        #endregion
 
-        #region ActorAction implementation
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorUseExit(m_Actor, m_ExitPoint, out m_FailReason);
+            return m_Actor.CanActorUseExit(m_ExitPoint, out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoUseExit(m_Actor, m_ExitPoint);
+            m_Actor.DoUseExit(m_ExitPoint);
         }
-        #endregion
     }
 }

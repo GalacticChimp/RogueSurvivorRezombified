@@ -9,20 +9,15 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionPush : ActorAction
     {
-        #region Fields
         readonly MapObject m_Object;
         readonly Direction m_Direction;
         readonly Point m_To;
-        #endregion
 
-        #region Properties
         public Direction Direction { get { return m_Direction; } }
         public Point To { get { return m_To; } }
-        #endregion
 
-        #region Init
-        public ActionPush(Actor actor, RogueGame game, MapObject pushObj, Direction pushDir)
-            : base(actor, game)
+        public ActionPush(Actor actor, MapObject pushObj, Direction pushDir)
+            : base(actor)
         {
             if (pushObj == null)
                 throw new ArgumentNullException("pushObj");
@@ -31,19 +26,16 @@ namespace djack.RogueSurvivor.Engine.Actions
             m_Direction = pushDir;
             m_To = pushObj.Location.Position + pushDir;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorPush(m_Actor, m_Object) && m_Game.Rules.CanPushObjectTo(m_Object, m_To, out m_FailReason);
+            return m_Actor.CanActorPush(m_Object, out m_FailReason) && m_Object.CanPushObjectTo(m_To, out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoPush(m_Actor, m_Object, m_To);
+            m_Actor.DoPush(m_Object, m_To);
         }
-        #endregion
 
     }
 }

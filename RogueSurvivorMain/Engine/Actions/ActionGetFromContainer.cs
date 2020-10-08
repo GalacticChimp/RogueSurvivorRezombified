@@ -10,11 +10,8 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionGetFromContainer : ActorAction
     {
-        #region Fields
         Point m_Position;
-        #endregion
 
-        #region Properties
         /// <summary>
         /// Gets item that will be taken : top item from container position.
         /// </summary>
@@ -26,26 +23,21 @@ namespace djack.RogueSurvivor.Engine.Actions
                 return map.GetItemsAt(m_Position).TopItem;
             }
         }
-        #endregion
 
-        #region Init
-        public ActionGetFromContainer(Actor actor, RogueGame game, Point position)
-            : base(actor, game)
+        public ActionGetFromContainer(Actor actor, Point position)
+            : base(actor)
         {
             m_Position = position;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorGetItemFromContainer(m_Actor, m_Position, out m_FailReason);
+            return m_Actor.CanActorGetItemFromContainer(m_Position, out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoTakeFromContainer(m_Actor, m_Position);
+            m_Actor.DoTakeFromContainer(m_Position);
         }
-        #endregion
     }
 }

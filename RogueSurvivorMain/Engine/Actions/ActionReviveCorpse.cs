@@ -9,31 +9,25 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionReviveCorpse : ActorAction
     {
-        #region Fields
         readonly Corpse m_Target;
-        #endregion
 
-        #region Init
-        public ActionReviveCorpse(Actor actor, RogueGame game, Corpse target)
-            : base(actor, game)
+        public ActionReviveCorpse(Actor actor, Corpse target)
+            : base(actor)
         {
             if (target == null)
                 throw new ArgumentNullException("target");
 
             m_Target = target;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorReviveCorpse(m_Actor, m_Target, out m_FailReason);
+            return m_Actor.CanActorReviveCorpse(m_Target, out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoReviveCorpse(m_Actor, m_Target);
+            m_Actor.DoReviveCorpse(m_Target);
         }
-        #endregion
     }
 }

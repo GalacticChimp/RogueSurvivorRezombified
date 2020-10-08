@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-using djack.RogueSurvivor.Data;
-
-namespace djack.RogueSurvivor.Engine.Items
+namespace djack.RogueSurvivor.Data.Items
 {
-    class ItemTrapModel : ItemModel
+    public class ItemTrapModel : ItemModel
     {
-        #region Flags
         [Flags]
         enum Flags
         {
@@ -20,9 +14,7 @@ namespace djack.RogueSurvivor.Engine.Items
             IS_FLAMMABLE        = (1<<3),
             DROP_ACTIVATE       = (1<<4)
         }
-        #endregion
 
-        #region Fields
         Flags m_Flags;
         int m_TriggerChance;
         int m_Damage;
@@ -30,9 +22,7 @@ namespace djack.RogueSurvivor.Engine.Items
         int m_BreakChanceWhenEscape;
         int m_BlockChance;
         string m_NoiseName;
-        #endregion
 
-        #region Properties
         public int TriggerChance { get { return m_TriggerChance; } }
         public int Damage { get { return m_Damage; } }
         public bool UseToActivate { get { return (m_Flags & Flags.USE_TO_ACTIVATE) != 0; } }
@@ -44,9 +34,7 @@ namespace djack.RogueSurvivor.Engine.Items
         public int BlockChance { get { return m_BlockChance; } }
         public int BreakChanceWhenEscape { get { return m_BreakChanceWhenEscape; } }
         public string NoiseName { get { return m_NoiseName; } }
-        #endregion
 
-        #region Init
         public ItemTrapModel(string aName, string theNames, string imageID, int stackLimit, int triggerChance, int damage, 
             bool dropActivate, bool useToActivate, bool IsOneTimeUse, 
             int breakChance, int blockChance, int breakChanceWhenEscape,
@@ -76,6 +64,5 @@ namespace djack.RogueSurvivor.Engine.Items
             if (IsOneTimeUse) m_Flags |= Flags.IS_ONE_TIME_USE;
             if (IsFlammable) m_Flags |= Flags.IS_FLAMMABLE;
         }
-        #endregion
     }
 }

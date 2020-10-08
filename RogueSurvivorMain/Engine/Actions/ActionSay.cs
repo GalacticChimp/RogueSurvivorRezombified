@@ -1,23 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
+using djack.RogueSurvivor.Data.Enums;
 using djack.RogueSurvivor.Data;
 
 namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionSay : ActorAction
     {
-        #region Fields
         Actor m_Target;
         string m_Text;
-        RogueGame.Sayflags m_Flags;
-        #endregion
+        Sayflags m_Flags;
 
-        #region Init
-        public ActionSay(Actor actor, RogueGame game, Actor target, string text, RogueGame.Sayflags flags)
-            : base(actor, game)
+        public ActionSay(Actor actor, Actor target, string text, Sayflags flags)
+            : base(actor)
         {
             if (target == null)
                 throw new ArgumentNullException("target");
@@ -26,9 +21,7 @@ namespace djack.RogueSurvivor.Engine.Actions
             m_Text = text;
             m_Flags = flags;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
             return true;
@@ -36,8 +29,7 @@ namespace djack.RogueSurvivor.Engine.Actions
 
         public override void Perform()
         {
-            m_Game.DoSay(m_Actor, m_Target, m_Text, m_Flags);
+            m_Actor.DoSay(m_Target, m_Text, m_Flags);
         }
-        #endregion
     }
 }

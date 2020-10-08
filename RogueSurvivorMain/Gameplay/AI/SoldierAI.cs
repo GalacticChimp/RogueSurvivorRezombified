@@ -245,7 +245,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 7 sleep.
             #region
-            if ( !hasAnyEnemies && WouldLikeToSleep(game, m_Actor) && IsInside(m_Actor) && game.Rules.CanActorSleep(m_Actor))
+            if ( !hasAnyEnemies && WouldLikeToSleep(game, m_Actor) && IsInside(m_Actor) && m_Actor.CanActorSleep(out string reason))
             {               
                 // secure sleep?
                 ActorAction secureSleepAction = BehaviorSecurePerimeter(game, m_LOSSensor.FOV);

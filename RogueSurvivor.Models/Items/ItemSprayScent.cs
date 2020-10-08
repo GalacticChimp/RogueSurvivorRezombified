@@ -1,21 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-using djack.RogueSurvivor.Data;
-
-namespace djack.RogueSurvivor.Engine.Items
+namespace djack.RogueSurvivor.Data.Items
 {
     [Serializable]
-    class ItemSprayScent : Item
+    public class ItemSprayScent : Item
     {
-        #region Properties
         public int SprayQuantity { get; set; }
         public Odor Odor { get { return (this.Model as ItemSprayScentModel).Odor; } } // alpha10
         public int Strength { get { return (this.Model as ItemSprayScentModel).Strength; } } // alpha10
-        #endregion
 
-        #region Init
         public ItemSprayScent(ItemModel model)
             : base(model)
         {
@@ -24,6 +17,5 @@ namespace djack.RogueSurvivor.Engine.Items
 
             this.SprayQuantity = (model as ItemSprayScentModel).MaxSprayQuantity;
         }
-        #endregion
     }
 }

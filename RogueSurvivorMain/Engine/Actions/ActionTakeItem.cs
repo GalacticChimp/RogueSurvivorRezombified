@@ -10,14 +10,11 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionTakeItem : ActorAction
     {
-        #region Fields
         Point m_Position;
         Item m_Item;
-        #endregion
 
-        #region Init
-        public ActionTakeItem(Actor actor, RogueGame game, Point position, Item it)
-            : base(actor, game)
+        public ActionTakeItem(Actor actor, Point position, Item it)
+            : base(actor)
         {
             if (it == null)
                 throw new ArgumentNullException("item");
@@ -25,18 +22,15 @@ namespace djack.RogueSurvivor.Engine.Actions
             m_Position = position;
             m_Item = it;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorGetItem(m_Actor, m_Item, out m_FailReason);
+            return m_Actor.CanActorGetItem(m_Item, out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoTakeItem(m_Actor, m_Position, m_Item);
+            m_Actor.DoTakeItem(m_Position, m_Item);
         }
-        #endregion
     }
 }

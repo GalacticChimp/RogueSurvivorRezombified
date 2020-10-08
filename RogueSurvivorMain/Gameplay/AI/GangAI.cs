@@ -10,6 +10,7 @@ using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
 using djack.RogueSurvivor.Gameplay.AI.Sensors;
 using djack.RogueSurvivor.Gameplay.AI.Tools;
+using djack.RogueSurvivor.Data.Enums;
 
 namespace djack.RogueSurvivor.Gameplay.AI
 {
@@ -231,7 +232,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             if (restAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
-                return new ActionWait(m_Actor, game);
+                return new ActionWait(m_Actor);
             }
             #endregion
 
@@ -276,7 +277,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 8 sleep.
             #region
-            if (!hasAnyEnemies && WouldLikeToSleep(game, m_Actor) && IsInside(m_Actor) && game.Rules.CanActorSleep(m_Actor))
+            if (!hasAnyEnemies && WouldLikeToSleep(game, m_Actor) && IsInside(m_Actor) && m_Actor.CanActorSleep(out string reason))
             {
                 // secure sleep?
                 ActorAction secureSleepAction = BehaviorSecurePerimeter(game, m_LOSSensor.FOV);
@@ -420,8 +421,8 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         // declare my evil intentions.
                         m_Actor.Activity = Activity.CHASING;
                         m_Actor.TargetActor = victim;
-                        return new ActionSay(m_Actor, game, victim,
-                            String.Format("Hey! That's some nice {0} you have here!", wantIt.Model.SingleName), RogueGame.Sayflags.IS_IMPORTANT | RogueGame.Sayflags.IS_DANGER);
+                        return new ActionSay(m_Actor, victim,
+                            String.Format("Hey! That's some nice {0} you have here!", wantIt.Model.SingleName), Sayflags.IS_IMPORTANT | Sayflags.IS_DANGER);
                     }
                 }
             }

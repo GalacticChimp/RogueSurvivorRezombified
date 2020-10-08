@@ -9,31 +9,25 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionTrade : ActorAction
     {
-        #region Fields
         readonly Actor m_Target;
-        #endregion
 
-        #region Init
-        public ActionTrade(Actor actor, RogueGame game, Actor target)
-            : base(actor, game)
+        public ActionTrade(Actor actor, Actor target)
+            : base(actor)
         {
             if (target == null)
                 throw new ArgumentNullException("target");
 
             m_Target = target;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorInitiateTradeWith(m_Actor, m_Target);
+            return m_Actor.CanActorInitiateTradeWith(m_Target, out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoTrade(m_Actor, m_Target);
+            m_Actor.DoTrade(m_Target);
         }
-        #endregion
     }
 }

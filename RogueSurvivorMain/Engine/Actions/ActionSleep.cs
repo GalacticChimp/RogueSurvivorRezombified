@@ -9,23 +9,19 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionSleep : ActorAction
     {
-        #region Init
-        public ActionSleep(Actor actor, RogueGame game)
-            : base(actor, game)
+        public ActionSleep(Actor actor)
+            : base(actor)
         {
         }
-        #endregion
 
-        #region Implementation
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorSleep(m_Actor, out m_FailReason);
+            return m_Actor.CanActorSleep(out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoStartSleeping(m_Actor);
+            m_Actor.DoStartSleeping();
         }
-        #endregion
     }
 }

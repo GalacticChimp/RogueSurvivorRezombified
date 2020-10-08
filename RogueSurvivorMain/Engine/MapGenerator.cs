@@ -5,7 +5,6 @@ using System.Text;
 using System.Drawing;   // Point
 
 using djack.RogueSurvivor.Data;
-using djack.RogueSurvivor.Engine.MapObjects;
 using djack.RogueSurvivor.Gameplay;
 
 namespace djack.RogueSurvivor.Engine
@@ -240,7 +239,7 @@ namespace djack.RogueSurvivor.Engine
                 position.X = roller.Roll(left, left + width);
                 position.Y = roller.Roll(top, top + height);
 
-                if (m_Rules.IsWalkableFor(actor, map, position.X, position.Y) &&
+                if (actor.IsWalkableFor(map, position.X, position.Y, out string reason) &&
                     (goodPositionFn == null || goodPositionFn(position)))
                 {
                     map.PlaceActorAt(actor, position);

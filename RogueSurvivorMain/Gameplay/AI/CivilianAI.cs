@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;   // Point
 
 using djack.RogueSurvivor.Data;
+using djack.RogueSurvivor.Data.Enums;
+using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
@@ -300,7 +302,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 ItemGrenade eqGrenade = m_Actor.GetEquippedWeapon() as ItemGrenade;
                 if (eqGrenade != null)
                 {
-                    ActionUnequipItem unequipGre = new ActionUnequipItem(m_Actor, game, eqGrenade);
+                    ActionUnequipItem unequipGre = new ActionUnequipItem(m_Actor, eqGrenade);
                     if (unequipGre.IsLegal())
                     {
                         m_Actor.Activity = Activity.IDLE;
@@ -418,7 +420,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             if (restAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
-                return new ActionWait(m_Actor, game);
+                return new ActionWait(m_Actor);
             }
             #endregion
 
@@ -463,7 +465,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 9 sleep when almost sleepy and safe.
             #region
             if (m_SafeTurns >= MIN_TURNS_SAFE_TO_SLEEP && this.Directives.CanSleep && 
-                WouldLikeToSleep(game, m_Actor) && IsInside(m_Actor) && game.Rules.CanActorSleep(m_Actor))
+                WouldLikeToSleep(game, m_Actor) && IsInside(m_Actor) && m_Actor.CanActorSleep(out string reason))
             {               
                 // secure sleep.
                 ActorAction secureSleepAction = BehaviorSecurePerimeter(game, m_LOSSensor.FOV);
@@ -575,7 +577,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                             Actor other = p.Percepted as Actor;
                             // dont bother player or someone we can't trade with or already did trade.
                             if (other.IsPlayer) return true;
-                            if (!game.Rules.CanActorInitiateTradeWith(m_Actor, other)) return true;
+                            if (!m_Actor.CanActorInitiateTradeWith(other, out string reason)) return true;
                             if (IsActorTabooTrade(other)) return true;
                             // alpha10 dont bother someone who is fighting or fleeing
                             if (other.Activity == Activity.CHASING || other.Activity == Activity.FIGHTING || other.Activity == Activity.FLEEING || other.Activity == Activity.FLEEING_FROM_EXPLOSIVE)
@@ -595,13 +597,13 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         Actor tradeTarget = FilterNearest(game, tradingActors).Percepted as Actor;
                         if (game.Rules.IsAdjacent(m_Actor.Location, tradeTarget.Location))
                         {
-                            ActorAction tradeAction = new ActionTrade(m_Actor, game, tradeTarget);
+                            ActorAction tradeAction = new ActionTrade(m_Actor, tradeTarget);
                             if (tradeAction.IsLegal())
                             {
                                 // remember we tried to trade.
                                 MarkActorAsRecentTrade(tradeTarget);
                                 // say, so we make sure we spend a turn and won't loop.
-                                game.DoSay(m_Actor, tradeTarget, String.Format("Hey {0}, let's make a deal!", tradeTarget.Name), RogueGame.Sayflags.NONE);
+                                m_Actor.DoSay(tradeTarget, String.Format("Hey {0}, let's make a deal!", tradeTarget.Name), Sayflags.NONE);
                                 return tradeAction;
                             }
                         }
@@ -612,7 +614,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                             {
                                 // alpha10 announce it to make it clear to the player whats happening but dont spend AP (free action)
                                 // might spam for a few turns, but its better than not understanding whats going on.
-                                game.DoSay(m_Actor, tradeTarget, String.Format("Hey {0}, let's make a deal!", tradeTarget.Name), RogueGame.Sayflags.IS_FREE_ACTION);
+                                m_Actor.DoSay(tradeTarget, String.Format("Hey {0}, let's make a deal!", tradeTarget.Name), Sayflags.IS_FREE_ACTION);
 
                                 m_Actor.Activity = Activity.FOLLOWING;
                                 m_Actor.TargetActor = tradeTarget;
@@ -655,7 +657,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     {
                         // randomly emote.
                         if (game.Rules.RollChance(HUNGRY_CHARGE_EMOTE_CHANCE))
-                            game.DoSay(m_Actor, targetForFood.Percepted as Actor, "HEY! YOU! SHARE SOME FOOD!", RogueGame.Sayflags.IS_FREE_ACTION | RogueGame.Sayflags.IS_DANGER);
+                            m_Actor.DoSay(targetForFood.Percepted as Actor, "HEY! YOU! SHARE SOME FOOD!", Sayflags.IS_FREE_ACTION | Sayflags.IS_DANGER);
 
                         // chaaarge!
                         m_Actor.Activity = Activity.FIGHTING;

@@ -10,31 +10,25 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionEatFoodOnGround : ActorAction
     {
-        #region Fields
         Item m_Item;
-        #endregion
 
-        #region Init
-        public ActionEatFoodOnGround(Actor actor, RogueGame game, Item it)
-            : base(actor, game)
+        public ActionEatFoodOnGround(Actor actor, Item it)
+            : base(actor)
         {
             if (it == null)
                 throw new ArgumentNullException("item");
 
             m_Item = it;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorEatFoodOnGround(m_Actor, m_Item, out m_FailReason); 
+            return m_Actor.CanActorEatFoodOnGround(m_Item, out m_FailReason); 
         }
 
         public override void Perform()
         {
-            m_Game.DoEatFoodFromGround(m_Actor, m_Item);
+            m_Actor.DoEatFoodFromGround(m_Item);
         }
-        #endregion
     }
 }

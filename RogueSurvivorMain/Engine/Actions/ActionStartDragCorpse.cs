@@ -9,31 +9,25 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionStartDragCorpse : ActorAction
     {
-        #region Fields
         readonly Corpse m_Target;
-        #endregion
 
-        #region Init
-        public ActionStartDragCorpse(Actor actor, RogueGame game, Corpse target)
-            : base(actor, game)
+        public ActionStartDragCorpse(Actor actor, Corpse target)
+            : base(actor)
         {
             if (target == null)
                 throw new ArgumentNullException("target");
 
             m_Target = target;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorStartDragCorpse(m_Actor, m_Target, out m_FailReason);
+            return m_Actor.CanActorStartDragCorpse(m_Target, out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoStartDragCorpse(m_Actor, m_Target);
+            m_Actor.DoStartDragCorpse(m_Target);
         }
-        #endregion
     }
 }

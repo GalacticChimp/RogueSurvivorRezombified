@@ -9,22 +9,17 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionMeleeAttack : ActorAction
     {
-        #region Fields
         readonly Actor m_Target;
-        #endregion
 
-        #region Init
-        public ActionMeleeAttack(Actor actor, RogueGame game, Actor target)
-            : base(actor, game)
+        public ActionMeleeAttack(Actor actor, Actor target)
+            : base(actor)
         {
             if (target == null)
                 throw new ArgumentNullException("target");
 
             m_Target = target;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
             return true;    // handled before in rules
@@ -32,8 +27,7 @@ namespace djack.RogueSurvivor.Engine.Actions
 
         public override void Perform()
         {
-            m_Game.DoMeleeAttack(m_Actor, m_Target);
+            m_Actor.DoMeleeAttack(m_Target);
         }
-        #endregion
     }
 }

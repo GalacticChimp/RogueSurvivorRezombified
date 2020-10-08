@@ -9,33 +9,27 @@ namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionShout : ActorAction
     {
-        #region Fields
         string m_Text;
-        #endregion
 
-        #region Init
-        public ActionShout(Actor actor, RogueGame game)
-            : this(actor, game, null)
+        public ActionShout(Actor actor)
+            : this(actor, null)
         {
         }
 
-        public ActionShout(Actor actor, RogueGame game, string text)
-            : base(actor, game)
+        public ActionShout(Actor actor, string text)
+            : base(actor)
         {
             m_Text = text;
         }
-        #endregion
 
-        #region Implementation
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorShout(m_Actor, out m_FailReason);
+            return m_Actor.CanActorShout(out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoShout(m_Actor, m_Text);
+            m_Actor.DoShout(m_Text);
         }
-        #endregion
     }
 }

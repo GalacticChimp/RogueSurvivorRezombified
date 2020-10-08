@@ -12,29 +12,22 @@ namespace djack.RogueSurvivor.Engine.Actions
     /// </summary>
     class ActionBump : ActorAction
     {
-        #region Fields
         readonly Direction m_Direction;
         readonly Location m_NewLocation;
         readonly ActorAction m_ConcreteAction;
-        #endregion
 
-        #region Properties
         public Direction Direction { get { return m_Direction; } }
         public ActorAction ConcreteAction { get { return m_ConcreteAction; } }
-        #endregion
 
-        #region Init
-        public ActionBump(Actor actor, RogueGame game, Direction direction)
-            : base(actor, game)
+        public ActionBump(Actor actor, Direction direction)
+            : base(actor)
         {
             m_Direction = direction;
             m_NewLocation = actor.Location + direction;
 
-            m_ConcreteAction = game.Rules.IsBumpableFor(m_Actor, game, m_NewLocation, out m_FailReason);
+            m_ConcreteAction = m_Actor.IsBumpableFor(m_NewLocation, out m_FailReason);
         }
-        #endregion
 
-        #region ActorAction implementation
         public override bool IsLegal()
         {
             if (m_ConcreteAction == null)
@@ -50,6 +43,5 @@ namespace djack.RogueSurvivor.Engine.Actions
             else
                 m_ConcreteAction.Perform();
         }
-        #endregion
     }
 }

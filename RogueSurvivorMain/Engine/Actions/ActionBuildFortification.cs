@@ -1,39 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Drawing;
+﻿using System.Drawing;
 
 using djack.RogueSurvivor.Data;
-using djack.RogueSurvivor.Engine.MapObjects;
 
 namespace djack.RogueSurvivor.Engine.Actions
 {
     class ActionBuildFortification : ActorAction
     {
-        #region Fields
         Point m_BuildPos;
         bool m_IsLarge;
-        #endregion
 
-        #region Init
-        public ActionBuildFortification(Actor actor, RogueGame game, Point buildPos, bool isLarge)
-            : base(actor, game)
+        public ActionBuildFortification(Actor actor, Point buildPos, bool isLarge)
+            : base(actor)
         {
             m_BuildPos = buildPos;
             m_IsLarge = isLarge;
         }
-        #endregion
 
-        #region ActorAction
         public override bool IsLegal()
         {
-            return m_Game.Rules.CanActorBuildFortification(m_Actor, m_BuildPos, m_IsLarge);
+            return m_Actor.CanActorBuildFortification(m_BuildPos, m_IsLarge, out m_FailReason);
         }
 
         public override void Perform()
         {
-            m_Game.DoBuildFortification(m_Actor, m_BuildPos, m_IsLarge);
+            m_Actor.DoBuildFortification(m_BuildPos, m_IsLarge);
         }
-        #endregion
     }
 }
