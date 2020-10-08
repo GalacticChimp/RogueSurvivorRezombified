@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class Corpse
+    public class Corpse
     {
-        #region Fields
         Actor m_DeadGuy;
         int m_Turn;
         Point m_Position;
@@ -18,9 +14,7 @@ namespace djack.RogueSurvivor.Data
         float m_Rotation;
         float m_Scale;
         Actor m_DraggedBy;
-        #endregion
 
-        #region Properties
         public Actor DeadGuy { get { return m_DeadGuy; } }
         public int Turn { get { return m_Turn; } }
         public Point Position
@@ -60,9 +54,7 @@ namespace djack.RogueSurvivor.Data
             get { return m_DraggedBy; }
             set { m_DraggedBy = value; }
         }
-        #endregion
 
-        #region Init
         public Corpse(Actor deadGuy, int hitPoints, int maxHitPoints, int corpseTurn, float rotation, float scale)
         {
             m_DeadGuy = deadGuy;
@@ -73,6 +65,5 @@ namespace djack.RogueSurvivor.Data
             m_Scale = scale;
             m_DraggedBy = null;
         }
-        #endregion
     }
 }

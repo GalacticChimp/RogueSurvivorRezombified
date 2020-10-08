@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using System.Drawing;
 using System.Runtime.Serialization;
-using System.Data;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class Exit
+    public class Exit
     {
         public Map ToMap { get; set; }
         public Point ToPosition { get; set; }
@@ -27,7 +24,7 @@ namespace djack.RogueSurvivor.Data
     }
 
     [Serializable]
-    enum Lighting
+    public enum Lighting
     {
         _FIRST,
 
@@ -39,15 +36,12 @@ namespace djack.RogueSurvivor.Data
     }
 
     [Serializable]
-    class Map : ISerializable
+    public class Map : ISerializable
     {        
-        #region Constants
         public const int GROUND_INVENTORY_SLOTS = 10;
-        #endregion
 
-        #region Fields
 
-        #region Primary data : Serialize.
+        // Primary data : Serialize.
         int m_Seed;
         District m_District;
         string m_Name;
@@ -79,9 +73,7 @@ namespace djack.RogueSurvivor.Data
 
         List<TimedTask> m_Timers;
 
-        #endregion
-
-        #region Auxiliary data : Don't serialize, Reconstruct at load time AFTER the Session has been deserialized.
+        // Auxiliary data : Don't serialize, Reconstruct at load time AFTER the Session has been deserialized.
         [NonSerialized]
         Dictionary<Point, Actor> m_aux_ActorsByPosition;
 
@@ -97,11 +89,7 @@ namespace djack.RogueSurvivor.Data
         // scent hash
         [NonSerialized]
         Dictionary<Point, List<OdorScent>> m_aux_ScentsByPosition;
-        #endregion
 
-        #endregion
-
-        #region Properties
         public District District
         {
             get { return m_District; }
@@ -227,9 +215,6 @@ namespace djack.RogueSurvivor.Data
             get { return m_Scents; }
         }
 
-        #endregion
-
-        #region Init
         public Map(int seed, string name, int width, int height)
         {
             if (name == null)
@@ -274,9 +259,7 @@ namespace djack.RogueSurvivor.Data
 
             m_Timers = new List<TimedTask>(5);
         }
-        #endregion
 
-        #region Bounds
         public bool IsInBounds(int x, int y)
         {
             return x >= 0 && x < m_Width && y >= 0 && y < m_Height;
@@ -314,9 +297,7 @@ namespace djack.RogueSurvivor.Data
         {
             return x == 0 || x == m_Width - 1 || y == 0 || y == m_Height - 1;
         }
-        #endregion
 
-        #region Tiles
         public Tile GetTileAt(int x, int y)
         {
             return m_Tiles[x, y];
@@ -336,9 +317,7 @@ namespace djack.RogueSurvivor.Data
 
             m_Tiles[x, y].Model = model;
         }
-        #endregion
 
-        #region Exits
         public Exit GetExitAt(Point pos)
         {
             Exit exit;
@@ -381,9 +360,7 @@ namespace djack.RogueSurvivor.Data
             }
             return null;
         }
-        #endregion
 
-        #region Zones
         public void AddZone(Zone zone)
         {
             m_Zones.Add(zone);            
@@ -446,9 +423,7 @@ namespace djack.RogueSurvivor.Data
 
             return false;
         }
-        #endregion
 
-        #region Actors
         public bool HasActor(Actor actor)
         {
             return m_ActorsList.Contains(actor);
@@ -530,9 +505,7 @@ namespace djack.RogueSurvivor.Data
             // reset check actor index, as it is now invalidated.
             m_iCheckNextActorIndex = 0;
         }
-        #endregion
 
-        #region Map Objects
         public bool HasMapObject(MapObject mapObj)
         {
             return m_MapObjectsList.Contains(mapObj);
@@ -588,9 +561,7 @@ namespace djack.RogueSurvivor.Data
             m_MapObjectsList.Remove(o);
             m_aux_MapObjectsByPosition.Remove(new Point(x, y));
         }
-        #endregion
 
-        #region Items
         public Inventory GetItemsAt(Point position)
         {
             if (!IsInBounds(position))
@@ -699,9 +670,7 @@ namespace djack.RogueSurvivor.Data
             m_GroundItemsByPosition.Remove(position);
             m_aux_GroundItemsList.Remove(invThere);
         }
-        #endregion
 
-        #region Corpses
         public List<Corpse> GetCorpsesAt(Point p)
         {
             List<Corpse> listHere;
@@ -787,9 +756,7 @@ namespace djack.RogueSurvivor.Data
             else
                 m_aux_CorpsesByPosition.Add(c.Position, new List<Corpse>(1) { c });
         }
-        #endregion
 
-        #region Timers
         public void AddTimer(TimedTask t)
         {
             if (m_Timers == null) m_Timers = new List<TimedTask>(5);
@@ -800,9 +767,7 @@ namespace djack.RogueSurvivor.Data
         {
             m_Timers.Remove(t);
         }
-        #endregion
 
-        #region Odors
         public int GetScentByOdorAt(Odor odor, Point position)
         {
             if (!IsInBounds(position))
@@ -915,9 +880,7 @@ namespace djack.RogueSurvivor.Data
                 }
             }
         }
-        #endregion
 
-        #region View & Visit
         /// <summary>
         /// Set all tiles property visible to false.
         /// </summary>
@@ -977,9 +940,8 @@ namespace djack.RogueSurvivor.Data
                 for (int y = 0; y < m_Height; y++)
                     m_Tiles[x, y].IsVisited = false;
         }
-        #endregion
 
-        #region Helpers for transparency, walkable && fire line.
+        // Helpers for transparency, walkable && fire line.
         /// <summary>
         /// Helper that checks for tile transparency : check tile model and check map object.
         /// </summary>
@@ -1087,9 +1049,8 @@ namespace djack.RogueSurvivor.Data
             // all clear.
             return false;
         }
-        #endregion
 
-        #region Predicates helpers
+        // Predicates helpers
         /// <summary>
         /// Makes a list of all adjacent positions in map matching a predicate.
         /// </summary>
@@ -1202,9 +1163,8 @@ namespace djack.RogueSurvivor.Data
 
             return null;
         }
-        #endregion
 
-        #region Serialization
+        // Serialization
         /// <summary>
         /// Deserialization contructor.
         /// </summary>
@@ -1303,7 +1263,7 @@ namespace djack.RogueSurvivor.Data
             info.AddValue("m_BgMusic", m_BgMusic);
         }
 
-        #region Pre-saving
+        // Pre-saving
         public void OptimizeBeforeSaving()
         {
             // tiles
@@ -1327,15 +1287,10 @@ namespace djack.RogueSurvivor.Data
             m_CorpsesList.TrimExcess();
             m_Timers.TrimExcess();
         }
-        #endregion
 
-        #endregion
-
-        #region Hashcode
         public override int GetHashCode()
         {
             return m_Name.GetHashCode() ^ m_District.GetHashCode();
         }
-        #endregion
     }
 }

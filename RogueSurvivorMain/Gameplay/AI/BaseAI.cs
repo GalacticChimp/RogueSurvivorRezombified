@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 
 using djack.RogueSurvivor.Data;
+using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
@@ -116,7 +117,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             m_Order = newOrder;
         }
 
-        public override ActorAction GetAction(RogueGame game)
+        public override ActorAction GetAction()
         {
             /////////////////////////
             // 1. Update sensors.

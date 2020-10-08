@@ -2,9 +2,8 @@
 
 namespace djack.RogueSurvivor.Data
 {
-    class ActorModel
+    public class ActorModel
     {
-        #region Fields
         int m_ID;
         string m_ImageID;
         DollBody m_DollBody;
@@ -17,9 +16,7 @@ namespace djack.RogueSurvivor.Data
         int m_ScoreValue;
 
         int m_CreatedCount;
-        #endregion
 
-        #region Properties
         public int ID
         {
             get { return m_ID; }
@@ -77,9 +74,7 @@ namespace djack.RogueSurvivor.Data
             get { return m_FlavorDescription; }
             set { m_FlavorDescription = value; }
         }
-        #endregion
 
-        #region Init
         public ActorModel(string imageID, string name, string pluralName, int scoreValue, DollBody body, Abilities abilities, ActorSheet startingSheet, Type defaultController)
         {
             if (name == null)
@@ -104,9 +99,7 @@ namespace djack.RogueSurvivor.Data
 
             m_CreatedCount = 0;
         }
-        #endregion
 
-        #region Factory
         Actor Create(Faction faction, int spawnTime)
         {
             ++m_CreatedCount;
@@ -143,6 +136,5 @@ namespace djack.RogueSurvivor.Data
             actor.IsPluralName = isPluralName;
             return actor;
         }
-        #endregion
     }
 }

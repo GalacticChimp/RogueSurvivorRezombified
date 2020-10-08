@@ -1,24 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using djack.RogueSurvivor.Gameplay;
-using djack.RogueSurvivor.Engine.Items;
+using djack.RogueSurvivor.Data.Items;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class TrustRecord
+    public class TrustRecord
     {
         public Actor Actor { get; set; }
         public int Trust { get; set; }
     }
 
     [Serializable]
-    class Actor
+    public class Actor
     {
-        #region Flags
         [Flags]
         enum Flags
         {
@@ -30,12 +25,9 @@ namespace djack.RogueSurvivor.Data
             IS_RUNNING = (1 << 4),
             IS_SLEEPING = (1 << 5)
         }
-        #endregion
 
-        #region Fields
         Flags m_Flags;
 
-        #region Definition
         int m_ModelID;
         /*bool m_IsUnique;*/
         int m_FactionID;
@@ -47,9 +39,7 @@ namespace djack.RogueSurvivor.Data
         bool m_isBotPlayer;  // alpha10.1
         ActorSheet m_Sheet;
         int m_SpawnTime;
-        #endregion
 
-        #region State
         Inventory m_Inventory = null;
         Doll m_Doll;
         int m_HitPoints;
@@ -86,11 +76,6 @@ namespace djack.RogueSurvivor.Data
         // alpha10
         bool m_IsInvincible;
         int m_OdorSuppressorCounter;
-        #endregion
-        #endregion
-
-        #region Properties
-        #region Definition
 
         /// <summary>
         /// Gets or sets model. Setting model reset inventory and all stats to the model default values.
@@ -203,11 +188,9 @@ namespace djack.RogueSurvivor.Data
 
         public bool IsInAGang
         {
-            get { return m_GangID != (int)GameGangs.IDs.NONE; }
+            get { return m_GangID != 0; }//TODO (int)GameGangs.IDs.NONE; }
         }
-        #endregion
 
-        #region State
         public Doll Doll
         {
             get { return m_Doll; }
@@ -491,10 +474,7 @@ namespace djack.RogueSurvivor.Data
             get { return m_OdorSuppressorCounter; }
             set { m_OdorSuppressorCounter = value; }
         }
-        #endregion
-        #endregion
 
-        #region Init
         public Actor(ActorModel model, Faction faction, string name, bool isProperName, bool isPluralName, int spawnTime)
         {
             if (model == null)
@@ -506,7 +486,8 @@ namespace djack.RogueSurvivor.Data
 
             m_ModelID = model.ID;
             m_FactionID = faction.ID;
-            m_GangID = (int)GameGangs.IDs.NONE;
+            // TODO
+            m_GangID = 0;//(int)GameGangs.IDs.NONE;
             m_Name = name;
             this.IsProperName = isProperName;
             this.IsPluralName = isPluralName;
@@ -547,9 +528,7 @@ namespace djack.RogueSurvivor.Data
             m_CurrentDefence = model.StartingSheet.BaseDefence;
             m_CurrentRangedAttack = Attack.BLANK;
         }
-        #endregion
 
-        #region Group, Followers & Trust
         public void AddFollower(Actor other)
         {
             if (other == null)
@@ -651,9 +630,7 @@ namespace djack.RogueSurvivor.Data
             // nope
             return false;
         }
-        #endregion
 
-        #region Aggressor & Self Defence
         public void MarkAsAgressorOf(Actor other)
         {
             if (other == null || other.IsDead)
@@ -948,7 +925,6 @@ namespace djack.RogueSurvivor.Data
             return m_SelfDefence.Contains(other);
         }
 #endif
-        #endregion
 
         // alpha10 made item centric: moved out of Actor to ItemEntertainment
 #if false
@@ -968,7 +944,6 @@ namespace djack.RogueSurvivor.Data
         #endregion
 #endif
 
-        #region Equipment helpers
         public Item GetEquippedItem(DollPart part)
         {
             if (m_Inventory == null || part == DollPart.NONE)
@@ -1009,16 +984,12 @@ namespace djack.RogueSurvivor.Data
         {
             return GetEquippedItem(DollPart.RIGHT_HAND) as ItemRangedWeapon;
         }
-        #endregion
 
-        #region Flags helpers
         private bool GetFlag(Flags f) { return (m_Flags & f) != 0; }
         private void SetFlag(Flags f, bool value) { if (value) m_Flags |= f; else m_Flags &= ~f; }
         private void OneFlag(Flags f) { m_Flags |= f; }
         private void ZeroFlag(Flags f) { m_Flags &= ~f; }
-        #endregion
 
-        #region Pre-save
         public void OptimizeBeforeSaving()
         {
             // remove dead target.
@@ -1078,6 +1049,29 @@ namespace djack.RogueSurvivor.Data
             if (m_Inventory != null)
                 m_Inventory.OptimizeBeforeSaving();
         }
-        #endregion
+
+        // Actions
+        public void DoBarricadeDoor(DoorWindow door)
+        {
+            // TODO
+            //// get barricading item.
+            //ItemBarricadeMaterial it = this.Inventory.GetSmallestStackByType(typeof(ItemBarricadeMaterial)) as ItemBarricadeMaterial; // alpha10
+            //ItemBarricadeMaterialModel m = it.Model as ItemBarricadeMaterialModel;
+
+            //// do it.
+            //this.Inventory.Consume(it);
+            //door.BarricadePoints = Math.Min(door.BarricadePoints + m_Rules.ActorBarricadingPoints(this, m.BarricadingValue), Rules.BARRICADING_MAX);
+
+            //// message.
+            //bool isVisible = IsVisibleToPlayer(this) || IsVisibleToPlayer(door);
+            //if (isVisible)
+            //{
+            //    AddMessage(MakeMessage(this, Conjugate(actor, VERB_BARRICADE), door));
+            //}
+
+            //// spend AP.
+            //int barricadingCost = Rules.BASE_ACTION_COST;
+            //SpendActorActionPoints(this, barricadingCost);
+        }
     }
 }

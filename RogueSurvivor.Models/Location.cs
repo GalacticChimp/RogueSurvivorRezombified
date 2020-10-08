@@ -1,21 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
-
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    struct Location
+    public struct Location
     {
-        #region Fields
         Map m_Map;
         Point m_Position;
-        #endregion
 
-        #region Properties
         public Map Map
         {
             get { return m_Map; }
@@ -25,9 +18,7 @@ namespace djack.RogueSurvivor.Data
         {
             get { return m_Position; }
         }
-        #endregion
 
-        #region Init
         public Location(Map map, Point position)
         {
             if (map == null)
@@ -36,9 +27,7 @@ namespace djack.RogueSurvivor.Data
             m_Map = map;
             m_Position = position;
         }
-        #endregion
 
-        #region Operators
         public static bool operator ==(Location lhs, Location rhs)
         {
             return lhs.m_Map == rhs.m_Map && lhs.m_Position == rhs.m_Position;
@@ -53,9 +42,7 @@ namespace djack.RogueSurvivor.Data
         {
             return new Location(lhs.m_Map, new Point(lhs.m_Position.X + rhs.Vector.X, lhs.m_Position.Y + rhs.Vector.Y));
         }
-        #endregion
 
-        #region Hashcode, Equality, ToString
         public override int GetHashCode()
         {
             return m_Map.GetHashCode() ^ m_Position.GetHashCode();
@@ -78,6 +65,5 @@ namespace djack.RogueSurvivor.Data
             //TODO
             throw new NotImplementedException();
         }
-        #endregion
     }
 }

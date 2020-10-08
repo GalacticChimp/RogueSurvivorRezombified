@@ -1,21 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class World
+    public class World
     {
-        #region Fields
         District[,] m_DistrictsGrid;
         int m_Size;
         Weather m_Weather;
         int m_NextWeatherCheckTurn;  // alpha10
-        #endregion
 
-        #region Properties
         public int Size
         {
             get { return m_Size; }
@@ -52,9 +46,7 @@ namespace djack.RogueSurvivor.Data
             get { return m_NextWeatherCheckTurn; }
             set { m_NextWeatherCheckTurn = value; }
         }
-        #endregion
 
-        #region Init
         public World(int size)
         {
             if (size <= 0)
@@ -65,9 +57,7 @@ namespace djack.RogueSurvivor.Data
             m_Weather = Weather.CLEAR;
             m_NextWeatherCheckTurn = 0;
         }
-        #endregion
 
-        #region Coordinates
         /// <summary>
         /// Trim district coordinates to world bounds.
         /// </summary>
@@ -91,15 +81,12 @@ namespace djack.RogueSurvivor.Data
         {
             return String.Format("{0}{1}", (char)('A'+x), y);
         }
-        #endregion
 
-        #region Pre-saving
         public void OptimizeBeforeSaving()
         {
             for (int x = 0; x < m_Size; x++)
                 for (int y = 0; y < m_Size; y++)
                     m_DistrictsGrid[x, y].OptimizeBeforeSaving();
         }
-        #endregion
     }
 }

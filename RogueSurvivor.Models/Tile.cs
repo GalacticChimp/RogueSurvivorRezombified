@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class Tile
+    public class Tile
     {
-        #region Flags
         [Flags]
         enum Flags
         {
@@ -17,15 +14,11 @@ namespace djack.RogueSurvivor.Data
             IS_IN_VIEW = (1 << 1),
             IS_VISITED = (1 << 2)
         }
-        #endregion
 
-        #region Fields
         int m_ModelID;
         Flags m_Flags;
         List<string> m_Decorations = null;
-        #endregion
 
-        #region Properties
         public TileModel Model
         {
             get { return Models.Tiles[m_ModelID]; }
@@ -62,9 +55,7 @@ namespace djack.RogueSurvivor.Data
         {
             get { return m_Decorations; }
         }
-        #endregion
 
-        #region Init
         public Tile(TileModel model)
         {
             if (model == null)
@@ -72,9 +63,7 @@ namespace djack.RogueSurvivor.Data
 
             m_ModelID = model.ID;
         }
-        #endregion
 
-        #region Decorations
         public void AddDecoration(string imageID)
         {
             if (m_Decorations == null)
@@ -107,15 +96,11 @@ namespace djack.RogueSurvivor.Data
                     m_Decorations = null;
             }
         }
-        #endregion
 
-        #region Pre-saving
         public void OptimizeBeforeSaving()
         {
             if (m_Decorations != null)
                 m_Decorations.TrimExcess();
         }
-        #endregion
-
     }
 }

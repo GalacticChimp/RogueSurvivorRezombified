@@ -5,6 +5,7 @@ using System.Text;
 using System.Drawing;
 
 using djack.RogueSurvivor.Data;
+using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Engine.Items;
 

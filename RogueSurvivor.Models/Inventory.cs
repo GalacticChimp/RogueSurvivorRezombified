@@ -4,14 +4,11 @@ using System.Collections.Generic;
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class Inventory
+    public class Inventory
     {
-        #region Fields
         List<Item> m_Items;
         int m_MaxCapacity;
-        #endregion
 
-        #region Properties
         public IEnumerable<Item> Items
         {
             get { return m_Items; }
@@ -68,9 +65,7 @@ namespace djack.RogueSurvivor.Data
                 return m_Items[0];
             }
         }
-        #endregion
 
-        #region Init
         public Inventory(int maxCapacity)
         {
             if (maxCapacity < 0)
@@ -80,9 +75,7 @@ namespace djack.RogueSurvivor.Data
             //m_Items = new List<Item>(maxCapacity);
             m_Items = new List<Item>(1);
         }
-        #endregion
 
-        #region Managing
         /// <summary>
         /// Try to add all the item quantity.
         /// </summary>
@@ -420,9 +413,8 @@ namespace djack.RogueSurvivor.Data
                 while (i < m_Items.Count && countEmptyStacksToRemove > 0);
             }
         }
-        #endregion
 
-        #region Helpers
+        // Helpers
         public Item GetFirstByModel(ItemModel model)
         {
             foreach (Item it in m_Items)
@@ -541,15 +533,12 @@ namespace djack.RogueSurvivor.Data
             foreach (Item it in m_Items)
                 fn(it);
         }
-        #endregion
 
         // alpha10
-        #region Pre-saving
         public void OptimizeBeforeSaving()
         {
             foreach (Item it in m_Items)
                 it.OptimizeBeforeSaving();
         }
-        #endregion
     }
 }

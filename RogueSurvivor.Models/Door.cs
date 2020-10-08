@@ -1,33 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-using djack.RogueSurvivor.Data;
-
-namespace djack.RogueSurvivor.Engine.MapObjects
+namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class DoorWindow : StateMapObject
+    public class DoorWindow : StateMapObject
     {
-        #region Constants
         public const int BASE_HITPOINTS = 40;
-        #endregion
 
-        #region Fields
         string m_ClosedImageID;
         string m_OpenImageID;
         string m_BrokenImageID;
         bool m_IsWindow;
         int m_BarricadePoints;
-        #endregion
 
-        #region Door states
         public const int STATE_CLOSED = 1;
         public const int STATE_OPEN = 2;
         public const int STATE_BROKEN = 3;
-        #endregion
 
-        #region Properties
         public bool IsOpen
         {
             get { return this.State == STATE_OPEN; }
@@ -93,9 +82,7 @@ namespace djack.RogueSurvivor.Engine.MapObjects
         {
             get { return m_BarricadePoints > 0; }
         }
-        #endregion
 
-        #region Init
         public DoorWindow(string name, string closedImageID, string openImageID, string brokenImageID, int hitPoints)
             : base(name, closedImageID, Break.BREAKABLE, Fire.BURNABLE, hitPoints)
         {
@@ -106,9 +93,7 @@ namespace djack.RogueSurvivor.Engine.MapObjects
 
             SetState(STATE_CLOSED);
         }
-        #endregion
 
-        #region StateMapObject
         public override void SetState(int newState)
         {
             switch (newState)
@@ -137,6 +122,5 @@ namespace djack.RogueSurvivor.Engine.MapObjects
 
             base.SetState(newState);
         }
-        #endregion
     }
 }

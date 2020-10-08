@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    enum DistrictKind
+    public enum DistrictKind
     {
         _FIRST,
         GENERAL = _FIRST,
@@ -19,9 +17,8 @@ namespace djack.RogueSurvivor.Data
     }
 
     [Serializable]
-    class District
+    public class District
     {
-        #region Fields
         Point m_WorldPosition;
         DistrictKind m_Kind;
         string m_Name;
@@ -29,9 +26,7 @@ namespace djack.RogueSurvivor.Data
         Map m_EntryMap;
         Map m_SewersMap;
         Map m_SubwayMap;
-        #endregion
 
-        #region Properties
         public Point WorldPosition
         {
             get { return m_WorldPosition; }
@@ -102,17 +97,12 @@ namespace djack.RogueSurvivor.Data
             get { return m_SubwayMap != null; }
         }
 
-        #endregion
-
-        #region Init
         public District(Point worldPos, DistrictKind kind)
         {
             m_WorldPosition = worldPos;
             m_Kind = kind;
         }
-        #endregion
 
-        #region Maps
         protected void AddMap(Map map)
         {
             if (map == null)
@@ -147,9 +137,7 @@ namespace djack.RogueSurvivor.Data
             m_Maps.Remove(map);
             map.District = null;
         }
-        #endregion
 
-        #region Pre-saving
         public void OptimizeBeforeSaving()
         {
             m_Maps.TrimExcess();
@@ -157,13 +145,10 @@ namespace djack.RogueSurvivor.Data
             foreach (Map m in m_Maps)
                 m.OptimizeBeforeSaving();
         }
-        #endregion
 
-        #region Hashcode
         public override int GetHashCode()
         {
             return m_WorldPosition.GetHashCode();
         }
-        #endregion
     }
 }

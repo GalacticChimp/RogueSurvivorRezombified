@@ -1,20 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class Item
+    public class Item
     {
-        #region Fields
         int  m_ModelID;
         int  m_Quantity;
         DollPart m_EquipedPart;
-        #endregion
 
-        #region Properties
         public ItemModel Model
         {
             get { return Models.Items[m_ModelID]; }
@@ -96,19 +90,14 @@ namespace djack.RogueSurvivor.Data
             get;
             set;
         }
-        #endregion
 
-        #region Init
         public Item(ItemModel model)
         {
             m_ModelID = model.ID;
             m_Quantity = 1;
             m_EquipedPart = DollPart.NONE;
         }
-        #endregion
 
-        #region Pre-save
         public virtual void OptimizeBeforeSaving() { }
-        #endregion
     }
 }

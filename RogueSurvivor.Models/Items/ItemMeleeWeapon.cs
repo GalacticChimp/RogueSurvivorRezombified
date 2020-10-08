@@ -1,13 +1,10 @@
 ﻿using System;
 
-using djack.RogueSurvivor.Data;
-
-namespace djack.RogueSurvivor.Engine.Items
+namespace djack.RogueSurvivor.Data.Items
 {
     [Serializable]
-    class ItemMeleeWeapon : ItemWeapon
+    public class ItemMeleeWeapon : ItemWeapon
     {
-        #region Properties
         public bool IsFragile
         {
             get { return (this.Model as ItemMeleeWeaponModel).IsFragile; }
@@ -28,15 +25,12 @@ namespace djack.RogueSurvivor.Engine.Items
         {
             get { return (this.Model as ItemMeleeWeaponModel).IsTool; }
         }
-        #endregion
 
-        #region Init
         public ItemMeleeWeapon(ItemModel model)
             : base(model)
         {
             if (!(model is ItemMeleeWeaponModel))
                 throw new ArgumentException("model is not a MeleeWeaponModel");
         }
-        #endregion
     }
 }

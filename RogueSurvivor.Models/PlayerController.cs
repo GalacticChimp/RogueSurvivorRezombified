@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using djack.RogueSurvivor.Engine;
 
 namespace djack.RogueSurvivor.Data
 {
@@ -11,10 +6,10 @@ namespace djack.RogueSurvivor.Data
     /// <summary>
     /// "Marker" class to tell the game the actor is controller by the human player. The class does nothing as the game itself handles all the work.
     /// </summary>
-    class PlayerController : ActorController
+    public class PlayerController : ActorController
     {
 
-        public override ActorAction GetAction(RogueGame game)
+        public override ActorAction GetAction()
         {
             // shouldn't get here
             throw new InvalidOperationException("do not call PlayerController.GetAction()");

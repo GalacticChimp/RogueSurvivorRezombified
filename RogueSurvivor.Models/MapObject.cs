@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class MapObject
+    public class MapObject
     {
-        #region Types
         [Serializable]
         public enum Break : byte
         {
@@ -42,9 +38,6 @@ namespace djack.RogueSurvivor.Data
             STANDON_FOV_BONUS = (1<<9)
         }
         
-        #endregion
-
-        #region Fields
         string m_ImageID;
         string m_HiddenImageID;
         string m_Name;
@@ -61,9 +54,7 @@ namespace djack.RogueSurvivor.Data
         Fire m_FireState = Fire.UNINFLAMMABLE;
 
         Location m_Location;
-        #endregion
 
-        #region Properties
         public string AName
         {
             get { return (IsAn ? "an " : IsPlural ? "some " : "a ") + m_Name; }
@@ -235,9 +226,6 @@ namespace djack.RogueSurvivor.Data
             get { return m_MaxHitPoints; }
         }
 
-        #endregion
-
-        #region Init
         public MapObject(string aName, string hiddenImageID)
             : this(aName, hiddenImageID, Break.UNBREAKABLE, Fire.UNINFLAMMABLE, 0)
         {
@@ -257,13 +245,10 @@ namespace djack.RogueSurvivor.Data
             if (breakable != Break.UNBREAKABLE || burnable != Fire.UNINFLAMMABLE)
                 m_HitPoints = m_MaxHitPoints = hitPoints;
         }
-        #endregion
 
-        #region Flags helpers
         private bool GetFlag(Flags f) { return (m_Flags & f) != 0; }
         private void SetFlag(Flags f, bool value) { if (value) m_Flags |= f; else m_Flags &= ~f; }
         private void OneFlag(Flags f) { m_Flags |= f; }
         private void ZeroFlag(Flags f) { m_Flags &= ~f; }
-        #endregion
     }
 }

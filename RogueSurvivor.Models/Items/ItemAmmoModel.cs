@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using djack.RogueSurvivor.Data;
-
-namespace djack.RogueSurvivor.Engine.Items
+﻿namespace djack.RogueSurvivor.Data.Items
 {
-    enum AmmoType
+    public enum AmmoType
     {
         _FIRST = 0,
 
@@ -21,13 +14,10 @@ namespace djack.RogueSurvivor.Engine.Items
         _COUNT
     }
 
-    class ItemAmmoModel : ItemModel
+    public class ItemAmmoModel : ItemModel
     {
-        #region Fields
         AmmoType m_AmmoType;
-        #endregion
 
-        #region Properties
         public AmmoType AmmoType
         {
             get { return m_AmmoType; }
@@ -37,9 +27,7 @@ namespace djack.RogueSurvivor.Engine.Items
         {
             get { return this.StackingLimit; }
         }
-        #endregion
 
-        #region Init
         public ItemAmmoModel(string aName, string theNames, string imageID, AmmoType ammoType, int maxQuantity)
             : base(aName, theNames, imageID)
         {
@@ -47,6 +35,5 @@ namespace djack.RogueSurvivor.Engine.Items
             this.IsStackable = true;
             this.StackingLimit = maxQuantity;
         }
-        #endregion
     }
 }

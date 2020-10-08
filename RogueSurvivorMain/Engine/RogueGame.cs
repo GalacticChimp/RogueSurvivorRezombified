@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.IO;
 
 using djack.RogueSurvivor.Data;
+using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.Items;
 using djack.RogueSurvivor.Engine.MapObjects;
@@ -5511,7 +5512,7 @@ namespace djack.RogueSurvivor.Engine
                         RedrawPlayScreen();
                         if (m_botControl != null) // for some reason even with the lock this can become null here. wth?? is thread.sleep the culprit??
                         {
-                            ActorAction botAction = m_botControl.GetAction(this);
+                            ActorAction botAction = m_botControl.GetAction();
                             if (botAction == null || !botAction.IsLegal())
                             {
                                 AddMessage(MakeErrorMessage("Bot issued " + (botAction == null ? "NULL" : "illegal " + botAction.ToString()) + " action"));
@@ -7839,7 +7840,7 @@ namespace djack.RogueSurvivor.Engine
                                 string reason;
                                 if (m_Rules.CanActorBarricadeDoor(player, door, out reason))
                                 {
-                                    DoBarricadeDoor(player, door);
+                                    player.DoBarricadeDoor(door);
                                     RedrawPlayScreen();
                                     loop = false;
                                     actionDone = true;
@@ -10256,7 +10257,7 @@ namespace djack.RogueSurvivor.Engine
         void HandleAiActor(Actor aiActor)
         {
             // Get and perform action from AI controler.
-            ActorAction desiredAction = aiActor.Controller.GetAction(this);
+            ActorAction desiredAction = aiActor.Controller.GetAction();
 
             // Insane effect?
             if (m_Rules.IsActorInsane(aiActor) && m_Rules.RollChance(Rules.SANITY_INSANE_ACTION_CHANCE))
@@ -15518,27 +15519,6 @@ namespace djack.RogueSurvivor.Engine
             SpendActorActionPoints(actor, closeCost);
         }
 
-        public void DoBarricadeDoor(Actor actor, DoorWindow door)
-        {
-            // get barricading item.
-            ItemBarricadeMaterial it = actor.Inventory.GetSmallestStackByType(typeof(ItemBarricadeMaterial)) as ItemBarricadeMaterial; // alpha10
-            ItemBarricadeMaterialModel m = it.Model as ItemBarricadeMaterialModel;
-
-            // do it.
-            actor.Inventory.Consume(it);
-            door.BarricadePoints = Math.Min(door.BarricadePoints + m_Rules.ActorBarricadingPoints(actor, m.BarricadingValue), Rules.BARRICADING_MAX);
-
-            // message.
-            bool isVisible = IsVisibleToPlayer(actor) || IsVisibleToPlayer(door);
-            if (isVisible)
-            {
-                AddMessage(MakeMessage(actor, Conjugate(actor, VERB_BARRICADE), door));
-            }
-
-            // spend AP.
-            int barricadingCost = Rules.BASE_ACTION_COST;
-            SpendActorActionPoints(actor, barricadingCost);
-        }
         #endregion
 
         #region Building & Repairing

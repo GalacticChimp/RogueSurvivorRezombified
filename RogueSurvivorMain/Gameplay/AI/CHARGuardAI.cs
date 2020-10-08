@@ -19,7 +19,6 @@ namespace djack.RogueSurvivor.Gameplay.AI
     /// </summary>
     class CHARGuardAI : OrderableAI
     {
-        #region Constants
         const int LOS_MEMORY = 10;
 
         static string[] FIGHT_EMOTES = 
@@ -28,14 +27,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
             "Damn it I'm trapped!",
             "Hey"
         };                              
-        #endregion
 
-        #region Fields
         LOSSensor m_LOSSensor;
         MemorizedSensor m_MemorizedSensor;
-        #endregion
 
-        #region BaseAI
         protected override void CreateSensors()
         {
             m_LOSSensor = new LOSSensor(LOSSensor.SensingFilter.ACTORS | LOSSensor.SensingFilter.ITEMS);
@@ -276,6 +271,5 @@ namespace djack.RogueSurvivor.Gameplay.AI
             m_Actor.Activity = Activity.IDLE;
             return BehaviorWander(game, null);
         }
-        #endregion
     }
 }
