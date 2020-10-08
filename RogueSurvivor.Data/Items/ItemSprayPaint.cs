@@ -1,20 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-using djack.RogueSurvivor.Data;
-
-namespace djack.RogueSurvivor.Engine.Items
+namespace djack.RogueSurvivor.Data.Items
 {
     [Serializable]
-    class ItemSprayPaint : Item
+    public class ItemSprayPaint : Item
     {
-        #region Properties
         public int PaintQuantity { get; set; }
-        #endregion
 
-        #region Init
         public ItemSprayPaint(ItemModel model)
             : base(model)
         {
@@ -23,6 +15,5 @@ namespace djack.RogueSurvivor.Engine.Items
 
             this.PaintQuantity = (model as ItemSprayPaintModel).MaxPaintQuantity;
         }
-        #endregion
     }
 }

@@ -1,20 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-using djack.RogueSurvivor.Data;
-
-namespace djack.RogueSurvivor.Engine.Items
+namespace djack.RogueSurvivor.Data.Items
 {
     [Serializable]
-    class ItemTracker : Item
+    public class ItemTracker : Item
     {
-        #region Fields
         int m_Batteries;
-        #endregion
 
-        #region Properties
         public ItemTrackerModel.TrackingFlags Tracking { get; private set; }
 
         public bool CanTrackFollowersOrLeader
@@ -57,9 +49,7 @@ namespace djack.RogueSurvivor.Engine.Items
         {
             get { return m_Batteries >= (this.Model as ItemTrackerModel).MaxBatteries; }
         }
-        #endregion
 
-        #region Init
         public ItemTracker(ItemModel model)
             : base(model)
         {
@@ -70,6 +60,5 @@ namespace djack.RogueSurvivor.Engine.Items
             this.Tracking = m.Tracking;
             this.Batteries = m.MaxBatteries;
         }
-        #endregion
     }
 }

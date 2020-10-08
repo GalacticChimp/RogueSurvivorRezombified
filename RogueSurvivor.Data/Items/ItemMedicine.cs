@@ -1,24 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-using djack.RogueSurvivor.Data;
-
-namespace djack.RogueSurvivor.Engine.Items
+namespace djack.RogueSurvivor.Data.Items
 {
     [Serializable]
-    class ItemMedicine : Item
+    public class ItemMedicine : Item
     {
-        #region Properties
         public int Healing { get; private set; }
         public int StaminaBoost { get; private set; }
         public int SleepBoost { get; private set; }
         public int InfectionCure { get; private set; }
         public int SanityCure { get; private set; }
-        #endregion
 
-        #region Init
         public ItemMedicine(ItemModel model)
             : base(model)
         {
@@ -32,7 +24,5 @@ namespace djack.RogueSurvivor.Engine.Items
             this.InfectionCure = m.InfectionCure;
             this.SanityCure = m.SanityCure;
         }
-        #endregion
-
     }
 }

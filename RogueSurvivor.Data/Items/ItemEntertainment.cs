@@ -1,35 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-using djack.RogueSurvivor.Data;
-
-namespace djack.RogueSurvivor.Engine.Items
+namespace djack.RogueSurvivor.Data.Items
 {
     [Serializable]
-    class ItemEntertainment : Item
+    public class ItemEntertainment : Item
     {
-        #region Fields
         // alpha10 boring items moved out of Actor
         List<Actor> m_BoringFor = null;
-        #endregion
 
-        #region Properties
         public ItemEntertainmentModel EntertainmentModel { get { return this.Model as ItemEntertainmentModel; } }
-        #endregion
 
-        #region Init
         public ItemEntertainment(ItemModel model)
             : base(model)
         {
             if (!(model is ItemEntertainmentModel))
                 throw new ArgumentException("model is not a EntertainmentModel");
         }
-        #endregion
 
         // alpha10 boring items moved out of Actor
-        #region Boring items
         public void AddBoringFor(Actor a)
         {
             if (m_BoringFor == null) m_BoringFor = new List<Actor>(1);
@@ -42,10 +31,8 @@ namespace djack.RogueSurvivor.Engine.Items
             if (m_BoringFor == null) return false;
             return m_BoringFor.Contains(a);
         }
-        #endregion
 
         // alpha10
-        #region Pre-saving
         public override void OptimizeBeforeSaving()
         {
             base.OptimizeBeforeSaving();
@@ -65,6 +52,5 @@ namespace djack.RogueSurvivor.Engine.Items
                     m_BoringFor = null;
             }
         }
-        #endregion
     }
 }

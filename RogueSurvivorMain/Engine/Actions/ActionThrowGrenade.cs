@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Drawing;
+﻿using System.Drawing;
 
 using djack.RogueSurvivor.Data;
-using djack.RogueSurvivor.Engine.Items;
+using djack.RogueSurvivor.Data.Items;
 
 namespace djack.RogueSurvivor.Engine.Actions
 {
