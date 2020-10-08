@@ -1,19 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    sealed class Direction
+    public sealed class Direction
     {
-        #region The neutral direction
         public static readonly Direction NEUTRAL = new Direction(-1, "neutral", new Point(0, 0));
-        #endregion
 
-        #region The eight directions
         /// <summary>
         /// 0 North (0, -1)
         /// </summary>
@@ -53,9 +48,8 @@ namespace djack.RogueSurvivor.Data
         /// 7 North-West (-1,-1)
         /// </summary>
         public static readonly Direction NW = new Direction(7, "NW", new Point(-1,-1));
-        #endregion
 
-        #region The compass containing the directions in clockwise otherwise order, starting north.
+        // The compass containing the directions in clockwise otherwise order, starting north.
         public static readonly Direction[] COMPASS = new Direction[8]
         {
             N, NE, E, SE, S, SW, W, NW
@@ -65,16 +59,12 @@ namespace djack.RogueSurvivor.Data
         {
             N, NE, E, SE, S, SW, W, NW
         };
-        #endregion
 
-        #region 4 directions compass
         public static readonly Direction[] COMPASS_4 = new Direction[4]
         {
             N, E, S, W
         };
-        #endregion
 
-        #region Directions helpers
         public static Direction FromVector(Point v)
         {
             foreach (Direction d in COMPASS)
@@ -133,23 +123,17 @@ namespace djack.RogueSurvivor.Data
         {
             return COMPASS[(d.m_Index + 4) % 8];
         }
-        #endregion
 
-        #region Operators
         public static Point operator +(Point lhs, Direction rhs)
         {
             return new Point(lhs.X + rhs.Vector.X, lhs.Y + rhs.Vector.Y);
         }
-        #endregion
 
-        #region Fields
         int m_Index;
         string m_Name;
         Point m_Vector;
         PointF m_NormalizedVector;
-        #endregion
 
-        #region Properties
         public int Index
         {
             get { return m_Index; }
@@ -169,9 +153,7 @@ namespace djack.RogueSurvivor.Data
         {
             get { return m_NormalizedVector; }
         }
-        #endregion
 
-        #region Init
         Direction(int index, string name, Point vector)
         {
             m_Index = index;
@@ -186,14 +168,11 @@ namespace djack.RogueSurvivor.Data
             else
                 m_NormalizedVector = PointF.Empty;
         }
-        #endregion
 
-        #region ToString
         public override string ToString()
         {
             return m_Name;
         }
-        #endregion
     }
 }
 

@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    enum ActorCourage
+    public enum ActorCourage
     {
         COWARD,
         CAUTIOUS,
@@ -14,18 +11,15 @@ namespace djack.RogueSurvivor.Data
     }
 
     [Serializable]
-    class ActorDirective
+    public class ActorDirective
     {
-        #region Properties
         public bool CanTakeItems { get; set; }
         public bool CanFireWeapons { get; set; }
         public bool CanThrowGrenades { get; set; }
         public bool CanSleep { get; set; }
         public bool CanTrade { get; set; }
         public ActorCourage Courage { get; set; }
-        #endregion
 
-        #region Init
         public ActorDirective()
         {
             Reset();
@@ -40,9 +34,7 @@ namespace djack.RogueSurvivor.Data
             this.CanTrade = true;
             this.Courage = ActorCourage.CAUTIOUS;
         }
-        #endregion
 
-        #region Helpers
         public static string CourageString(ActorCourage c)
         {
             switch (c)
@@ -57,6 +49,5 @@ namespace djack.RogueSurvivor.Data
                     throw new ArgumentOutOfRangeException("unhandled courage");
             }
         }
-        #endregion
     }
 }

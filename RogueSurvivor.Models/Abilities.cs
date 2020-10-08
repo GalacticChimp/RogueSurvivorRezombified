@@ -1,27 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class Abilities
+    public class Abilities
     {
-        #region Blank abilities
         [NonSerialized]
         public static readonly Abilities NONE = new Abilities();
-        #endregion
 
-        #region Properties
-        /// <summary>
-        /// Is an undead.
-        /// </summary>
         public bool IsUndead { get; set; }
 
-        /// <summary>
-        /// Is master of undeads.
-        /// </summary>
         public bool IsUndeadMaster { get; set; }
 
         /// <summary>
@@ -54,14 +42,8 @@ namespace djack.RogueSurvivor.Data
         /// </summary>
         public bool CanRun { get; set; }
 
-        /// <summary>
-        /// Can use voice to chat, cry...
-        /// </summary>
         public bool CanTalk { get; set; }
 
-        /// <summary>
-        /// Can use map objects such as doors...
-        /// </summary>
         public bool CanUseMapObjects { get; set; }
 
         /// <summary>
@@ -74,9 +56,6 @@ namespace djack.RogueSurvivor.Data
         /// </summary>
         public bool CanBreakObjects { get; set; }
 
-        /// <summary>
-        /// Can walk on "jumpable" map objects.
-        /// </summary>
         public bool CanJump { get; set; }
 
         /// <summary>
@@ -89,19 +68,10 @@ namespace djack.RogueSurvivor.Data
         /// </summary>
         public bool HasInventory { get; set; }
 
-        /// <summary>
-        /// Can equip/use items.
-        /// </summary>
         public bool CanUseItems { get; set; }
 
-        /// <summary>
-        /// Can trade with other actors.
-        /// </summary>
         public bool CanTrade { get; set; }
 
-        /// <summary>
-        /// Can barricade map objects.
-        /// </summary>
         public bool CanBarricade { get; set; }
 
         /// <summary>
@@ -131,9 +101,8 @@ namespace djack.RogueSurvivor.Data
         public bool IsRotting { get; set; }
 
         // alpha10
-        public bool CanDisarm { get; set; }
+        public bool CanDisarm { get; set; } = true;
 
-        #region AI flags
         /// <summary>
         /// AI flag : tell some AIs t can use Exits with flag Exit.IsAnAIExit.
         /// </summary>
@@ -154,15 +123,5 @@ namespace djack.RogueSurvivor.Data
         /// AI flag : tell some AIs to use the explore behavior.
         /// </summary>
         public bool ZombieAI_Explore { get; set; }
-        #endregion
-
-        #endregion
-
-        // alpha10
-        // CanDisarm by default.
-        public Abilities()
-        {
-            this.CanDisarm = true;
-        }
     }
 }

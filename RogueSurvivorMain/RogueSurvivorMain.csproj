@@ -19,6 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RogueSurvivor.Models\RogueSurvivor.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Microsoft.DirectX">
       <HintPath>libs\mdx\Microsoft.DirectX.dll</HintPath>
     </Reference>

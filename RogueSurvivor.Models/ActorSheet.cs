@@ -1,23 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class ActorSheet
+    public class ActorSheet
     {
-        #region Fields
         SkillTable m_SkillTable = new SkillTable();
-        #endregion
 
-        #region Blank sheet
         [NonSerialized]
         public static readonly ActorSheet BLANK = new ActorSheet(0, 0, 0, 0, 0, Attack.BLANK, Defence.BLANK, 0, 0, 0, 0);
-        #endregion
 
-        #region Properties
         public int BaseHitPoints { get; private set; }
         public int BaseStaminaPoints { get; private set; }
         public int BaseFoodPoints { get; private set; }
@@ -35,9 +27,7 @@ namespace djack.RogueSurvivor.Data
             get { return m_SkillTable; }
             set { m_SkillTable = value; }
         }
-        #endregion
 
-        #region Init
         public ActorSheet(int baseHitPoints, int baseStaminaPoints, 
             int baseFoodPoints, int baseSleepPoints, int baseSanity,
             Attack unarmedAttack, Defence baseDefence,
@@ -77,7 +67,5 @@ namespace djack.RogueSurvivor.Data
             if (copyFrom.SkillTable.Skills != null)
                 m_SkillTable = new SkillTable(copyFrom.SkillTable.Skills);
         }
-        #endregion
-
     }
 }

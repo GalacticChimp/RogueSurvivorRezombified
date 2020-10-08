@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace djack.RogueSurvivor.Data
+﻿namespace djack.RogueSurvivor.Data
 {
-    class ItemModel
+    public class ItemModel
     {
-        #region Fields
         int m_ID;
         string m_SingleName;
         string m_PluralName;
@@ -21,9 +15,7 @@ namespace djack.RogueSurvivor.Data
         DollPart m_EquipmentSlot;
         bool m_DontAutoEquip;
         bool m_IsUnbreakable;
-        #endregion
 
-        #region Properties
         public int ID
         {
             get { return m_ID; }
@@ -103,15 +95,12 @@ namespace djack.RogueSurvivor.Data
             get { return m_IsUnbreakable; }
             set { m_IsUnbreakable = value; }
         }
-        #endregion
 
-        #region Init
         public ItemModel(string aName, string theNames, string imageID)
         {
             m_SingleName = aName;
             m_PluralName = theNames;
             m_ImageID = imageID;
         }
-        #endregion
     }
 }

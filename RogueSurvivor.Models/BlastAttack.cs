@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    struct BlastAttack
+    public struct BlastAttack
     {
         public int Radius { get; private set; }
         public int[] Damage { get; private set; }

@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
 
 namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    enum Odor
+    public enum Odor
     {
         LIVING,
         UNDEAD_MASTER,
@@ -19,7 +16,7 @@ namespace djack.RogueSurvivor.Data
     }
 
     [Serializable]
-    class OdorScent
+    public class OdorScent
     {
         public const int MIN_STRENGTH = 1;
         public const int MAX_STRENGTH = 9 * WorldTime.TURNS_PER_HOUR;
@@ -55,6 +52,5 @@ namespace djack.RogueSurvivor.Data
             this.Strength = str;
 
         }
-
     }
 }

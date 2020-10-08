@@ -1,20 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
 
 namespace djack.RogueSurvivor.Data
 {
-    class Message
+    public class Message
     {
-        #region Fields
         string m_Text;
         Color m_Color;
         readonly int m_Turn;
-        #endregion
 
-        #region Properties
         public string Text
         {
             get { return m_Text; }
@@ -31,9 +25,7 @@ namespace djack.RogueSurvivor.Data
         {
             get { return m_Turn; }
         }
-        #endregion
 
-        #region Init
         public Message(string text, int turn, Color color)
         {
             if (text == null)
@@ -48,6 +40,5 @@ namespace djack.RogueSurvivor.Data
             : this(text, turn, Color.White)
         {
         }
-        #endregion
     }
 }
