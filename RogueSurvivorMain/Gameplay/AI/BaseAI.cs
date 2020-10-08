@@ -693,7 +693,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                                     List<Direction> validPushes = new List<Direction>(8);
                                     foreach (Direction pushDir in Direction.COMPASS)
                                     {
-                                        if (obj.CanPushObjectTo(obj.Location.Position + pushDir, out reason)
+                                        if (obj.CanPushObjectTo(obj.Location.Position + pushDir, out reason))
                                             validPushes.Add(pushDir);
                                     }
                                     if (validPushes.Count > 0)
@@ -783,7 +783,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     //if (distance < 2f) return distance;
 
                     // penalize having to push/bash/jump.
-                    if (!m_Actor.IsWalkableFor(m_Actor.Location.Map, ptA.X, ptA.Y, out string reason)
+                    if (!m_Actor.IsWalkableFor(m_Actor.Location.Map, ptA.X, ptA.Y, out string reason))
                         distance += MOVE_DISTANCE_PENALTY;
 
                     return distance;
@@ -2119,7 +2119,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 return null;
 
             // use med.
-            return new ActionUseItem(m_Actor, game, bestMedChoice.Choice);
+            return new ActionUseItem(m_Actor, bestMedChoice.Choice);
         }
 
         protected ActorAction BehaviorUseEntertainment(RogueGame game)
@@ -2751,7 +2751,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // Shout if leader is sleeping.
             // (kinda hax, but make followers more useful for players over phone)
             if (m_Actor.HasLeader && m_Actor.Leader.IsSleeping)
-                return new ActionShout(m_Actor, game);
+                return new ActionShout(m_Actor);
 
             // Shout if we have a friend sleeping.
             foreach (Percept p in friends)
@@ -3095,8 +3095,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
             if ((useFlags & UseExitFlags.BREAK_BLOCKING_OBJECTS) != 0)
             {
                 MapObject blockingObj = exit.ToMap.GetMapObjectAt(exit.ToPosition);
-                if (blockingObj != null && m_Actor.IsBreakableFor(blockingObj, out string reason))
+                if (blockingObj != null && m_Actor.IsBreakableFor(blockingObj, out string failReason))
+                { 
                     return new ActionBreak(m_Actor, blockingObj);
+                }
             }
 
             // if using exit is illegal, fail.
@@ -3416,7 +3418,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             //  spray?
             if (sprayOn != null)
             {
-                ActionSprayOdorSuppressor sprayIt = new ActionSprayOdorSuppressor(m_Actor, game, spray, sprayOn);
+                ActionSprayOdorSuppressor sprayIt = new ActionSprayOdorSuppressor(m_Actor, spray, sprayOn);
                 if (sprayIt.IsLegal())
                     return sprayIt;
             }
@@ -3533,7 +3535,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             {
                 // eat the first food we get.
                 Item eatIt = invThere.GetFirstByType(typeof(ItemFood));
-                return new ActionEatFoodOnGround(m_Actor, game, eatIt);
+                return new ActionEatFoodOnGround(m_Actor, eatIt);
             }
             // 2) go to nearest food.
             Percept nearest = FilterNearest(game, foodStacks);
@@ -5505,7 +5507,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             foreach (Direction d in Direction.COMPASS)
             {
                 Point to = from + d;
-                bool isEscape = m_Actor.IsWalkableFor(map, to.X, to.Y, out string reason));
+                bool isEscape = m_Actor.IsWalkableFor(map, to.X, to.Y, out string reason);
                 if (!isEscape && m_Actor.Model.Abilities.CanUseMapObjects)
                 {
                     DoorWindow door = map.GetMapObjectAt(to) as DoorWindow;
