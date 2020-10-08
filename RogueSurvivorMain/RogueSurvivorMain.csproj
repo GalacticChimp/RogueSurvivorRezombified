@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RogueSurvivor.Models\RogueSurvivor.Data.csproj" />
+    <ProjectReference Include="..\RogueSurvivor.Data\RogueSurvivor.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>

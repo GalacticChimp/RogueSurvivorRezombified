@@ -57,7 +57,6 @@ namespace djack.RogueSurvivor.Gameplay.AI.Sensors
         }
         #endregion
 
-        #region Sensor
         public override List<Percept> Sense(RogueGame game, Actor actor)
         {
             // compute FOV
