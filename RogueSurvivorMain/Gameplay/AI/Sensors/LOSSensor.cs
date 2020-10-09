@@ -57,11 +57,11 @@ namespace djack.RogueSurvivor.Gameplay.AI.Sensors
         }
         #endregion
 
-        public override List<Percept> Sense(RogueGame game, Actor actor)
+        public override List<Percept> Sense(World world, Actor actor)
         {
             // compute FOV
-            m_FOV = LOS.ComputeFOVFor(game.Rules, actor, actor.Location.Map.LocalTime, game.Session.World.Weather);
-            int maxRange = game.Rules.ActorFOV(actor, actor.Location.Map.LocalTime, game.Session.World.Weather);
+            m_FOV = LOS.ComputeFOVFor(actor, actor.Location.Map.LocalTime, world.Weather);
+            int maxRange = actor.ActorFOV(actor.Location.Map.LocalTime, world.Weather);
 
             // compute percepts.
             List<Percept> list = new List<Percept>();
@@ -91,7 +91,7 @@ namespace djack.RogueSurvivor.Gameplay.AI.Sensors
                         if (other == actor)
                             continue;
 
-                        if (game.Rules.LOSDistance(actor.Location.Position, other.Location.Position) > maxRange)
+                        if (LOS.LOSDistance(actor.Location.Position, other.Location.Position) > maxRange)
                             continue;
 
                         if (m_FOV.Contains(other.Location.Position))

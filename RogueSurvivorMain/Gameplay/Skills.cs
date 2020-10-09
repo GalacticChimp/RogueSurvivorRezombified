@@ -7,6 +7,7 @@ using System.IO;
 using djack.RogueSurvivor;
 using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Engine;
+using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Gameplay
 {
@@ -184,14 +185,14 @@ namespace djack.RogueSurvivor.Gameplay
             return MaxSkillLevel((IDs)id);
         }
 
-        public static IDs RollLiving(DiceRoller roller)
+        public static IDs RollLiving()
         {
-            return (IDs)roller.Roll((int)IDs._FIRST_LIVING, (int)IDs._LAST_LIVING + 1);
+            return (IDs)DiceRoller.Roll((int)IDs._FIRST_LIVING, (int)IDs._LAST_LIVING + 1);
         }
 
-        public static IDs RollUndead(DiceRoller roller)
+        public static IDs RollUndead()
         {
-            return (IDs)roller.Roll((int)IDs._FIRST_UNDEAD, (int)IDs._LAST_UNDEAD + 1);
+            return (IDs)DiceRoller.Roll((int)IDs._FIRST_UNDEAD, (int)IDs._LAST_UNDEAD + 1);
         }
 
         #region Data

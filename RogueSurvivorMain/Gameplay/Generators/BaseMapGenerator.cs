@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Drawing;
-
+using djack.RogueSurvivor.Common;
 using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Engine;
@@ -46,112 +46,112 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         static readonly string[] DOG_SKINS = new string[] { GameImages.DOG_SKIN1, GameImages.DOG_SKIN2, GameImages.DOG_SKIN3 };
 
-        public void DressCivilian(DiceRoller roller, Actor actor)
+        public void DressCivilian(Actor actor)
         {
             if (actor.Model.DollBody.IsMale)
-                DressCivilian(roller, actor, MALE_EYES, MALE_SKINS, MALE_HEADS, MALE_TORSOS, MALE_LEGS, MALE_SHOES);
+                DressCivilian(actor, MALE_EYES, MALE_SKINS, MALE_HEADS, MALE_TORSOS, MALE_LEGS, MALE_SHOES);
             else
-                DressCivilian(roller, actor, FEMALE_EYES, FEMALE_SKINS, FEMALE_HEADS, FEMALE_TORSOS, FEMALE_LEGS, FEMALE_SHOES);
+                DressCivilian(actor, FEMALE_EYES, FEMALE_SKINS, FEMALE_HEADS, FEMALE_TORSOS, FEMALE_LEGS, FEMALE_SHOES);
         }
 
-        public void SkinNakedHuman(DiceRoller roller, Actor actor)
+        public void SkinNakedHuman(Actor actor)
         {
             if (actor.Model.DollBody.IsMale)
-                SkinNakedHuman(roller, actor, MALE_EYES, MALE_SKINS, MALE_HEADS);
+                SkinNakedHuman(actor, MALE_EYES, MALE_SKINS, MALE_HEADS);
             else
-                SkinNakedHuman(roller, actor, FEMALE_EYES, FEMALE_SKINS, FEMALE_HEADS);
+                SkinNakedHuman(actor, FEMALE_EYES, FEMALE_SKINS, FEMALE_HEADS);
         }
 
-        public void DressCivilian(DiceRoller roller, Actor actor, string[] eyes, string[] skins, string[] heads, string[] torsos, string[] legs, string[] shoes)
+        public void DressCivilian(Actor actor, string[] eyes, string[] skins, string[] heads, string[] torsos, string[] legs, string[] shoes)
         {
             actor.Doll.RemoveAllDecorations();
-            actor.Doll.AddDecoration(DollPart.EYES, eyes[roller.Roll(0, eyes.Length)]);
-            actor.Doll.AddDecoration(DollPart.SKIN, skins[roller.Roll(0, skins.Length)]);
-            actor.Doll.AddDecoration(DollPart.HEAD, heads[roller.Roll(0, heads.Length)]);
-            actor.Doll.AddDecoration(DollPart.TORSO, torsos[roller.Roll(0, torsos.Length)]);
-            actor.Doll.AddDecoration(DollPart.LEGS, legs[roller.Roll(0, legs.Length)]);
-            actor.Doll.AddDecoration(DollPart.FEET, shoes[roller.Roll(0, shoes.Length)]);
+            actor.Doll.AddDecoration(DollPart.EYES, eyes[DiceRoller.Roll(0, eyes.Length)]);
+            actor.Doll.AddDecoration(DollPart.SKIN, skins[DiceRoller.Roll(0, skins.Length)]);
+            actor.Doll.AddDecoration(DollPart.HEAD, heads[DiceRoller.Roll(0, heads.Length)]);
+            actor.Doll.AddDecoration(DollPart.TORSO, torsos[DiceRoller.Roll(0, torsos.Length)]);
+            actor.Doll.AddDecoration(DollPart.LEGS, legs[DiceRoller.Roll(0, legs.Length)]);
+            actor.Doll.AddDecoration(DollPart.FEET, shoes[DiceRoller.Roll(0, shoes.Length)]);
         }
 
-        public void SkinNakedHuman(DiceRoller roller, Actor actor, string[] eyes, string[] skins, string[] heads)
+        public void SkinNakedHuman(Actor actor, string[] eyes, string[] skins, string[] heads)
         {
             actor.Doll.RemoveAllDecorations();
-            actor.Doll.AddDecoration(DollPart.EYES, eyes[roller.Roll(0, eyes.Length)]);
-            actor.Doll.AddDecoration(DollPart.SKIN, skins[roller.Roll(0, skins.Length)]);
-            actor.Doll.AddDecoration(DollPart.HEAD, heads[roller.Roll(0, heads.Length)]);
+            actor.Doll.AddDecoration(DollPart.EYES, eyes[DiceRoller.Roll(0, eyes.Length)]);
+            actor.Doll.AddDecoration(DollPart.SKIN, skins[DiceRoller.Roll(0, skins.Length)]);
+            actor.Doll.AddDecoration(DollPart.HEAD, heads[DiceRoller.Roll(0, heads.Length)]);
         }
 
-        public void SkinDog(DiceRoller roller, Actor actor)
+        public void SkinDog(Actor actor)
         {
             actor.Doll.RemoveAllDecorations();
-            actor.Doll.AddDecoration(DollPart.SKIN, DOG_SKINS[roller.Roll(0, DOG_SKINS.Length)]);
+            actor.Doll.AddDecoration(DollPart.SKIN, DOG_SKINS[DiceRoller.Roll(0, DOG_SKINS.Length)]);
         }
 
-        public void DressArmy(DiceRoller roller, Actor actor)
+        public void DressArmy(Actor actor)
         {
             actor.Doll.RemoveAllDecorations();
-            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[roller.Roll(0, MALE_SKINS.Length)]);
+            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[DiceRoller.Roll(0, MALE_SKINS.Length)]);
             actor.Doll.AddDecoration(DollPart.HEAD, GameImages.ARMY_HELMET);
             actor.Doll.AddDecoration(DollPart.TORSO, GameImages.ARMY_SHIRT);
             actor.Doll.AddDecoration(DollPart.LEGS, GameImages.ARMY_PANTS);
             actor.Doll.AddDecoration(DollPart.FEET, GameImages.ARMY_SHOES);
         }
 
-        public void DressPolice(DiceRoller roller, Actor actor)
+        public void DressPolice(Actor actor)
         {
             actor.Doll.RemoveAllDecorations();
-            actor.Doll.AddDecoration(DollPart.EYES, MALE_EYES[roller.Roll(0, MALE_EYES.Length)]);
-            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[roller.Roll(0, MALE_SKINS.Length)]);
-            actor.Doll.AddDecoration(DollPart.HEAD, MALE_HEADS[roller.Roll(0, MALE_HEADS.Length)]);
+            actor.Doll.AddDecoration(DollPart.EYES, MALE_EYES[DiceRoller.Roll(0, MALE_EYES.Length)]);
+            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[DiceRoller.Roll(0, MALE_SKINS.Length)]);
+            actor.Doll.AddDecoration(DollPart.HEAD, MALE_HEADS[DiceRoller.Roll(0, MALE_HEADS.Length)]);
             actor.Doll.AddDecoration(DollPart.HEAD, GameImages.POLICE_HAT);
             actor.Doll.AddDecoration(DollPart.TORSO, GameImages.POLICE_UNIFORM);
             actor.Doll.AddDecoration(DollPart.LEGS, GameImages.POLICE_PANTS);
             actor.Doll.AddDecoration(DollPart.FEET, GameImages.POLICE_SHOES);
         }
 
-        public void DressBiker(DiceRoller roller, Actor actor)
+        public void DressBiker(Actor actor)
         {
             actor.Doll.RemoveAllDecorations();
-            actor.Doll.AddDecoration(DollPart.EYES, MALE_EYES[roller.Roll(0, MALE_EYES.Length)]);
-            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[roller.Roll(0, MALE_SKINS.Length)]);
-            actor.Doll.AddDecoration(DollPart.HEAD, BIKER_HEADS[roller.Roll(0, BIKER_HEADS.Length)]);
-            actor.Doll.AddDecoration(DollPart.LEGS, BIKER_LEGS[roller.Roll(0, BIKER_LEGS.Length)]);
-            actor.Doll.AddDecoration(DollPart.FEET, BIKER_SHOES[roller.Roll(0, BIKER_SHOES.Length)]);
+            actor.Doll.AddDecoration(DollPart.EYES, MALE_EYES[DiceRoller.Roll(0, MALE_EYES.Length)]);
+            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[DiceRoller.Roll(0, MALE_SKINS.Length)]);
+            actor.Doll.AddDecoration(DollPart.HEAD, BIKER_HEADS[DiceRoller.Roll(0, BIKER_HEADS.Length)]);
+            actor.Doll.AddDecoration(DollPart.LEGS, BIKER_LEGS[DiceRoller.Roll(0, BIKER_LEGS.Length)]);
+            actor.Doll.AddDecoration(DollPart.FEET, BIKER_SHOES[DiceRoller.Roll(0, BIKER_SHOES.Length)]);
         }
 
-        public void DressGangsta(DiceRoller roller, Actor actor)
+        public void DressGangsta(Actor actor)
         {
             actor.Doll.RemoveAllDecorations();
-            actor.Doll.AddDecoration(DollPart.EYES, MALE_EYES[roller.Roll(0, MALE_EYES.Length)]);
-            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[roller.Roll(0, MALE_SKINS.Length)]);
+            actor.Doll.AddDecoration(DollPart.EYES, MALE_EYES[DiceRoller.Roll(0, MALE_EYES.Length)]);
+            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[DiceRoller.Roll(0, MALE_SKINS.Length)]);
             actor.Doll.AddDecoration(DollPart.TORSO, GameImages.GANGSTA_SHIRT);
-            actor.Doll.AddDecoration(DollPart.HEAD, MALE_HEADS[roller.Roll(0, MALE_HEADS.Length)]);
+            actor.Doll.AddDecoration(DollPart.HEAD, MALE_HEADS[DiceRoller.Roll(0, MALE_HEADS.Length)]);
             actor.Doll.AddDecoration(DollPart.HEAD, GameImages.GANGSTA_HAT);
             actor.Doll.AddDecoration(DollPart.LEGS, GameImages.GANGSTA_PANTS);
-            actor.Doll.AddDecoration(DollPart.FEET, MALE_SHOES[roller.Roll(0, MALE_SHOES.Length)]);
+            actor.Doll.AddDecoration(DollPart.FEET, MALE_SHOES[DiceRoller.Roll(0, MALE_SHOES.Length)]);
         }
 
-        public void DressCHARGuard(DiceRoller roller, Actor actor)
+        public void DressCHARGuard(Actor actor)
         {
             actor.Doll.RemoveAllDecorations();
-            actor.Doll.AddDecoration(DollPart.EYES, MALE_EYES[roller.Roll(0, MALE_EYES.Length)]);
-            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[roller.Roll(0, MALE_SKINS.Length)]);
-            actor.Doll.AddDecoration(DollPart.HEAD, CHARGUARD_HEADS[roller.Roll(0, CHARGUARD_HEADS.Length)]);
-            actor.Doll.AddDecoration(DollPart.LEGS, CHARGUARD_LEGS[roller.Roll(0, CHARGUARD_LEGS.Length)]);
+            actor.Doll.AddDecoration(DollPart.EYES, MALE_EYES[DiceRoller.Roll(0, MALE_EYES.Length)]);
+            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[DiceRoller.Roll(0, MALE_SKINS.Length)]);
+            actor.Doll.AddDecoration(DollPart.HEAD, CHARGUARD_HEADS[DiceRoller.Roll(0, CHARGUARD_HEADS.Length)]);
+            actor.Doll.AddDecoration(DollPart.LEGS, CHARGUARD_LEGS[DiceRoller.Roll(0, CHARGUARD_LEGS.Length)]);
         }
 
-        public void DressBlackOps(DiceRoller roller, Actor actor)
+        public void DressBlackOps(Actor actor)
         {
             actor.Doll.RemoveAllDecorations();
-            actor.Doll.AddDecoration(DollPart.EYES, MALE_EYES[roller.Roll(0, MALE_EYES.Length)]);
-            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[roller.Roll(0, MALE_SKINS.Length)]);
+            actor.Doll.AddDecoration(DollPart.EYES, MALE_EYES[DiceRoller.Roll(0, MALE_EYES.Length)]);
+            actor.Doll.AddDecoration(DollPart.SKIN, MALE_SKINS[DiceRoller.Roll(0, MALE_SKINS.Length)]);
             actor.Doll.AddDecoration(DollPart.TORSO, GameImages.BLACKOP_SUIT);
         }
 
-        public string RandomSkin(DiceRoller roller, bool isMale)
+        public string RandomSkin(bool isMale)
         {
             string[] skins = isMale ? MALE_SKINS : FEMALE_SKINS;
-            return skins[roller.Roll(0, skins.Length)];
+            return skins[DiceRoller.Roll(0, skins.Length)];
         }
         #endregion
 
@@ -249,36 +249,36 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             // Z
         };
 
-        public void GiveNameToActor(DiceRoller roller, Actor actor)
+        public void GiveNameToActor(Actor actor)
         {
             if (actor.Model.DollBody.IsMale)
-                GiveNameToActor(roller, actor, MALE_FIRST_NAMES, LAST_NAMES);
+                GiveNameToActor(actor, MALE_FIRST_NAMES, LAST_NAMES);
             else
-                GiveNameToActor(roller, actor, FEMALE_FIRST_NAMES, LAST_NAMES);
+                GiveNameToActor(actor, FEMALE_FIRST_NAMES, LAST_NAMES);
         }
 
-        public void GiveNameToActor(DiceRoller roller, Actor actor, string[] firstNames, string[] lastNames)
+        public void GiveNameToActor(Actor actor, string[] firstNames, string[] lastNames)
         {
             actor.IsProperName = true;
-            string randomName = firstNames[roller.Roll(0, firstNames.Length)] + " " + lastNames[roller.Roll(0, lastNames.Length)];
+            string randomName = firstNames[DiceRoller.Roll(0, firstNames.Length)] + " " + lastNames[DiceRoller.Roll(0, lastNames.Length)];
             actor.Name = randomName;
         }
         #endregion
 
         #region Actor skills helpers
-        public void GiveRandomSkillsToActor(DiceRoller roller, Actor actor, int count)
+        public void GiveRandomSkillsToActor(Actor actor, int count)
         {
             for (int i = 0; i < count; i++)
-                GiveRandomSkillToActor(roller, actor);
+                GiveRandomSkillToActor(actor);
         }
 
-        public void GiveRandomSkillToActor(DiceRoller roller, Actor actor)
+        public void GiveRandomSkillToActor(Actor actor)
         {
             Skills.IDs randomID;
             if (actor.Model.Abilities.IsUndead)
-                randomID = Skills.RollUndead(roller);
+                randomID = Skills.RollUndead();
             else
-                randomID = Skills.RollLiving(roller);
+                randomID = Skills.RollLiving();
             GiveStartingSkillToActor(actor, randomID);
         }
 
@@ -435,9 +435,9 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         /// </summary>
         /// <param name="roller"></param>
         /// <returns></returns>
-        protected MapObject MakeObjWreckedCar(DiceRoller roller)
+        protected MapObject MakeObjWreckedCar()
         {
-            return MakeObjWreckedCar(CARS[roller.Roll(0, CARS.Length)]);
+            return MakeObjWreckedCar(CARS[DiceRoller.Roll(0, CARS.Length)]);
         }
 
         /// <summary>

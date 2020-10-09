@@ -9,6 +9,7 @@ using System.IO;
 using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Data.Enums;
+using djack.RogueSurvivor.Data.Helpers;
 using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.Items;
 using djack.RogueSurvivor.Gameplay;
@@ -869,7 +870,7 @@ namespace djack.RogueSurvivor.Engine
                     return;
 
                 // can hear if close enough.
-                if (m_Rules.StdDistance(m_Player.Location.Position, location.Position) <= m_Player.AudioRange)
+                if (DistanceHelpers.StdDistance(m_Player.Location.Position, location.Position) <= m_Player.AudioRange)
                 {
                     // hear.
                     msg.Color = PLAYER_AUDIO_COLOR;
@@ -894,7 +895,7 @@ namespace djack.RogueSurvivor.Engine
         Message MakePlayerCentricMessage(string eventText, Point position)
         {
             Point vDir = new Point(position.X - m_Player.Location.Position.X, position.Y - m_Player.Location.Position.Y);
-            string text = String.Format("{0} {1} tiles to the {2}.", eventText, (int)m_Rules.StdDistance(vDir), Direction.ApproximateFromVector(vDir));
+            string text = String.Format("{0} {1} tiles to the {2}.", eventText, (int)DistanceHelpers.StdDistance(vDir), Direction.ApproximateFromVector(vDir));
             return new Message(text, m_Session.WorldTime.TurnCounter);
         }
 
@@ -4954,7 +4955,7 @@ namespace djack.RogueSurvivor.Engine
         {
             if (m_Player == null || m_Player.Location.Map != map)
                 return int.MaxValue;
-            return m_Rules.GridDistance(m_Player.Location.Position, x, y);
+            return DistanceHelpers.GridDistance(m_Player.Location.Position, x, y);
         }
 
         int DistanceToPlayer(Map map, Point pos)
@@ -4979,7 +4980,7 @@ namespace djack.RogueSurvivor.Engine
                     Actor other = map.GetActorAt(x, y);
                     if (other == null)
                         continue;
-                    if (m_Rules.AreEnemies(actor, other))
+                    if (actor.IsEnemiesWith(other))
                         return true;
                 }
 
@@ -5371,7 +5372,7 @@ namespace djack.RogueSurvivor.Engine
         {
             if (player == null)
                 return;
-            m_PlayerFOV = LOS.ComputeFOVFor(m_Rules, player, m_Session.WorldTime, m_Session.World.Weather);
+            m_PlayerFOV = LOS.ComputeFOVFor(player, m_Session.WorldTime, m_Session.World.Weather);
             player.Location.Map.SetViewAndMarkVisited(m_PlayerFOV);
         }
         #endregion
@@ -5512,7 +5513,7 @@ namespace djack.RogueSurvivor.Engine
                         RedrawPlayScreen();
                         if (m_botControl != null) // for some reason even with the lock this can become null here. wth?? is thread.sleep the culprit??
                         {
-                            ActorAction botAction = m_botControl.GetAction();
+                            ActorAction botAction = m_botControl.GetAction(m_Session.World);
                             if (botAction == null || !botAction.IsLegal())
                             {
                                 AddMessage(MakeErrorMessage("Bot issued " + (botAction == null ? "NULL" : "illegal " + botAction.ToString()) + " action"));
@@ -7802,7 +7803,7 @@ namespace djack.RogueSurvivor.Engine
                             if (actorTo != null)
                             {
                                 // only if enemy.
-                                if (m_Rules.AreEnemies(player, actorTo))
+                                if (player.IsEnemiesWith(actorTo))
                                 {
                                     // check melee rule.
                                     if (m_Rules.CanActorMeleeAttack(player, actorTo, out reason))
@@ -7974,7 +7975,7 @@ namespace djack.RogueSurvivor.Engine
             }
 
             // Get targeting data.
-            HashSet<Point> fov = LOS.ComputeFOVFor(m_Rules, player, m_Session.WorldTime, m_Session.World.Weather);
+            HashSet<Point> fov = LOS.ComputeFOVFor(player, m_Session.WorldTime, m_Session.World.Weather);
             List<Actor> potentialTargets = m_Rules.GetEnemiesInFov(player, fov);
 
             if (potentialTargets == null || potentialTargets.Count == 0)
@@ -7995,7 +7996,7 @@ namespace djack.RogueSurvivor.Engine
                 LoF.Clear();
                 string reason;
                 bool canFireAtTarget = player.CanActorFireAt(currentTarget, LoF, out reason);
-                int dToTarget = m_Rules.GridDistance(player.Location.Position, currentTarget.Location.Position);
+                int dToTarget = DistanceHelpers.GridDistance(player.Location.Position, currentTarget.Location.Position);
 
                 string modeDesc;
                 if (mode == FireMode.RAPID)
@@ -8150,7 +8151,7 @@ namespace djack.RogueSurvivor.Engine
                         AddMessage(MakeErrorMessage("Can't make your leader your enemy."));
                         allowed = false;
                     }
-                    else if (m_Rules.AreEnemies(m_Player, currentActor))
+                    else if (m_Player.IsEnemiesWith(currentActor))
                     {
                         AddMessage(MakeErrorMessage("Already enemies."));
                         allowed = false;
@@ -8237,7 +8238,7 @@ namespace djack.RogueSurvivor.Engine
                         bool doIt = true;
 
                         // if within the blast radius, ask for confirmation...
-                        if (m_Rules.GridDistance(player.Location.Position, targetThrow) <= grenadeModel.BlastAttack.Radius)
+                        if (DistanceHelpers.GridDistance(player.Location.Position, targetThrow) <= grenadeModel.BlastAttack.Radius)
                         {
                             ClearMessages();
                             AddMessage(new Message("You are in the blast radius!", m_Session.WorldTime.TurnCounter, Color.Yellow));
@@ -8272,7 +8273,7 @@ namespace djack.RogueSurvivor.Engine
                     if (dir != null)
                     {
                         Point pos = targetThrow + dir;
-                        if (map.IsInBounds(pos) && m_Rules.GridDistance(player.Location.Position, pos) <= maxThrowDist)
+                        if (map.IsInBounds(pos) && DistanceHelpers.GridDistance(player.Location.Position, pos) <= maxThrowDist)
                             targetThrow = pos;
                     }
                 }
@@ -9182,7 +9183,7 @@ namespace djack.RogueSurvivor.Engine
             foreach (Point p in m_PlayerFOV)
             {
                 Actor other = player.Location.Map.GetActorAt(p);
-                if (other != null && m_Rules.AreEnemies(player, other))
+                if (other != null && player.IsEnemiesWith(other))
                     return false;
             }
 
@@ -9212,7 +9213,7 @@ namespace djack.RogueSurvivor.Engine
             foreach (Actor fo in player.Followers)
             {
                 followers[iFo] = fo;
-                fovs[iFo] = LOS.ComputeFOVFor(m_Rules, fo, m_Session.WorldTime, m_Session.World.Weather);
+                fovs[iFo] = LOS.ComputeFOVFor(fo, m_Session.WorldTime, m_Session.World.Weather);
                 bool inView = fovs[iFo].Contains(player.Location.Position) && m_PlayerFOV.Contains(fo.Location.Position);
                 bool linkedByPhone = AreLinkedByPhone(player, fo);
                 hasLinkWith[iFo] = inView || linkedByPhone;
@@ -9410,7 +9411,7 @@ namespace djack.RogueSurvivor.Engine
             string desc = DescribePlayerFollowerStatus(follower);
 
             // compute follower fov.
-            HashSet<Point> followerFOV = LOS.ComputeFOVFor(m_Rules, follower, m_Session.WorldTime, m_Session.World.Weather);
+            HashSet<Point> followerFOV = LOS.ComputeFOVFor(follower, m_Session.WorldTime, m_Session.World.Weather);
 
             // loop.
             bool loop = true;
@@ -10042,7 +10043,7 @@ namespace djack.RogueSurvivor.Engine
                 return false;
             }
             // must be adjacent.
-            if (player.Location.Map != follower.Location.Map || !m_Rules.IsAdjacent(player.Location.Position, follower.Location.Position))
+            if (player.Location.Map != follower.Location.Map || !player.Location.Position.IsAdjacent(follower.Location.Position))
             {
                 ClearMessages();
                 AddMessage(MakeErrorMessage(String.Format("{0} is not next to you.", follower.TheName)));
@@ -10131,7 +10132,7 @@ namespace djack.RogueSurvivor.Engine
         void HandleAiActor(Actor aiActor)
         {
             // Get and perform action from AI controler.
-            ActorAction desiredAction = aiActor.Controller.GetAction();
+            ActorAction desiredAction = aiActor.Controller.GetAction(m_Session.World);
 
             // Insane effect?
             if (m_Rules.IsActorInsane(aiActor) && m_Rules.RollChance(Rules.SANITY_INSANE_ACTION_CHANCE))
@@ -10438,7 +10439,7 @@ namespace djack.RogueSurvivor.Engine
                             Actor other = map.GetActorAt(pt);
                             if (other == null)
                                 return false;
-                            return !m_Rules.AreEnemies(m_Player, other);
+                            return !m_Player.IsEnemiesWith(other);
                         });
 
                 case AdvisorHint.LEADING_SWITCH_PLACE:  // switch place.
@@ -10494,7 +10495,7 @@ namespace djack.RogueSurvivor.Engine
                                 Actor other = map.GetActorAt(pt);
                                 if (other == null)
                                     return false;
-                                return !m_Rules.AreEnemies(m_Player, other);
+                                return !m_Player.IsEnemiesWith(other);
                             });
                     }
 
@@ -10504,7 +10505,7 @@ namespace djack.RogueSurvivor.Engine
                             Actor other = map.GetActorAt(pt);
                             if (other == null)
                                 return false;
-                            return other.IsSleeping && !m_Rules.AreEnemies(m_Player, other);
+                            return other.IsSleeping && !m_Player.IsEnemiesWith(other);
                         });
 
                 case AdvisorHint.OBJECT_BREAK: // breaking around.
@@ -11349,7 +11350,7 @@ namespace djack.RogueSurvivor.Engine
                 lines.Add(String.Format("You aggressed {0}.", HimOrHer(actor)));
             if (actor.IsSelfDefenceFrom(m_Player))
                 lines.Add("Killing you would be self-defence.");
-            if (!m_Player.Faction.IsEnemyOf(actor.Faction) && m_Rules.AreGroupEnemies(m_Player, actor)) // alpha10
+            if (!m_Player.Faction.IsEnemyOf(actor.Faction) && m_Player.IsGroupEnemiesWith(actor)) // alpha10
                 lines.Add("You are enemies through groups.");
 
             lines.Add("");
@@ -11438,7 +11439,7 @@ namespace djack.RogueSurvivor.Engine
                 lines.Add(string.Format("- FOV : {0}.", actor.Model.StartingSheet.BaseViewRange));
 
                 // smell rating
-                int smell = (int)(100 * m_Rules.ActorSmell(actor));  // appliyes z-tracker skill
+                int smell = (int)(100 * actor.ActorSmell());  // appliyes z-tracker skill
                 lines.Add(
                     smell == 0 ? "- Has no sense of smell." :
                     smell < 50 ? "- Has poor sense of smell." :
@@ -12654,7 +12655,7 @@ namespace djack.RogueSurvivor.Engine
                     return;
                 if (!grabber.Model.Abilities.IsUndead)
                     return;
-                if (!m_Rules.AreEnemies(grabber, actor))
+                if (!grabber.IsEnemiesWith(actor))
                     return;
                 int chance = m_Rules.ZGrabChance(grabber, actor);
                 if (chance == 0)
@@ -12870,7 +12871,7 @@ namespace djack.RogueSurvivor.Engine
                 bool canFollow = false;
                 List<Point> adjList = null;
 
-                if (m_Rules.IsAdjacent(fromPos, fo.Location.Position))
+                if (fromPos.IsAdjacent(fo.Location.Position))
                 {
                     adjList = toMap.FilterAdjacentInMap(toPos, (pt) => fo.IsWalkableFor(toMap, pt.X, pt.Y, out string reason));
                     if (adjList == null || adjList.Count == 0)
@@ -13103,7 +13104,7 @@ namespace djack.RogueSurvivor.Engine
             MakeEnemyOfTargetFactionInDistrict(aggressor, cop,
                 (a) =>
                 {
-                    if (a.IsPlayer && a != cop && !a.IsSleeping && !m_Rules.AreEnemies(a, aggressor))
+                    if (a.IsPlayer && a != cop && !a.IsSleeping && !a.IsEnemiesWith(aggressor))
                     {
                         int turn = m_Session.WorldTime.TurnCounter;
                         ClearMessages();
@@ -13127,7 +13128,7 @@ namespace djack.RogueSurvivor.Engine
             MakeEnemyOfTargetFactionInDistrict(aggressor, soldier,
                 (a) =>
                 {
-                    if (a.IsPlayer && a != soldier && !a.IsSleeping && !m_Rules.AreEnemies(a, aggressor))
+                    if (a.IsPlayer && a != soldier && !a.IsSleeping && !a.IsEnemiesWith(aggressor))
                     {
                         int turn = m_Session.WorldTime.TurnCounter;
                         ClearMessages();
@@ -13216,7 +13217,7 @@ namespace djack.RogueSurvivor.Engine
             attacker.TargetActor = defender;
 
             // get attack & defence.
-            int targetDistance = m_Rules.GridDistance(attacker.Location.Position, defender.Location.Position);
+            int targetDistance = DistanceHelpers.GridDistance(attacker.Location.Position, defender.Location.Position);
             Attack attack = m_Rules.ActorRangedAttack(attacker, attacker.CurrentRangedAttack, targetDistance, defender);
             Defence defence = m_Rules.ActorDefence(defender, defender.CurrentDefence);
 
@@ -14190,7 +14191,7 @@ namespace djack.RogueSurvivor.Engine
             foreach (Actor fo in actor.Followers)
             {
                 // follower can help if: not sleeping, idle and adj to map object.
-                if (!fo.IsSleeping && (fo.Activity == Activity.IDLE || fo.Activity == Activity.FOLLOWING) && m_Rules.IsAdjacent(fo.Location, mapObj.Location))
+                if (!fo.IsSleeping && (fo.Activity == Activity.IDLE || fo.Activity == Activity.FOLLOWING) && fo.Location.IsAdjacent(mapObj.Location))
                 {
                     if (helpers == null) helpers = new List<Actor>(actor.CountFollowers);
                     helpers.Add(fo);
@@ -14234,7 +14235,7 @@ namespace djack.RogueSurvivor.Engine
             Map map = target.Location.Map;
             Point prevTargetPos = target.Location.Position;
             map.PlaceActorAt(target, toPos);
-            if (!m_Rules.IsAdjacent(toPos, actor.Location.Position) && actor.IsWalkableFor(map, prevTargetPos.X, prevTargetPos.Y, out string reason))
+            if (!toPos.IsAdjacent(actor.Location.Position) && actor.IsWalkableFor(map, prevTargetPos.X, prevTargetPos.Y, out string reason))
             {
                 // shoving away, need to follow.
                 // Try to leave tile.
@@ -14445,7 +14446,7 @@ namespace djack.RogueSurvivor.Engine
                         continue;
 
                     // ignore if too far.
-                    int noiseDistance = m_Rules.GridDistance(noisePosition, x, y);
+                    int noiseDistance = DistanceHelpers.GridDistance(noisePosition, x, y);
                     if (noiseDistance > Rules.LOUD_NOISE_RADIUS)
                         continue;
 
@@ -14716,7 +14717,7 @@ namespace djack.RogueSurvivor.Engine
                 foreach (Actor fo in killer.Followers)
                 {
                     bool gainTrust = false;
-                    if (fo.TargetActor == deadGuy || (m_Rules.AreEnemies(fo, deadGuy) && m_Rules.IsAdjacent(fo.Location, deadGuy.Location)))
+                    if (fo.TargetActor == deadGuy || (fo.IsEnemiesWith(deadGuy) && fo.Location.IsAdjacent(deadGuy.Location)))
                         gainTrust = true;
 
                     if (gainTrust)
@@ -14754,7 +14755,7 @@ namespace djack.RogueSurvivor.Engine
                     // do as less computations as possible : we don't need all the actor f*****g fov, just the line to the murderer.
 
                     // fov range check. 
-                    if (m_Rules.GridDistance(a.Location.Position, killerPos) > m_Rules.ActorFOV(a, map.LocalTime, m_Session.World.Weather))
+                    if (DistanceHelpers.GridDistance(a.Location.Position, killerPos) > a.ActorFOV(map.LocalTime, m_Session.World.Weather))
                         continue;
 
                     // LOS check.
@@ -16477,7 +16478,7 @@ namespace djack.RogueSurvivor.Engine
             Point position = new Point();
             bool isUndead = m_Player.Model.Abilities.IsUndead;
             bool hasSmell = m_Player.Model.StartingSheet.BaseSmellRating > 0;
-            int playerSmellTheshold = m_Rules.ActorSmellThreshold(m_Player);
+            int playerSmellTheshold = m_Player.ActorSmellThreshold();
             for (int x = left; x < right; x++)
             {
                 position.X = x;
@@ -16524,7 +16525,7 @@ namespace djack.RogueSurvivor.Engine
 
                     // 4. Scents
                     #region
-                    if (!m_Player.IsSleeping && map.IsInBounds(x, y) && m_Rules.GridDistance(m_Player.Location.Position, position) <= 1)
+                    if (!m_Player.IsSleeping && map.IsInBounds(x, y) && DistanceHelpers.GridDistance(m_Player.Location.Position, position) <= 1)
                     {
                         // scents alpha is low to be able to see objects behind them (eg: scent on a door)
                         // squaring alpha helps increase discrimination for player.
@@ -16777,7 +16778,7 @@ namespace djack.RogueSurvivor.Engine
             {
                 bool imSelfDefence = m_Player.IsSelfDefenceFrom(actor);
                 bool imTheAggressor = m_Player.IsAggressorOf(actor);
-                bool groupEnemies = !m_Player.Faction.IsEnemyOf(actor.Faction) && m_Rules.AreGroupEnemies(m_Player, actor); // alpha10
+                bool groupEnemies = !m_Player.Faction.IsEnemyOf(actor.Faction) && m_Player.IsGroupEnemiesWith(actor); // alpha10
                 if (imSelfDefence)
                     m_UI.UI_DrawImage(GameImages.ICON_SELF_DEFENCE, gx, gy, tint);
                 else if (imTheAggressor)
@@ -16939,7 +16940,7 @@ namespace djack.RogueSurvivor.Engine
             // combat assitant helper.
             if (s_Options.IsCombatAssistantOn)
             {
-                if (actor != m_Player && m_Player != null && m_Rules.AreEnemies(actor, m_Player))
+                if (actor != m_Player && m_Player != null && actor.IsEnemiesWith(m_Player))
                 {
                     if (m_Rules.WillActorActAgainBefore(m_Player, actor))
                         m_UI.UI_DrawImage(GameImages.ICON_THREAT_SAFE, gx, gy, tint);
@@ -17366,7 +17367,7 @@ namespace djack.RogueSurvivor.Engine
                                 // only track in same map.
                                 if (other.Location.Map != m_Player.Location.Map)
                                     continue;
-                                if (m_Rules.GridDistance(other.Location.Position, m_Player.Location.Position) > Rules.ZTRACKINGRADIUS)
+                                if (DistanceHelpers.GridDistance(other.Location.Position, m_Player.Location.Position) > Rules.ZTRACKINGRADIUS)
                                     continue;
 
                                 // close undead, show it.
@@ -17581,8 +17582,8 @@ namespace djack.RogueSurvivor.Engine
                 m_UI.UI_DrawStringBold(Color.White, String.Format("Def {0:D2} Spd {1:F2} FoV {2} Sml {3:F2} Kills {4}",
                     defence.Value,
                     (float)m_Rules.ActorSpeed(actor) / (float)Rules.BASE_SPEED,
-                    m_Rules.ActorFOV(actor, m_Session.WorldTime, m_Session.World.Weather),
-                    m_Rules.ActorSmell(actor),
+                    actor.ActorFOV(m_Session.WorldTime, m_Session.World.Weather),
+                    actor.ActorSmell(),
                     actor.KillsCount),
                     gx, gy);
             }
@@ -17591,7 +17592,7 @@ namespace djack.RogueSurvivor.Engine
                 m_UI.UI_DrawStringBold(Color.White, String.Format("Def {0:D2} Arm {1:D1}/{2:D1} Spd {3:F2} FoV {4}/{5} Fol {6}/{7}",
                     defence.Value, defence.Protection_Hit, defence.Protection_Shot,
                     (float)m_Rules.ActorSpeed(actor) / (float)Rules.BASE_SPEED,
-                    m_Rules.ActorFOV(actor, m_Session.WorldTime, m_Session.World.Weather),
+                    actor.ActorFOV(m_Session.WorldTime, m_Session.World.Weather),
                     actor.Sheet.BaseViewRange,
                     actor.CountFollowers, m_Rules.ActorMaxFollowers(actor)),
                     gx, gy);
@@ -20025,7 +20026,7 @@ namespace djack.RogueSurvivor.Engine
                         /////////////////////////////////////////////
                         // Player is near the prisoner : offer deal.
                         /////////////////////////////////////////////
-                        if (m_Rules.GridDistance(player.Location.Position, prisoner.Location.Position) <= 2 &&
+                        if (DistanceHelpers.GridDistance(player.Location.Position, prisoner.Location.Position) <= 2 &&
                             //map.HasAnyAdjacentInMap(player.Location.Position, (pt) => map.GetMapObjectAt(pt) is PowerGenerator) &&
                             !prisoner.IsSleeping &&
                             IsVisibleToPlayer(prisoner))  // alpha10 fix: and visible!
@@ -20066,7 +20067,7 @@ namespace djack.RogueSurvivor.Engine
                         // Wait to get out of cell and next to player.
                         ///////////////////////////////////////////////
                         if (!map.HasZonePartiallyNamedAt(prisoner.Location.Position, NAME_POLICE_STATION_JAILS_CELL) &&
-                            m_Rules.IsAdjacent(player.Location.Position, prisoner.Location.Position) &&
+                            player.Location.Position.IsAdjacent(prisoner.Location.Position) &&
                             !prisoner.IsSleeping)
                         {
                             lock (m_Session) // thread safe
@@ -20663,11 +20664,11 @@ namespace djack.RogueSurvivor.Engine
 
                 // random agression.
                 case 4:
-                    int fov = m_Rules.ActorFOV(actor, actor.Location.Map.LocalTime, m_Session.World.Weather);
+                    int fov = actor.ActorFOV(actor.Location.Map.LocalTime, m_Session.World.Weather);
                     foreach (Actor a in actor.Location.Map.Actors)
                     {
                         if (a == actor) continue;
-                        if (m_Rules.AreEnemies(actor, a)) continue;
+                        if (actor.IsEnemiesWith(a)) continue;
                         if (!LOS.CanTraceViewLine(actor.Location, a.Location.Position, fov)) continue;
                         if (m_Rules.RollChance(50))
                         {
@@ -20697,7 +20698,7 @@ namespace djack.RogueSurvivor.Engine
 
                 // can't see if sleeping or out of fov.
                 if (a.IsSleeping) continue;
-                int fov = m_Rules.ActorFOV(a, loc.Map.LocalTime, m_Session.World.Weather);
+                int fov = a.ActorFOV(loc.Map.LocalTime, m_Session.World.Weather);
                 if (!LOS.CanTraceViewLine(loc, a.Location.Position, fov)) continue;
 
                 // san hit.

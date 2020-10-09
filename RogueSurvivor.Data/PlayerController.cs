@@ -9,7 +9,7 @@ namespace djack.RogueSurvivor.Data
     public class PlayerController : ActorController
     {
 
-        public override ActorAction GetAction()
+        public override ActorAction GetAction(World world)
         {
             // shouldn't get here
             throw new InvalidOperationException("do not call PlayerController.GetAction()");

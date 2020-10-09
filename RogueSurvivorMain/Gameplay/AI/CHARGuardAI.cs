@@ -43,21 +43,21 @@ namespace djack.RogueSurvivor.Gameplay.AI
             base.TakeControl(actor);
         }
 
-        protected override List<Percept> UpdateSensors(RogueGame game)
+        protected override List<Percept> UpdateSensors(World world)
         {
-            return m_MemorizedSensor.Sense(game, m_Actor);
+            return m_MemorizedSensor.Sense(world, m_Actor);
         }
 
         protected override ActorAction SelectAction(RogueGame game, List<Percept> percepts)
         {
-            List<Percept> mapPercepts = FilterSameMap(game, percepts);
+            List<Percept> mapPercepts = FilterSameMap(percepts);
 
             // alpha10
             // don't run by default.
             m_Actor.IsRunning = false;
 
             // 0. Equip best item
-            ActorAction bestEquip = BehaviorEquipBestItems(game, true, true);
+            ActorAction bestEquip = BehaviorEquipBestItems(true, true);
             if (bestEquip != null)
             {
                 return bestEquip;
@@ -65,7 +65,6 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // end alpha10
 
             // 1. Follow order
-            #region
             if (this.Order != null)
             {
                 ActorAction orderAction = ExecuteOrder(game, this.Order, mapPercepts, null);
@@ -77,7 +76,6 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     return orderAction;
                 }
             }
-            #endregion
 
             ///////////////////////////////////////
             // alpha10 OBSOLETE 1 equip weapon
@@ -98,8 +96,8 @@ namespace djack.RogueSurvivor.Gameplay.AI
             m_Actor.IsRunning = false;
 
             // get data.
-            List<Percept> allEnemies = FilterEnemies(game, mapPercepts);
-            List<Percept> currentEnemies = FilterCurrent(game, allEnemies);
+            List<Percept> allEnemies = FilterEnemies(mapPercepts);
+            List<Percept> currentEnemies = FilterCurrent(allEnemies);
             bool checkOurLeader = m_Actor.HasLeader && !DontFollowLeader;
             bool hasAnyEnemies = allEnemies != null;
 
@@ -123,10 +121,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 3 fire at nearest enemy.
             if (currentEnemies != null)
             {
-                List<Percept> fireTargets = FilterFireTargets(game, currentEnemies);
+                List<Percept> fireTargets = FilterFireTargets(currentEnemies);
                 if (fireTargets != null)
                 {
-                    Percept nearestTarget = FilterNearest(game, fireTargets);
+                    Percept nearestTarget = FilterNearest(fireTargets);
                     Actor targetActor = nearestTarget.Percepted as Actor;
 
                     ActorAction fireAction = BehaviorRangedAttack(game, nearestTarget);
@@ -142,7 +140,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 4 hit adjacent enemy
             if (currentEnemies != null)
             {
-                Percept nearestEnemy = FilterNearest(game, currentEnemies);
+                Percept nearestEnemy = FilterNearest(currentEnemies);
                 Actor targetActor = nearestEnemy.Percepted as Actor;
 
                 // fight or flee?
@@ -155,10 +153,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 5 warn trepassers.
-            List<Percept> nonEnemies = FilterNonEnemies(game, mapPercepts);
+            List<Percept> nonEnemies = FilterNonEnemies(mapPercepts);
             if (nonEnemies != null)
             {
-                List<Percept> trespassers = Filter(game, nonEnemies, (p) =>
+                List<Percept> trespassers = Filter(nonEnemies, (p) =>
                 {
                     Actor other = (p.Percepted as Actor);
                     if (other.Faction == game.GameFactions.TheCHARCorporation)
@@ -173,7 +171,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 if (trespassers != null)
                 {
                     // Hey YOU!
-                    Actor trespasser = FilterNearest(game, trespassers).Percepted as Actor;
+                    Actor trespasser = FilterNearest(trespassers).Percepted as Actor;
 
                     game.DoMakeAggression(m_Actor, trespasser);
 
@@ -188,7 +186,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             {
                 if (nonEnemies != null)
                 {
-                    ActorAction shoutAction = BehaviorWarnFriends(game, nonEnemies, FilterNearest(game, allEnemies).Percepted as Actor);
+                    ActorAction shoutAction = BehaviorWarnFriends(nonEnemies, FilterNearest(allEnemies).Percepted as Actor);
                     if (shoutAction != null)
                     {
                         m_Actor.Activity = Activity.IDLE;
@@ -198,7 +196,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 7 rest if tired
-            ActorAction restAction = BehaviorRestIfTired(game);
+            ActorAction restAction = BehaviorRestIfTired();
             if (restAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
@@ -208,7 +206,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 8 charge/chase enemy
             if (allEnemies != null)
             {
-                Percept chasePercept = FilterNearest(game, allEnemies);
+                Percept chasePercept = FilterNearest(allEnemies);
 
                 // cheat a bit for good chasing behavior.
                 if (m_Actor.Location == chasePercept.Location)
@@ -245,7 +243,6 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 10 follow leader
-            #region
             if (checkOurLeader)
             {
                 Point lastKnownLeaderPosition = m_Actor.Leader.Location.Position;
@@ -258,7 +255,6 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     return followAction;
                 }
             }
-            #endregion
 
             // 11 wander in CHAR office.
             ActorAction wanderInOfficeAction = BehaviorWander(game, (loc) => RogueGame.IsInCHAROffice(loc), null);

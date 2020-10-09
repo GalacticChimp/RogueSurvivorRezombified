@@ -10,6 +10,7 @@ using djack.RogueSurvivor.Engine.AI;
 using djack.RogueSurvivor.Gameplay.AI.Sensors;
 using djack.RogueSurvivor.Gameplay.AI.Tools;
 using djack.RogueSurvivor.Data.Enums;
+using djack.RogueSurvivor.Data.Helpers;
 
 namespace djack.RogueSurvivor.Gameplay.AI
 {
@@ -44,17 +45,17 @@ namespace djack.RogueSurvivor.Gameplay.AI
             m_LivingSmellSensor = new SmellSensor(Odor.LIVING);
         }
 
-        protected override List<Percept> UpdateSensors(RogueGame game)
+        protected override List<Percept> UpdateSensors(World world)
         {
-            List<Percept> list = m_LOSSensor.Sense(game, m_Actor);
-            list.AddRange(m_LivingSmellSensor.Sense(game, m_Actor));
+            List<Percept> list = m_LOSSensor.Sense(world, m_Actor);
+            list.AddRange(m_LivingSmellSensor.Sense(world, m_Actor));
             return list;
         }
 
         protected override ActorAction SelectAction(RogueGame game, List<Percept> percepts)
         {
             HashSet<Point> fov = m_LOSSensor.FOV;
-            List<Percept> mapPercepts = FilterSameMap(game, percepts);
+            List<Percept> mapPercepts = FilterSameMap(percepts);
 
             //////////////////////////////////////////////////////////////
             // 1 defend our leader.
@@ -86,9 +87,9 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 }
             }
 
-            List<Percept> enemies = FilterEnemies(game, mapPercepts);
+            List<Percept> enemies = FilterEnemies(mapPercepts);
             bool isLeaderVisible = m_Actor.HasLeader && m_LOSSensor.FOV.Contains(m_Actor.Leader.Location.Position);
-            bool isLeaderFighting = m_Actor.HasLeader && IsAdjacentToEnemy(game, m_Actor.Leader);
+            bool isLeaderFighting = m_Actor.HasLeader && IsAdjacentToEnemy(m_Actor.Leader);
 
             // 2 attack or flee enemies.
             #region
@@ -110,7 +111,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             #region
             if (game.IsAlmostHungry(m_Actor))
             {
-                List<Percept> itemsStack = FilterStacks(game, mapPercepts);
+                List<Percept> itemsStack = FilterStacks(mapPercepts);
                 if (itemsStack != null)
                 {
                     ActorAction eatFood = BehaviorGoEatFoodOnGround(game, itemsStack);
@@ -126,9 +127,9 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 4 go eat corpses if hungry
             #region
-            if (game.Rules.IsActorHungry(m_Actor))
+            if (m_Actor.IsActorHungry())
             {
-                List<Percept> corpses = FilterCorpses(game, mapPercepts);
+                List<Percept> corpses = FilterCorpses(mapPercepts);
                 if (corpses != null)
                 {
                     ActorAction eatCorpses = BehaviorGoEatCorpse(game, corpses);
@@ -187,7 +188,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         #region Dogs specifics
         protected void RunToIfCloseTo(RogueGame game, Point pos, int closeDistance)
         {
-            if (game.Rules.GridDistance(m_Actor.Location.Position, pos) <= closeDistance)
+            if (DistanceHelpers.GridDistance(m_Actor.Location.Position, pos) <= closeDistance)
             {
                 m_Actor.IsRunning = game.Rules.CanActorRun(m_Actor);
             }

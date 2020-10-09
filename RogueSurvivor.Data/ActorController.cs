@@ -19,6 +19,6 @@ namespace djack.RogueSurvivor.Data
             m_Actor = null;
         }
 
-        public abstract ActorAction GetAction();
+        public abstract ActorAction GetAction(World world);
     }
 }

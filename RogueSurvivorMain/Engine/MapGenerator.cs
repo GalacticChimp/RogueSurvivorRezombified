@@ -6,6 +6,7 @@ using System.Drawing;   // Point
 
 using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Gameplay;
+using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Engine
 {
@@ -210,22 +211,22 @@ namespace djack.RogueSurvivor.Engine
         #endregion
 
         #region Placing actors
-        public bool ActorPlace(DiceRoller roller, int maxTries, Map map, Actor actor)
+        public bool ActorPlace(int maxTries, Map map, Actor actor)
         {
-            return ActorPlace(roller, maxTries, map, actor, null);
+            return ActorPlace(maxTries, map, actor, null);
         }
 
-        public bool ActorPlace(DiceRoller roller, int maxTries, Map map, Actor actor, int left, int top, int width, int height)
+        public bool ActorPlace(int maxTries, Map map, Actor actor, int left, int top, int width, int height)
         {
-            return ActorPlace(roller, maxTries, map, actor, left, top, width, height, null);
+            return ActorPlace(maxTries, map, actor, left, top, width, height, null);
         }
 
-        public bool ActorPlace(DiceRoller roller, int maxTries, Map map, Actor actor, Predicate<Point> goodPositionFn)
+        public bool ActorPlace(int maxTries, Map map, Actor actor, Predicate<Point> goodPositionFn)
         {
-            return ActorPlace(roller, maxTries, map, actor, 0, 0, map.Width, map.Height, goodPositionFn);
+            return ActorPlace(maxTries, map, actor, 0, 0, map.Width, map.Height, goodPositionFn);
         }
 
-        public bool ActorPlace(DiceRoller roller, int maxTries, Map map, Actor actor, int left, int top, int width, int height, Predicate<Point> goodPositionFn)
+        public bool ActorPlace(int maxTries, Map map, Actor actor, int left, int top, int width, int height, Predicate<Point> goodPositionFn)
         {
             if (map == null)
                 throw new ArgumentNullException("map");
@@ -236,8 +237,8 @@ namespace djack.RogueSurvivor.Engine
             Point position = new Point();
             for (int i = 0; i < maxTries; i++)
             {
-                position.X = roller.Roll(left, left + width);
-                position.Y = roller.Roll(top, top + height);
+                position.X = DiceRoller.Roll(left, left + width);
+                position.Y = DiceRoller.Roll(top, top + height);
 
                 if (actor.IsWalkableFor(map, position.X, position.Y, out string reason) &&
                     (goodPositionFn == null || goodPositionFn(position)))
@@ -282,12 +283,12 @@ namespace djack.RogueSurvivor.Engine
             }
         }
 
-        public void MapObjectPlaceInGoodPosition(Map map, Rectangle rect, Func<Point, bool> isGoodPosFn, DiceRoller roller, Func<Point, MapObject> createFn)
+        public void MapObjectPlaceInGoodPosition(Map map, Rectangle rect, Func<Point, bool> isGoodPosFn, Func<Point, MapObject> createFn)
         {
-            MapObjectPlaceInGoodPosition(map, rect.Left, rect.Top, rect.Width, rect.Height, isGoodPosFn, roller, createFn);
+            MapObjectPlaceInGoodPosition(map, rect.Left, rect.Top, rect.Width, rect.Height, isGoodPosFn, createFn);
         }
 
-        public void MapObjectPlaceInGoodPosition(Map map, int left, int top, int width, int height, Func<Point, bool> isGoodPosFn, DiceRoller roller, Func<Point, MapObject> createFn)
+        public void MapObjectPlaceInGoodPosition(Map map, int left, int top, int width, int height, Func<Point, bool> isGoodPosFn, Func<Point, MapObject> createFn)
         {
             // find all good positions.
             List<Point> goodList = null;
@@ -312,7 +313,7 @@ namespace djack.RogueSurvivor.Engine
             // pick a good position at random and put the object there.
             if (goodList == null)
                 return;
-            int iValid = roller.Roll(0, goodList.Count);
+            int iValid = DiceRoller.Roll(0, goodList.Count);
             MapObject mapObj = createFn(goodList[iValid]);
             if (mapObj != null)
                 map.PlaceMapObjectAt(mapObj, goodList[iValid]);

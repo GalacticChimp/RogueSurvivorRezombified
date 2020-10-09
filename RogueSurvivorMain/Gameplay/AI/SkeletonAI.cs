@@ -33,14 +33,14 @@ namespace djack.RogueSurvivor.Gameplay.AI
             m_LOSSensor = new LOSSensor(LOSSensor.SensingFilter.ACTORS);
         }
 
-        protected override List<Percept> UpdateSensors(RogueGame game)
+        protected override List<Percept> UpdateSensors(World world)
         {
-            return m_LOSSensor.Sense(game, m_Actor);
+            return m_LOSSensor.Sense(world, m_Actor);
         }
 
         protected override ActorAction SelectAction(RogueGame game, List<Percept> percepts)
         {
-            List<Percept> mapPercepts = FilterSameMap(game, percepts);
+            List<Percept> mapPercepts = FilterSameMap(percepts);
 
             ////////////////////////////////////////////
             // 1 move in straight line to nearest enemy
@@ -49,7 +49,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             ////////////////////////////////////////////
 
             // 1 move in straight line to nearest enemy
-            Percept nearestEnemy = FilterNearest(game, FilterEnemies(game, mapPercepts));
+            Percept nearestEnemy = FilterNearest(FilterEnemies(mapPercepts));
             if (nearestEnemy != null)
             {
                 ActorAction bumpAction = BehaviorStupidBumpToward(game, nearestEnemy.Location.Position, true, false);

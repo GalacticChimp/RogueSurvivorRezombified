@@ -11,6 +11,8 @@ using djack.RogueSurvivor.Gameplay;
 using djack.RogueSurvivor.Gameplay.AI;
 using djack.RogueSurvivor.UI;
 using djack.RogueSurvivor.Data.Items;
+using djack.RogueSurvivor.Data.Helpers;
+using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Gameplay.Generators
 {
@@ -310,7 +312,6 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         #region Fields
         Parameters m_Params = DEFAULT_PARAMS;
-        protected DiceRoller m_DiceRoller;
 
         /// <summary>
         /// Blocks on surface map since during current generation.
@@ -330,13 +331,11 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             : base(game)
         {
             m_Params = parameters;
-            m_DiceRoller = new DiceRoller();
         }
 
         #region Entry Map (Surface)
         public override Map Generate(int seed)
         {
-            m_DiceRoller = new DiceRoller(seed);
             Map map = new Map(seed, "Base City", m_Params.MapWidth, m_Params.MapHeight);
 
             ///////////////////
@@ -384,7 +383,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             completedBlocks.Clear();
             foreach (Block b in emptyBlocks)
             {
-                if (m_DiceRoller.RollChance(m_Params.ShopBuildingChance) &&
+                if (DiceRoller.RollChance(m_Params.ShopBuildingChance) &&
                     MakeShopBuilding(map, b))
                     completedBlocks.Add(b);
             }
@@ -396,7 +395,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             int charOfficesCount = 0;
             foreach (Block b in emptyBlocks)
             {
-                if ((m_Params.District.Kind == DistrictKind.BUSINESS && charOfficesCount == 0) || m_DiceRoller.RollChance(m_Params.CHARBuildingChance))
+                if ((m_Params.District.Kind == DistrictKind.BUSINESS && charOfficesCount == 0) || DiceRoller.RollChance(m_Params.CHARBuildingChance))
                 {
                     CHARBuildingType btype = MakeCHARBuilding(map, b);
                     if (btype == CHARBuildingType.OFFICE)
@@ -415,7 +414,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             completedBlocks.Clear();
             foreach (Block b in emptyBlocks)
             {
-                if (m_DiceRoller.RollChance(m_Params.ParkBuildingChance) &&
+                if (DiceRoller.RollChance(m_Params.ParkBuildingChance) &&
                     MakeParkBuilding(map, b))
                     completedBlocks.Add(b);
             }
@@ -456,7 +455,6 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         public virtual Map GenerateSewersMap(int seed, District district)
         {
             // Create.
-            m_DiceRoller = new DiceRoller(seed);
             Map sewers = new Map(seed, "sewers", district.EntryMap.Width, district.EntryMap.Height)
             {
                 Lighting = Lighting.DARKNESS
@@ -494,7 +492,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             foreach (Block b in blocks)
             {
                 // chance?
-                if (!m_DiceRoller.RollChance(SEWERS_IRON_FENCE_PER_BLOCK_CHANCE))
+                if (!DiceRoller.RollChance(SEWERS_IRON_FENCE_PER_BLOCK_CHANCE))
                     continue;
 
                 // fences on a side.
@@ -503,12 +501,12 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 do
                 {
                     // roll side.
-                    int sideRoll = m_DiceRoller.Roll(0, 4);
+                    int sideRoll = DiceRoller.Roll(0, 4);
                     switch (sideRoll)
                     {
                         case 0: // north.
                         case 1: // south.
-                            fx1 = m_DiceRoller.Roll(b.Rectangle.Left, b.Rectangle.Right - 1);
+                            fx1 = DiceRoller.Roll(b.Rectangle.Left, b.Rectangle.Right - 1);
                             fy1 = (sideRoll == 0 ? b.Rectangle.Top : b.Rectangle.Bottom - 1);
 
                             fx2 = fx1;
@@ -517,7 +515,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         case 2: // east.
                         case 3: // west.
                             fx1 = (sideRoll == 2 ? b.Rectangle.Left : b.Rectangle.Right - 1);
-                            fy1 = m_DiceRoller.Roll(b.Rectangle.Top, b.Rectangle.Bottom - 1);
+                            fy1 = DiceRoller.Roll(b.Rectangle.Top, b.Rectangle.Bottom - 1);
 
                             fx2 = (sideRoll == 2 ? fx1 - 1 : fx1 + 1);
                             fy2 = fy1;
@@ -557,7 +555,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                     for (int y = 0; y < sewers.Height; y++)
                     {
                         // link? roll chance. 3%
-                        bool doLink = m_DiceRoller.RollChance(3);
+                        bool doLink = DiceRoller.RollChance(3);
                         if (!doLink)
                             continue;
 
@@ -645,7 +643,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             if (goodBlocks != null)
             {
                 // pick one at random.
-                Block surfaceBlock = goodBlocks[m_DiceRoller.Roll(0, goodBlocks.Count)];
+                Block surfaceBlock = goodBlocks[DiceRoller.Roll(0, goodBlocks.Count)];
 
                 // clear surface building.
                 ClearRectangle(surface, surfaceBlock.BuildingRect);
@@ -666,7 +664,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             foreach (Block b in blocks)
             {
                 // chance?
-                if (!m_DiceRoller.RollChance(SEWERS_ROOM_CHANCE))
+                if (!DiceRoller.RollChance(SEWERS_ROOM_CHANCE))
                     continue;
 
                 // must be all walls = not already assigned as a room.
@@ -693,7 +691,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             MapObjectFill(sewers, new Rectangle(0, 0, sewers.Width, sewers.Height),
                 (pt) =>
                 {
-                    if (!m_DiceRoller.RollChance(SEWERS_JUNK_CHANCE))
+                    if (!DiceRoller.RollChance(SEWERS_JUNK_CHANCE))
                         return null;
                     if (!sewers.IsWalkable(pt.X, pt.Y))
                         return null;
@@ -707,14 +705,14 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             for (int x = 0; x < sewers.Width; x++)
                 for (int y = 0; y < sewers.Height; y++)
                 {
-                    if (!m_DiceRoller.RollChance(SEWERS_ITEM_CHANCE))
+                    if (!DiceRoller.RollChance(SEWERS_ITEM_CHANCE))
                         continue;
                     if (!sewers.IsWalkable(x, y))
                         continue;
 
                     // drop item.
                     Item it;
-                    int roll = m_DiceRoller.Roll(0, 3);
+                    int roll = DiceRoller.Roll(0, 3);
                     switch (roll)
                     {
                         case 0: it = MakeItemBigFlashlight(); break;
@@ -732,7 +730,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             for (int x = 0; x < sewers.Width; x++)
                 for (int y = 0; y < sewers.Height; y++)
                 {
-                    if (m_DiceRoller.RollChance(SEWERS_TAG_CHANCE))
+                    if (DiceRoller.RollChance(SEWERS_TAG_CHANCE))
                     {
                         // must be a wall with walkables around.
                         Tile t = sewers.GetTileAt(x, y);
@@ -742,7 +740,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                             continue;
 
                         // tag.
-                        t.AddDecoration(TAGS[m_DiceRoller.Roll(0, TAGS.Length)]);
+                        t.AddDecoration(TAGS[DiceRoller.Roll(0, TAGS.Length)]);
                     }
                 }
             #endregion
@@ -760,7 +758,6 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         public virtual Map GenerateSubwayMap(int seed, District district)
         {
             // Create.
-            m_DiceRoller = new DiceRoller(seed);
             Map subway = new Map(seed, "subway", district.EntryMap.Width, district.EntryMap.Height)
             {
                 Lighting = Lighting.DARKNESS
@@ -832,7 +829,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             if (goodBlocks != null)
             {
                 // pick one at random.
-                Block surfaceBlock = goodBlocks[m_DiceRoller.Roll(0, goodBlocks.Count)];
+                Block surfaceBlock = goodBlocks[DiceRoller.Roll(0, goodBlocks.Count)];
 
                 // clear surface building.
                 ClearRectangle(surface, surfaceBlock.BuildingRect);
@@ -852,13 +849,13 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             #region
             const int toolsRoomWidth = 5;
             const int toolsRoomHeight = 5;
-            Direction toolsRoomDir = m_DiceRoller.RollChance(50) ? Direction.N : Direction.S;
+            Direction toolsRoomDir = DiceRoller.RollChance(50) ? Direction.N : Direction.S;
             Rectangle toolsRoom = Rectangle.Empty;
             bool foundToolsRoom = false;
             int toolsRoomAttempt = 0;
             do
             {
-                int x = m_DiceRoller.Roll(10, subway.Width - 10);
+                int x = DiceRoller.Roll(10, subway.Width - 10);
                 int y = (toolsRoomDir == Direction.N ? railY - 1 : railY + railSize);
 
                 if (!subway.GetTileAt(x, y).Model.IsWalkable)
@@ -903,7 +900,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             for (int x = 0; x < subway.Width; x++)
                 for (int y = 0; y < subway.Height; y++)
                 {
-                    if (m_DiceRoller.RollChance(SUBWAY_TAGS_POSTERS_CHANCE))
+                    if (DiceRoller.RollChance(SUBWAY_TAGS_POSTERS_CHANCE))
                     {
                         // must be a wall with walkables around.
                         Tile t = subway.GetTileAt(x, y);
@@ -913,12 +910,12 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                             continue;
 
                         // poster?
-                        if (m_DiceRoller.RollChance(50))
-                            t.AddDecoration(POSTERS[m_DiceRoller.Roll(0, POSTERS.Length)]);
+                        if (DiceRoller.RollChance(50))
+                            t.AddDecoration(POSTERS[DiceRoller.Roll(0, POSTERS.Length)]);
 
                         // tag?
-                        if (m_DiceRoller.RollChance(50))
-                            t.AddDecoration(TAGS[m_DiceRoller.Roll(0, TAGS.Length)]);
+                        if (DiceRoller.RollChance(50))
+                            t.AddDecoration(TAGS[DiceRoller.Roll(0, TAGS.Length)]);
                     }
                 }
             #endregion
@@ -944,8 +941,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         void QuadSplit(Rectangle rect, int minWidth, int minHeight, out int splitX, out int splitY, out Rectangle topLeft, out Rectangle topRight, out Rectangle bottomLeft, out Rectangle bottomRight)
         {
             // Choose a random split point.
-            int leftWidthSplit = m_DiceRoller.Roll(rect.Width / 3, (2 * rect.Width) / 3);
-            int topHeightSplit = m_DiceRoller.Roll(rect.Height / 3, (2 * rect.Height) / 3);
+            int leftWidthSplit = DiceRoller.Roll(rect.Width / 3, (2 * rect.Width) / 3);
+            int topHeightSplit = DiceRoller.Roll(rect.Height / 3, (2 * rect.Height) / 3);
 
             // Ensure splitting does not produce rects below minima.
             if (leftWidthSplit < minWidth)
@@ -1132,13 +1129,13 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             base.MapObjectFill(map, rect,
                 (pt) =>
                 {
-                    if (m_DiceRoller.RollChance(m_Params.WreckedCarChance))
+                    if (DiceRoller.RollChance(m_Params.WreckedCarChance))
                     {
                         Tile tile = map.GetTileAt(pt.X, pt.Y);
                         if (!tile.IsInside && tile.Model.IsWalkable && tile.Model != m_Game.GameTiles.FLOOR_GRASS)
                         {
-                            MapObject car = base.MakeObjWreckedCar(m_DiceRoller);
-                            if (m_DiceRoller.RollChance(50))
+                            MapObject car = base.MakeObjWreckedCar();
+                            if (DiceRoller.RollChance(50))
                             {
                                 m_Game.ApplyOnFire(car);
                             }
@@ -1195,7 +1192,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             ///////////////////////
             // 2. Decide shop type
             ///////////////////////
-            ShopType shopType = (ShopType)m_DiceRoller.Roll((int)ShopType._FIRST, (int)ShopType._COUNT);
+            ShopType shopType = (ShopType)DiceRoller.Roll((int)ShopType._FIRST, (int)ShopType._COUNT);
 
             //////////////////////////////////////////
             // 3. Make sections alleys with displays.
@@ -1250,7 +1247,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             // make doors on one side.
             if (horizontalAlleys)
             {
-                bool west = m_DiceRoller.RollChance(50);
+                bool west = DiceRoller.RollChance(50);
 
                 if (west)
                 {
@@ -1278,7 +1275,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             }
             else
             {
-                bool north = m_DiceRoller.RollChance(50);
+                bool north = DiceRoller.RollChance(50);
 
                 if (north)
                 {
@@ -1343,10 +1340,10 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             DecorateOutsideWalls(map, b.BuildingRect, (x, y) => map.GetMapObjectAt(x, y) == null && CountAdjDoors(map, x, y) >= 1 ? shopImage : null);
 
             // window?
-            if (m_DiceRoller.RollChance(SHOP_WINDOW_CHANCE))
+            if (DiceRoller.RollChance(SHOP_WINDOW_CHANCE))
             {
                 // pick a random side.
-                int side = m_DiceRoller.Roll(0, 4);
+                int side = DiceRoller.Roll(0, 4);
                 int wx, wy;
                 switch (side)
                 {
@@ -1385,7 +1382,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                     if (mapObj == null)
                         return false;
                     return mapObj.ImageID == GameImages.OBJ_SHOP_SHELF &&
-                        m_DiceRoller.RollChance(m_Params.ItemInShopShelfChance);
+                        DiceRoller.RollChance(m_Params.ItemInShopShelfChance);
                 },
                 (pt) => MakeRandomShopItem(shopType));
             #endregion
@@ -1402,7 +1399,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             // 7. Basement?
             ////////////////
             #region
-            if (m_DiceRoller.RollChance(SHOP_BASEMENT_CHANCE))
+            if (DiceRoller.RollChance(SHOP_BASEMENT_CHANCE))
             {
                 // shop basement map:                
                 // - a single dark room.
@@ -1428,10 +1425,10 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         if (shopBasement.GetExitAt(pt) != null)
                             return;
 
-                        if (m_DiceRoller.RollChance(SHOP_BASEMENT_SHELF_CHANCE_PER_TILE))
+                        if (DiceRoller.RollChance(SHOP_BASEMENT_SHELF_CHANCE_PER_TILE))
                         {
                             shopBasement.PlaceMapObjectAt(MakeObjShelf(GameImages.OBJ_SHOP_SHELF), pt);
-                            if (m_DiceRoller.RollChance(SHOP_BASEMENT_ITEM_CHANCE_PER_SHELF))
+                            if (DiceRoller.RollChance(SHOP_BASEMENT_ITEM_CHANCE_PER_SHELF))
                             {
                                 Item it = MakeRandomShopItem(shopType);
                                 if (it != null)
@@ -1441,7 +1438,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
                         if (Rules.HasZombiesInBasements(m_Game.Session.GameMode))
                         {
-                            if (m_DiceRoller.RollChance(SHOP_BASEMENT_ZOMBIE_RAT_CHANCE))
+                            if (DiceRoller.RollChance(SHOP_BASEMENT_ZOMBIE_RAT_CHANCE))
                                 shopBasement.PlaceActorAt(CreateNewBasementRatZombie(0), pt);
                         }
                     });
@@ -1451,8 +1448,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
                 // link maps, stairs in one corner.
                 Point basementCorner = new Point();
-                basementCorner.X = m_DiceRoller.RollChance(50) ? 1 : shopBasement.Width - 2;
-                basementCorner.Y = m_DiceRoller.RollChance(50) ? 1 : shopBasement.Height - 2;
+                basementCorner.X = DiceRoller.RollChance(50) ? 1 : shopBasement.Width - 2;
+                basementCorner.Y = DiceRoller.RollChance(50) ? 1 : shopBasement.Height - 2;
                 Point shopCorner = new Point(basementCorner.X - 1 + b.InsideRect.Left, basementCorner.Y - 1 + b.InsideRect.Top);
                 AddExit(shopBasement, basementCorner, map, shopCorner, GameImages.DECO_STAIRS_UP, true);
                 AddExit(map, shopCorner, shopBasement, basementCorner, GameImages.DECO_STAIRS_DOWN, true);
@@ -1532,7 +1529,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             #region
             if (horizontalCorridor)
             {
-                bool west = m_DiceRoller.RollChance(50);
+                bool west = DiceRoller.RollChance(50);
 
                 if (west)
                 {
@@ -1559,7 +1556,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             }
             else
             {
-                bool north = m_DiceRoller.RollChance(50);
+                bool north = DiceRoller.RollChance(50);
 
                 if (north)
                 {
@@ -1604,8 +1601,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         return null;
 
                     // alpha10.1 book/magazines on chair?
-                    if (m_DiceRoller.RollChance(25))
-                        map.DropItemAt(m_DiceRoller.RollChance(20) ? MakeItemBook() : MakeItemMagazines(), pt);
+                    if (DiceRoller.RollChance(25))
+                        map.DropItemAt(DiceRoller.RollChance(20) ? MakeItemBook() : MakeItemMagazines(), pt);
 
                     return MakeObjChair(GameImages.OBJ_CHAR_CHAIR);
                 });
@@ -1613,7 +1610,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             TileFill(map, m_Game.GameTiles.WALL_CHAR_OFFICE, new Rectangle(b.InsideRect.Left + b.InsideRect.Width / 2 - 1, b.InsideRect.Top + b.InsideRect.Height / 2 - 1, 3, 2),
                 (tile, model, x, y) =>
                 {
-                    tile.AddDecoration(CHAR_POSTERS[m_DiceRoller.Roll(0, CHAR_POSTERS.Length)]);
+                    tile.AddDecoration(CHAR_POSTERS[DiceRoller.Roll(0, CHAR_POSTERS.Length)]);
                 });
             #endregion
 
@@ -1629,8 +1626,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         return null;
                     else
                     {
-                        if (m_DiceRoller.RollChance(25))
-                            return CHAR_POSTERS[m_DiceRoller.Roll(0, CHAR_POSTERS.Length)];
+                        if (DiceRoller.RollChance(25))
+                            return CHAR_POSTERS[DiceRoller.Roll(0, CHAR_POSTERS.Length)];
                         else
                             return null;
                     }
@@ -1674,7 +1671,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             #region
             if (horizontalCorridor)
             {
-                bool west = m_DiceRoller.RollChance(50);
+                bool west = DiceRoller.RollChance(50);
 
                 if (west)
                 {
@@ -1703,7 +1700,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             }
             else
             {
-                bool north = m_DiceRoller.RollChance(50);
+                bool north = DiceRoller.RollChance(50);
 
                 if (north)
                 {
@@ -1885,7 +1882,6 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         adjTableRect.Intersect(insideRoom);
                         MapObjectPlaceInGoodPosition(map, adjTableRect,
                             (pt) => pt != tablePos,
-                            m_DiceRoller,
                             (pt) => MakeObjChair(GameImages.OBJ_CHAR_CHAIR));
                     }
                 }
@@ -1955,7 +1951,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             base.MapObjectFill(map, b.InsideRect,
                 (pt) =>
                 {
-                    bool placeTree = m_DiceRoller.RollChance(PARK_TREE_CHANCE);
+                    bool placeTree = DiceRoller.RollChance(PARK_TREE_CHANCE);
                     if (placeTree)
                         return base.MakeObjTree(GameImages.OBJ_TREE);
                     else
@@ -1965,7 +1961,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             base.MapObjectFill(map, b.InsideRect,
                 (pt) =>
                 {
-                    bool placeBench = m_DiceRoller.RollChance(PARK_BENCH_CHANCE);
+                    bool placeBench = DiceRoller.RollChance(PARK_BENCH_CHANCE);
                     if (placeBench)
                         return base.MakeObjBench(GameImages.OBJ_BENCH);
                     else
@@ -1975,7 +1971,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             ///////////////
             // 3. Entrance
             ///////////////
-            int entranceFace = m_DiceRoller.Roll(0, 4);
+            int entranceFace = DiceRoller.Roll(0, 4);
             int ex, ey;
             switch (entranceFace)
             {
@@ -2003,7 +1999,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             // 4. Items
             ////////////
             base.ItemsDrop(map, b.InsideRect,
-                (pt) => map.GetMapObjectAt(pt) == null && m_DiceRoller.RollChance(PARK_ITEM_CHANCE),
+                (pt) => map.GetMapObjectAt(pt) == null && DiceRoller.RollChance(PARK_ITEM_CHANCE),
                 (pt) => MakeRandomParkItem());
 
             ///////////
@@ -2019,11 +2015,11 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             ////////////
             if (b.InsideRect.Width > PARK_SHED_WIDTH + 2 && b.InsideRect.Height > PARK_SHED_HEIGHT + 2)
             {
-                if (m_DiceRoller.RollChance(PARK_SHED_CHANCE))
+                if (DiceRoller.RollChance(PARK_SHED_CHANCE))
                 {
                     // roll shed pos - dont put next to park fences!
-                    int shedX = m_DiceRoller.Roll(b.InsideRect.Left + 1, b.InsideRect.Right - PARK_SHED_WIDTH);
-                    int shedY = m_DiceRoller.Roll(b.InsideRect.Top + 1, b.InsideRect.Bottom - PARK_SHED_HEIGHT);
+                    int shedX = DiceRoller.Roll(b.InsideRect.Left + 1, b.InsideRect.Right - PARK_SHED_WIDTH);
+                    int shedY = DiceRoller.Roll(b.InsideRect.Top + 1, b.InsideRect.Bottom - PARK_SHED_HEIGHT);
                     Rectangle shedRect = new Rectangle(shedX, shedY, PARK_SHED_WIDTH, PARK_SHED_HEIGHT);
                     Rectangle shedInsideRect = new Rectangle(shedX + 1, shedY + 1, PARK_SHED_WIDTH - 2, PARK_SHED_HEIGHT - 2);
 
@@ -2049,7 +2045,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             map.AddZone(MakeUniqueZone(baseZoneName, shedBuildingRect));
 
             // place shed door and make sure door front is cleared of objects (trees).
-            int doorDir = m_DiceRoller.Roll(0, 4);
+            int doorDir = DiceRoller.Roll(0, 4);
             int doorX, doorY;
             int doorFrontX, doorFrontY;
             switch (doorDir)
@@ -2110,7 +2106,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             // alpha10.1 decide floorplan
             // apartment?
-            if (m_DiceRoller.RollChance(HOUSE_IS_APARTMENTS_CHANCE))
+            if (DiceRoller.RollChance(HOUSE_IS_APARTMENTS_CHANCE))
                 if (MakeApartmentsBuilding(map, b))
                     return true;
 
@@ -2153,7 +2149,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             if (horizontalCorridor)
             {
-                bool west = m_DiceRoller.RollChance(50);
+                bool west = DiceRoller.RollChance(50);
 
                 if (west)
                 {
@@ -2172,7 +2168,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             }
             else
             {
-                bool north = m_DiceRoller.RollChance(50);
+                bool north = DiceRoller.RollChance(50);
 
                 if (north)
                 {
@@ -2340,16 +2336,16 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             int iOutsideRoom = -1;
             HouseOutsideRoomType outsideRoom = HouseOutsideRoomType._FIRST;
-            if (roomsList.Count >= HOUSE_OUTSIDE_ROOM_NEED_MIN_ROOMS && m_DiceRoller.RollChance(HOUSE_OUTSIDE_ROOM_CHANCE))
+            if (roomsList.Count >= HOUSE_OUTSIDE_ROOM_NEED_MIN_ROOMS && DiceRoller.RollChance(HOUSE_OUTSIDE_ROOM_CHANCE))
             {
                 for (; ; )
                 {
-                    iOutsideRoom = m_DiceRoller.Roll(0, roomsList.Count);
+                    iOutsideRoom = DiceRoller.Roll(0, roomsList.Count);
                     Rectangle r = roomsList[iOutsideRoom];
                     if (r.Left == b.BuildingRect.Left || r.Right == b.BuildingRect.Right || r.Top == b.BuildingRect.Top || r.Bottom == b.BuildingRect.Bottom)
                         break;
                 }
-                outsideRoom = (HouseOutsideRoomType)m_DiceRoller.Roll((int)HouseOutsideRoomType._FIRST, (int)HouseOutsideRoomType._COUNT);
+                outsideRoom = (HouseOutsideRoomType)DiceRoller.Roll((int)HouseOutsideRoomType._FIRST, (int)HouseOutsideRoomType._COUNT);
             }
 
             for (int i = 0; i < roomsList.Count; i++)
@@ -2388,7 +2384,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                             base.DoForEachTile(map, roomRect,
                                 (pos) =>
                                 {
-                                    if (map.GetTileAt(pos).Model == m_Game.GameTiles.FLOOR_GRASS && m_DiceRoller.RollChance(HOUSE_GARDEN_TREE_CHANCE))
+                                    if (map.GetTileAt(pos).Model == m_Game.GameTiles.FLOOR_GRASS && DiceRoller.RollChance(HOUSE_GARDEN_TREE_CHANCE))
                                         map.PlaceMapObjectAt(MakeObjTree(GameImages.OBJ_TREE), pos);
                                 });
                             break;
@@ -2398,8 +2394,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                             base.DoForEachTile(map, roomRect,
                                 (pos) =>
                                 {
-                                    if (map.GetTileAt(pos).Model == m_Game.GameTiles.FLOOR_ASPHALT && m_DiceRoller.RollChance(HOUSE_PARKING_LOT_CAR_CHANCE))
-                                        map.PlaceMapObjectAt(MakeObjWreckedCar(m_DiceRoller), pos);
+                                    if (map.GetTileAt(pos).Model == m_Game.GameTiles.FLOOR_ASPHALT && DiceRoller.RollChance(HOUSE_PARKING_LOT_CAR_CHANCE))
+                                        map.PlaceMapObjectAt(MakeObjWreckedCar(), pos);
                                 });
                             break;
                     }
@@ -2482,7 +2478,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 // replace an exit window with a door
                 if (buildingExits.Count > 0)
                 {
-                    Point newDoorPos = buildingExits[m_DiceRoller.Roll(0, buildingExits.Count)];
+                    Point newDoorPos = buildingExits[DiceRoller.Roll(0, buildingExits.Count)];
                     map.RemoveMapObjectAt(newDoorPos.X, newDoorPos.Y);
                     map.PlaceMapObjectAt(MakeObjWoodenDoor(), newDoorPos);
                     hasOutsideDoor = true;
@@ -2502,7 +2498,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             // 6. Basement?
             ////////////////
             #region
-            if (m_DiceRoller.RollChance(HOUSE_BASEMENT_CHANCE))
+            if (DiceRoller.RollChance(HOUSE_BASEMENT_CHANCE))
             {
                 Map basementMap = GenerateHouseBasementMap(map, b);
                 m_Params.District.AddUniqueMap(basementMap);
@@ -2543,7 +2539,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             #region
             int doorX, doorY;
             Direction digDirection;
-            int sideRoll = m_DiceRoller.Roll(0, 4);
+            int sideRoll = DiceRoller.Roll(0, 4);
             switch (sideRoll)
             {
                 case 0: // north.
@@ -2617,12 +2613,11 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             // Furniture & Items.
             /////////////////////
             // bunch of tables near walls with construction items on them.
-            int nbTables = m_DiceRoller.Roll(Math.Max(b.InsideRect.Width, b.InsideRect.Height), 2 * Math.Max(b.InsideRect.Width, b.InsideRect.Height));
+            int nbTables = DiceRoller.Roll(Math.Max(b.InsideRect.Width, b.InsideRect.Height), 2 * Math.Max(b.InsideRect.Width, b.InsideRect.Height));
             for (int i = 0; i < nbTables; i++)
             {
                 MapObjectPlaceInGoodPosition(map, b.InsideRect,
                     (pt) => CountAdjWalls(map, pt.X, pt.Y) >= 3 && CountAdjDoors(map, pt.X, pt.Y) == 0,
-                    m_DiceRoller,
                     (pt) =>
                     {
                         // add item.
@@ -2633,18 +2628,16 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                     });
             }
             // a bed and a fridge with food if lucky.
-            if (m_DiceRoller.RollChance(33))
+            if (DiceRoller.RollChance(33))
             {
                 // bed.
                 MapObjectPlaceInGoodPosition(map, b.InsideRect,
                     (pt) => CountAdjWalls(map, pt.X, pt.Y) >= 3 && CountAdjDoors(map, pt.X, pt.Y) == 0,
-                    m_DiceRoller,
                     (pt) => MakeObjBed(GameImages.OBJ_BED));
 
                 // fridge + food.
                 MapObjectPlaceInGoodPosition(map, b.InsideRect,
                     (pt) => CountAdjWalls(map, pt.X, pt.Y) >= 3 && CountAdjDoors(map, pt.X, pt.Y) == 0,
-                    m_DiceRoller,
                     (pt) =>
                     {
                         // add food.
@@ -2659,7 +2652,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             // Add the poor maintenance guy/gal.
             ////////////////////////////////////
             Actor poorGuy = CreateNewCivilian(0, 3, 1);
-            ActorPlace(m_DiceRoller, b.Rectangle.Width * b.Rectangle.Height, map, poorGuy, b.InsideRect.Left, b.InsideRect.Top, b.InsideRect.Width, b.InsideRect.Height);
+            ActorPlace(b.Rectangle.Width * b.Rectangle.Height, map, poorGuy, b.InsideRect.Left, b.InsideRect.Top, b.InsideRect.Width, b.InsideRect.Height);
 
             //////////////
             // Make zone.
@@ -2696,7 +2689,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             Direction digDirection;
             int sideRoll;
             if (isSurface)
-                sideRoll = m_DiceRoller.Roll(0, 4);
+                sideRoll = DiceRoller.Roll(0, 4);
             else
                 sideRoll = b.Rectangle.Bottom < map.Width / 2 ? 1 : 0;
             switch (sideRoll)
@@ -2908,7 +2901,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         continue;
 
                     // not next to stairs.
-                    if (m_Game.Rules.GridDistance(new Point(bx, by), new Point(entryFenceX, entryFenceY)) < 2)
+                    if (DistanceHelpers.GridDistance(new Point(bx, by), new Point(entryFenceX, entryFenceY)) < 2)
                         continue;
 
                     // bench.
@@ -2922,7 +2915,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             if (isSurface)
             {
                 Actor policeMan = CreateNewPoliceman(0);
-                ActorPlace(m_DiceRoller, b.Rectangle.Width * b.Rectangle.Height, map, policeMan, b.InsideRect.Left, b.InsideRect.Top, b.InsideRect.Width, b.InsideRect.Height);
+                ActorPlace(b.Rectangle.Width * b.Rectangle.Height, map, policeMan, b.InsideRect.Left, b.InsideRect.Top, b.InsideRect.Width, b.InsideRect.Height);
             }
 
             //////////////
@@ -3004,16 +2997,16 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             PlaceIf(map, midX, roomRect.Top, floor,
                 (x, y) => HasNoObjectAt(map, x, y) && IsAccessible(map, x, y) && CountAdjDoors(map, x, y) == 0,
-                (x, y) => IsInside(map, x, y) || m_DiceRoller.RollChance(outsideDoorChance) ? MakeObjWoodenDoor() : MakeObjWindow());
+                (x, y) => IsInside(map, x, y) || DiceRoller.RollChance(outsideDoorChance) ? MakeObjWoodenDoor() : MakeObjWindow());
             PlaceIf(map, midX, roomRect.Bottom - 1, floor,
                 (x, y) => HasNoObjectAt(map, x, y) && IsAccessible(map, x, y) && CountAdjDoors(map, x, y) == 0,
-                (x, y) => IsInside(map, x, y) || m_DiceRoller.RollChance(outsideDoorChance) ? MakeObjWoodenDoor() : MakeObjWindow());
+                (x, y) => IsInside(map, x, y) || DiceRoller.RollChance(outsideDoorChance) ? MakeObjWoodenDoor() : MakeObjWindow());
             PlaceIf(map, roomRect.Left, midY, floor,
                 (x, y) => HasNoObjectAt(map, x, y) && IsAccessible(map, x, y) && CountAdjDoors(map, x, y) == 0,
-                (x, y) => IsInside(map, x, y) || m_DiceRoller.RollChance(outsideDoorChance) ? MakeObjWoodenDoor() : MakeObjWindow());
+                (x, y) => IsInside(map, x, y) || DiceRoller.RollChance(outsideDoorChance) ? MakeObjWoodenDoor() : MakeObjWindow());
             PlaceIf(map, roomRect.Right - 1, midY, floor,
                 (x, y) => HasNoObjectAt(map, x, y) && IsAccessible(map, x, y) && CountAdjDoors(map, x, y) == 0,
-                (x, y) => IsInside(map, x, y) || m_DiceRoller.RollChance(outsideDoorChance) ? MakeObjWoodenDoor() : MakeObjWindow());
+                (x, y) => IsInside(map, x, y) || DiceRoller.RollChance(outsideDoorChance) ? MakeObjWoodenDoor() : MakeObjWindow());
         }
 
         // alpha10.1 can force room role (optional param)
@@ -3030,7 +3023,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // alpha10.1 roll room role if not set
             if (role == -1)
-                role = m_DiceRoller.Roll(0, 10);
+                role = DiceRoller.Roll(0, 10);
 
             // alpha10.1 added restriction to not place a mapobj if adj to at least 5 mapobj as to not cramp apartements
 
@@ -3046,12 +3039,11 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                     {
                         #region
                         // beds with night tables.
-                        int nbBeds = m_DiceRoller.Roll(1, 3);
+                        int nbBeds = DiceRoller.Roll(1, 3);
                         for (int i = 0; i < nbBeds; i++)
                         {
                             MapObjectPlaceInGoodPosition(map, insideRoom,
                                 (pt) => CountAdjWalls(map, pt.X, pt.Y) >= 3 && CountAdjDoors(map, pt.X, pt.Y) == 0 && CountAdjMapObjects(map, pt.X, pt.Y) < 5,  // alpha10.1 not cramped
-                                m_DiceRoller,
                                 (pt) =>
                                 {
                                     // one night table around with item.
@@ -3059,7 +3051,6 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                                     adjBedRect.Intersect(insideRoom);
                                     MapObjectPlaceInGoodPosition(map, adjBedRect,
                                         (pt2) => pt2 != pt && CountAdjDoors(map, pt2.X, pt2.Y) == 0 && CountAdjWalls(map, pt2.X, pt2.Y) > 0 && CountAdjMapObjects(map, pt.X, pt.Y) < 5,  // alpha10.1 not cramped,
-                                        m_DiceRoller,
                                         (pt2) =>
                                         {
                                             // item.
@@ -3078,12 +3069,11 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         }
 
                         // wardrobe/drawer with items
-                        int nbWardrobeOrDrawer = m_DiceRoller.Roll(1, 4);
+                        int nbWardrobeOrDrawer = DiceRoller.Roll(1, 4);
                         for (int i = 0; i < nbWardrobeOrDrawer; i++)
                         {
                             MapObjectPlaceInGoodPosition(map, insideRoom,
                                                 (pt) => CountAdjWalls(map, pt.X, pt.Y) >= 2 && CountAdjDoors(map, pt.X, pt.Y) == 0 && CountAdjMapObjects(map, pt.X, pt.Y) < 5,  // alpha10.1 not cramped,
-                                                m_DiceRoller,
                                                 (pt) =>
                                                 {
                                                     // item.
@@ -3092,7 +3082,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                                                         map.DropItemAt(it, pt);
 
                                                     // wardrobe or drawer
-                                                    if (m_DiceRoller.RollChance(50))
+                                                    if (DiceRoller.RollChance(50))
                                                         return MakeObjWardrobe(GameImages.OBJ_WARDROBE);
                                                     else
                                                         return MakeObjDrawer(GameImages.OBJ_DRAWER);
@@ -3111,13 +3101,12 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                     {
                         #region
                         // tables with chairs.
-                        int nbTables = m_DiceRoller.Roll(1, 3);
+                        int nbTables = DiceRoller.Roll(1, 3);
 
                         for (int i = 0; i < nbTables; i++)
                         {
                             MapObjectPlaceInGoodPosition(map, insideRoom,
                                 (pt) => CountAdjWalls(map, pt.X, pt.Y) == 0 && CountAdjDoors(map, pt.X, pt.Y) == 0 && CountAdjMapObjects(map, pt.X, pt.Y) < 5,  // alpha10.1 not cramped,
-                                m_DiceRoller,
                                 (pt) =>
                                 {
                                     // items.
@@ -3133,7 +3122,6 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                                     adjTableRect.Intersect(insideRoom);
                                     MapObjectPlaceInGoodPosition(map, adjTableRect,
                                         (pt2) => pt2 != pt && CountAdjDoors(map, pt2.X, pt2.Y) == 0 && CountAdjMapObjects(map, pt.X, pt.Y) < 5,  // alpha10.1 not cramped,
-                                        m_DiceRoller,
                                         (pt2) => MakeObjChair(GameImages.OBJ_CHAIR));
 
                                     // table.
@@ -3143,12 +3131,11 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         }
 
                         // drawers.
-                        int nbDrawers = m_DiceRoller.Roll(1, 3);
+                        int nbDrawers = DiceRoller.Roll(1, 3);
                         for (int i = 0; i < nbDrawers; i++)
                         {
                             MapObjectPlaceInGoodPosition(map, insideRoom,
                                                 (pt) => CountAdjWalls(map, pt.X, pt.Y) >= 2 && CountAdjDoors(map, pt.X, pt.Y) == 0 && CountAdjMapObjects(map, pt.X, pt.Y) < 5,  // alpha10.1 not cramped,
-                                                m_DiceRoller,
                                                 (pt) => MakeObjDrawer(GameImages.OBJ_DRAWER));
                         }
                         break;
@@ -3165,7 +3152,6 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         // table with item & chair.
                         MapObjectPlaceInGoodPosition(map, insideRoom,
                             (pt) => CountAdjWalls(map, pt.X, pt.Y) == 0 && CountAdjDoors(map, pt.X, pt.Y) == 0 && CountAdjMapObjects(map, pt.X, pt.Y) < 5,  // alpha10.1 not cramped,
-                            m_DiceRoller,
                             (pt) =>
                             {
                                 // items.
@@ -3180,7 +3166,6 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                                 Rectangle adjTableRect = new Rectangle(pt.X - 1, pt.Y - 1, 3, 3);
                                 MapObjectPlaceInGoodPosition(map, adjTableRect,
                                     (pt2) => pt2 != pt && CountAdjDoors(map, pt2.X, pt2.Y) == 0,
-                                    m_DiceRoller,
                                     (pt2) => MakeObjChair(GameImages.OBJ_CHAIR));
 
                                 // table.
@@ -3190,7 +3175,6 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         // fridge with items
                         MapObjectPlaceInGoodPosition(map, insideRoom,
                                             (pt) => CountAdjWalls(map, pt.X, pt.Y) >= 2 && CountAdjDoors(map, pt.X, pt.Y) == 0 && CountAdjMapObjects(map, pt.X, pt.Y) < 5,  // alpha10.1 not cramped,
-                                            m_DiceRoller,
                                             (pt) =>
                                             {
                                                 // items.
@@ -3243,7 +3227,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public Item MakeShopGroceryItem()
         {
-            if (m_DiceRoller.RollChance(50))
+            if (DiceRoller.RollChance(50))
                 return MakeItemCannedFood();
             else
                 return MakeItemGroceries();
@@ -3251,7 +3235,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public Item MakeShopPharmacyItem()
         {
-            int randomItem = m_DiceRoller.Roll(0, 6);
+            int randomItem = DiceRoller.Roll(0, 6);
             switch (randomItem)
             {
                 case 0: return MakeItemBandages();
@@ -3268,17 +3252,17 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public Item MakeShopSportsWearItem()
         {
-            int roll = m_DiceRoller.Roll(0, 10);
+            int roll = DiceRoller.Roll(0, 10);
 
             switch (roll)
             {
                 case 0:
-                    if (m_DiceRoller.RollChance(30))
+                    if (DiceRoller.RollChance(30))
                         return MakeItemHuntingRifle();
                     else
                         return MakeItemLightRifleAmmo();
                 case 1:
-                    if (m_DiceRoller.RollChance(30))
+                    if (DiceRoller.RollChance(30))
                         return MakeItemHuntingCrossbow();
                     else
                         return MakeItemBoltsAmmo();
@@ -3299,12 +3283,12 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public Item MakeShopConstructionItem()
         {
-            int roll = m_DiceRoller.Roll(0, 24);
+            int roll = DiceRoller.Roll(0, 24);
             switch (roll)
             {
                 case 0:
                 case 1:
-                case 2: return m_DiceRoller.RollChance(50) ? MakeItemShovel() : MakeItemShortShovel();
+                case 2: return DiceRoller.RollChance(50) ? MakeItemShovel() : MakeItemShortShovel();
 
                 case 3:
                 case 4:
@@ -3312,7 +3296,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
                 case 6:
                 case 7:
-                case 8: return m_DiceRoller.RollChance(50) ? MakeItemHugeHammer() : MakeItemSmallHammer();
+                case 8: return DiceRoller.RollChance(50) ? MakeItemHugeHammer() : MakeItemSmallHammer();
 
                 case 9:
                 case 10:
@@ -3342,9 +3326,9 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         public Item MakeShopGunshopItem()
         {
             // Weapons (40%) vs Ammo (60%)
-            if (m_DiceRoller.RollChance(40))
+            if (DiceRoller.RollChance(40))
             {
-                int roll = m_DiceRoller.Roll(0, 4);
+                int roll = DiceRoller.Roll(0, 4);
 
                 switch (roll)
                 {
@@ -3359,7 +3343,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             }
             else
             {
-                int roll = m_DiceRoller.Roll(0, 4);
+                int roll = DiceRoller.Roll(0, 4);
 
                 switch (roll)
                 {
@@ -3377,12 +3361,12 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         public Item MakeHuntingShopItem()
         {
             // Weapons/Ammo (50%) Outfits&Traps (50%)
-            if (m_DiceRoller.RollChance(50))
+            if (DiceRoller.RollChance(50))
             {
                 // Weapons(40) Ammo(60)
-                if (m_DiceRoller.RollChance(40))
+                if (DiceRoller.RollChance(40))
                 {
-                    int roll = m_DiceRoller.Roll(0, 2);
+                    int roll = DiceRoller.Roll(0, 2);
 
                     switch (roll)
                     {
@@ -3394,7 +3378,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 }
                 else
                 {
-                    int roll = m_DiceRoller.Roll(0, 2);
+                    int roll = DiceRoller.Roll(0, 2);
 
                     switch (roll)
                     {
@@ -3408,7 +3392,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             else
             {
                 // Outfits&Traps
-                int roll = m_DiceRoller.Roll(0, 2);
+                int roll = DiceRoller.Roll(0, 2);
                 switch (roll)
                 {
                     case 0: return MakeItemHunterVest();
@@ -3421,7 +3405,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public Item MakeShopGeneralItem()
         {
-            int roll = m_DiceRoller.Roll(0, 6);
+            int roll = DiceRoller.Roll(0, 6);
             switch (roll)
             {
                 case 0: return MakeShopPharmacyItem();
@@ -3437,7 +3421,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public Item MakeHospitalItem()
         {
-            int randomItem = m_DiceRoller.Roll(0, 7);
+            int randomItem = DiceRoller.Roll(0, 7);
             switch (randomItem)
             {
                 case 0: return MakeItemBandages();
@@ -3455,7 +3439,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public Item MakeRandomBedroomItem()
         {
-            int randomItem = m_DiceRoller.Roll(0, 24);
+            int randomItem = DiceRoller.Roll(0, 24);
 
             switch (randomItem)
             {
@@ -3473,16 +3457,16 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 case 9: return MakeItemRandomPistol();
 
                 case 10: // rare fire weapon
-                    if (m_DiceRoller.RollChance(30))
+                    if (DiceRoller.RollChance(30))
                     {
-                        if (m_DiceRoller.RollChance(50))
+                        if (DiceRoller.RollChance(50))
                             return MakeItemShotgun();
                         else
                             return MakeItemHuntingRifle();
                     }
                     else
                     {
-                        if (m_DiceRoller.RollChance(50))
+                        if (DiceRoller.RollChance(50))
                             return MakeItemShotgunAmmo();
                         else
                             return MakeItemLightRifleAmmo();
@@ -3505,7 +3489,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 case 21:
                 case 22:
                 case 23:
-                    if (m_DiceRoller.RollChance(50))
+                    if (DiceRoller.RollChance(50))
                         return MakeItemBook();
                     else
                         return MakeItemMagazines();
@@ -3516,7 +3500,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public Item MakeRandomKitchenItem()
         {
-            if (m_DiceRoller.RollChance(50))
+            if (DiceRoller.RollChance(50))
                 return MakeItemCannedFood();
             else
                 return MakeItemGroceries();
@@ -3524,14 +3508,14 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public Item MakeRandomCHAROfficeItem()
         {
-            int randomItem = m_DiceRoller.Roll(0, 10);
+            int randomItem = DiceRoller.Roll(0, 10);
             switch (randomItem)
             {
                 case 0:
                     // weapons:
                     // - grenade (rare).
                     // - shotgun/ammo
-                    if (m_DiceRoller.RollChance(10))
+                    if (DiceRoller.RollChance(10))
                     {
                         // grenade!
                         return MakeItemGrenade();
@@ -3539,7 +3523,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                     else
                     {
                         // shotgun/ammo
-                        if (m_DiceRoller.RollChance(30))
+                        if (DiceRoller.RollChance(30))
                             return MakeItemShotgun();
                         else
                             return MakeItemShotgunAmmo();
@@ -3547,7 +3531,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
                 case 1:
                 case 2:
-                    if (m_DiceRoller.RollChance(50))
+                    if (DiceRoller.RollChance(50))
                         return MakeItemBandages();
                     else
                         return MakeItemMedikit();
@@ -3556,9 +3540,9 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                     return MakeItemCannedFood();
 
                 case 4: // rare tracker items
-                    if (m_DiceRoller.RollChance(50))
+                    if (DiceRoller.RollChance(50))
                     {
-                        if (m_DiceRoller.RollChance(50))
+                        if (DiceRoller.RollChance(50))
                             return MakeItemZTracker();
                         else
                             return MakeItemBlackOpsGPS();
@@ -3572,7 +3556,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public Item MakeRandomParkItem()
         {
-            int randomItem = m_DiceRoller.Roll(0, 8);
+            int randomItem = DiceRoller.Roll(0, 8);
             switch (randomItem)
             {
                 case 0: return MakeItemSprayPaint();
@@ -3596,9 +3580,9 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             base.DecorateOutsideWalls(map, rect,
                 (x, y) =>
                 {
-                    if (m_DiceRoller.RollChance(chancePerWall))
+                    if (DiceRoller.RollChance(chancePerWall))
                     {
-                        return POSTERS[m_DiceRoller.Roll(0, POSTERS.Length)];
+                        return POSTERS[DiceRoller.Roll(0, POSTERS.Length)];
                     }
                     else
                         return null;
@@ -3612,9 +3596,9 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             base.DecorateOutsideWalls(map, rect,
                 (x, y) =>
                 {
-                    if (m_DiceRoller.RollChance(chancePerWall))
+                    if (DiceRoller.RollChance(chancePerWall))
                     {
-                        return TAGS[m_DiceRoller.Roll(0, TAGS.Length)];
+                        return TAGS[DiceRoller.Roll(0, TAGS.Length)];
                     }
                     else
                         return null;
@@ -3631,7 +3615,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             for (int i = 0; i < MAX_CHAR_GUARDS_PER_OFFICE; i++)
             {
                 Actor newGuard = CreateNewCHARGuard(0);
-                ActorPlace(m_DiceRoller, 100, map, newGuard, b.InsideRect.Left, b.InsideRect.Top, b.InsideRect.Width, b.InsideRect.Height);
+                ActorPlace(100, map, newGuard, b.InsideRect.Left, b.InsideRect.Top, b.InsideRect.Width, b.InsideRect.Height);
             }
 
         }
@@ -3665,8 +3649,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             for (; ; )
             {
                 // roll.
-                surfaceStairs.X = m_DiceRoller.Roll(rect.Left, rect.Right);
-                surfaceStairs.Y = m_DiceRoller.Roll(rect.Top, rect.Bottom);
+                surfaceStairs.X = DiceRoller.Roll(rect.Left, rect.Right);
+                surfaceStairs.Y = DiceRoller.Roll(rect.Top, rect.Bottom);
 
                 // valid if walkable & no blocking object.
                 // alpha10 and inside
@@ -3690,7 +3674,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             DoForEachTile(basement, basement.Rect,
                 (pt) =>
                 {
-                    if (!m_DiceRoller.RollChance(HOUSE_BASEMENT_PILAR_CHANCE))
+                    if (!DiceRoller.RollChance(HOUSE_BASEMENT_PILAR_CHANCE))
                         return;
                     if (pt == basementStairs)
                         return;
@@ -3703,7 +3687,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             MapObjectFill(basement, basement.Rect,
                 (pt) =>
                 {
-                    if (!m_DiceRoller.RollChance(HOUSE_BASEMENT_OBJECT_CHANCE_PER_TILE))
+                    if (!DiceRoller.RollChance(HOUSE_BASEMENT_OBJECT_CHANCE_PER_TILE))
                         return null;
 
                     if (basement.GetExitAt(pt) != null)
@@ -3711,7 +3695,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                     if (!basement.IsWalkable(pt.X, pt.Y))
                         return null;
 
-                    int roll = m_DiceRoller.Roll(0, 5);
+                    int roll = DiceRoller.Roll(0, 5);
                     switch (roll)
                     {
                         case 0: // junk
@@ -3751,7 +3735,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         if (basement.GetExitAt(pt) != null)
                             return;
 
-                        if (m_DiceRoller.RollChance(SHOP_BASEMENT_ZOMBIE_RAT_CHANCE))
+                        if (DiceRoller.RollChance(SHOP_BASEMENT_ZOMBIE_RAT_CHANCE))
                             basement.PlaceActorAt(CreateNewBasementRatZombie(0), pt);
                     });
             }
@@ -3759,7 +3743,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // weapons cache?
             #region
-            if (m_DiceRoller.RollChance(HOUSE_BASEMENT_WEAPONS_CACHE_CHANCE))
+            if (DiceRoller.RollChance(HOUSE_BASEMENT_WEAPONS_CACHE_CHANCE))
             {
                 MapObjectPlaceInGoodPosition(basement, basement.Rect,
                     (pt) =>
@@ -3774,7 +3758,6 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                             return false;
                         return true;
                     },
-                    m_DiceRoller,
                     (pt) =>
                     {
                         // two grenades...
@@ -3846,8 +3829,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 // find a random room.
                 do
                 {
-                    int x = m_DiceRoller.Roll(officeZone.Bounds.Left, officeZone.Bounds.Right);
-                    int y = m_DiceRoller.Roll(officeZone.Bounds.Top, officeZone.Bounds.Bottom);
+                    int x = DiceRoller.Roll(officeZone.Bounds.Left, officeZone.Bounds.Right);
+                    int y = DiceRoller.Roll(officeZone.Bounds.Top, officeZone.Bounds.Bottom);
                     List<Zone> zonesHere = surfaceMap.GetZonesAt(x, y);
                     if (zonesHere == null || zonesHere.Count == 0)
                         continue;
@@ -3865,8 +3848,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 int attempts = 0;
                 do
                 {
-                    surfaceExit.X = m_DiceRoller.Roll(roomZone.Bounds.Left, roomZone.Bounds.Right);
-                    surfaceExit.Y = m_DiceRoller.Roll(roomZone.Bounds.Top, roomZone.Bounds.Bottom);
+                    surfaceExit.X = DiceRoller.Roll(roomZone.Bounds.Left, roomZone.Bounds.Right);
+                    surfaceExit.Y = DiceRoller.Roll(roomZone.Bounds.Top, roomZone.Bounds.Bottom);
                     foundSurfaceExit = surfaceMap.IsWalkable(surfaceExit.X, surfaceExit.Y);
                     ++attempts;
                 }
@@ -4041,16 +4024,16 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 for (int y = 0; y < underground.Height; y++)
                 {
                     // poster on wall?
-                    if (m_DiceRoller.RollChance(25))
+                    if (DiceRoller.RollChance(25))
                     {
                         Tile tile = underground.GetTileAt(x, y);
                         if (tile.Model.IsWalkable)
                             continue;
-                        tile.AddDecoration(CHAR_POSTERS[m_DiceRoller.Roll(0, CHAR_POSTERS.Length)]);
+                        tile.AddDecoration(CHAR_POSTERS[DiceRoller.Roll(0, CHAR_POSTERS.Length)]);
                     }
 
                     // blood?
-                    if (m_DiceRoller.RollChance(20))
+                    if (DiceRoller.RollChance(20))
                     {
                         Tile tile = underground.GetTileAt(x, y);
                         if (tile.Model.IsWalkable)
@@ -4076,7 +4059,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         break;
                     undead.Model = m_Game.GameActors[upID];
                 }
-                ActorPlace(m_DiceRoller, underground.Width * underground.Height, underground, undead, (pt) => underground.GetExitAt(pt) == null);
+                ActorPlace(underground.Width * underground.Height, underground, undead, (pt) => underground.GetExitAt(pt) == null);
             }
 
             // CHAR Guards.
@@ -4084,7 +4067,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             for (int i = 0; i < nbGuards; i++)
             {
                 Actor guard = CreateNewCHARGuard(0);
-                ActorPlace(m_DiceRoller, underground.Width * underground.Height, underground, guard, (pt) => underground.GetExitAt(pt) == null);
+                ActorPlace(underground.Width * underground.Height, underground, guard, (pt) => underground.GetExitAt(pt) == null);
             }
             #endregion
 
@@ -4114,32 +4097,32 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         return null;
 
                     // table + tracker/armor/weapon.
-                    if (m_DiceRoller.RollChance(20))
+                    if (DiceRoller.RollChance(20))
                     {
                         Item it;
-                        if (m_DiceRoller.RollChance(20))
+                        if (DiceRoller.RollChance(20))
                             it = MakeItemCHARLightBodyArmor();
-                        else if (m_DiceRoller.RollChance(20))
+                        else if (DiceRoller.RollChance(20))
                         {
-                            it = m_DiceRoller.RollChance(50) ? MakeItemZTracker() : MakeItemBlackOpsGPS();
+                            it = DiceRoller.RollChance(50) ? MakeItemZTracker() : MakeItemBlackOpsGPS();
                         }
                         else
                         {
                             // rare grenades.
-                            if (m_DiceRoller.RollChance(20))
+                            if (DiceRoller.RollChance(20))
                             {
                                 it = MakeItemGrenade();
                             }
                             else
                             {
                                 // weapon vs ammo.
-                                if (m_DiceRoller.RollChance(30))
+                                if (DiceRoller.RollChance(30))
                                 {
-                                    it = m_DiceRoller.RollChance(50) ? MakeItemShotgun() : MakeItemHuntingRifle();
+                                    it = DiceRoller.RollChance(50) ? MakeItemShotgun() : MakeItemHuntingRifle();
                                 }
                                 else
                                 {
-                                    it = m_DiceRoller.RollChance(50) ? MakeItemShotgunAmmo() : MakeItemLightRifleAmmo();
+                                    it = DiceRoller.RollChance(50) ? MakeItemShotgunAmmo() : MakeItemLightRifleAmmo();
                                 }
                             }
                         }
@@ -4170,8 +4153,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         return null;
 
                     // barrels/junk?
-                    if (m_DiceRoller.RollChance(50))
-                        return m_DiceRoller.RollChance(50) ? MakeObjJunk(GameImages.OBJ_JUNK) : MakeObjBarrels(GameImages.OBJ_BARRELS);
+                    if (DiceRoller.RollChance(50))
+                        return DiceRoller.RollChance(50) ? MakeObjJunk(GameImages.OBJ_JUNK) : MakeObjBarrels(GameImages.OBJ_BARRELS);
                     else
                         return null;
                 });
@@ -4207,9 +4190,9 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         return null;
 
                     // bed/fridge?
-                    if (m_DiceRoller.RollChance(30))
+                    if (DiceRoller.RollChance(30))
                     {
-                        if (m_DiceRoller.RollChance(50))
+                        if (DiceRoller.RollChance(50))
                             return MakeObjBed(GameImages.OBJ_BED);
                         else
                             return MakeObjFridge(GameImages.OBJ_FRIDGE);
@@ -4228,9 +4211,9 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         return null;
 
                     // tables/chairs.
-                    if (m_DiceRoller.RollChance(30))
+                    if (DiceRoller.RollChance(30))
                     {
-                        if (m_DiceRoller.RollChance(30))
+                        if (DiceRoller.RollChance(30))
                         {
                             MapObject table = MakeObjTable(GameImages.OBJ_CHAR_TABLE);
                             map.DropItemAt(MakeItemCannedFood(), pt);
@@ -4257,7 +4240,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                         return null;
 
                     // table + meds.
-                    if (m_DiceRoller.RollChance(20))
+                    if (DiceRoller.RollChance(20))
                     {
                         Item it = MakeHospitalItem();
                         map.DropItemAt(it, pt);
@@ -4324,7 +4307,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // 1. Pick a block.
             // any random block will do.
-            policeBlock = freeBlocks[m_DiceRoller.Roll(0, freeBlocks.Count)];
+            policeBlock = freeBlocks[DiceRoller.Roll(0, freeBlocks.Count)];
 
             // 2. Generate surface station.
             Point surfaceStairsPos;
@@ -4445,19 +4428,19 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
                             // weaponry/armor/radios.
                             Item it = null;
-                            int roll = m_DiceRoller.Roll(0, 10);
+                            int roll = DiceRoller.Roll(0, 10);
                             switch (roll)
                             {
                                 // 20% armors
                                 case 0:
                                 case 1:
-                                    it = m_DiceRoller.RollChance(50) ? MakeItemPoliceJacket() : MakeItemPoliceRiotArmor();
+                                    it = DiceRoller.RollChance(50) ? MakeItemPoliceJacket() : MakeItemPoliceRiotArmor();
                                     break;
 
                                 // 20% light/radio
                                 case 2:
                                 case 3:
-                                    it = m_DiceRoller.RollChance(50) ? (m_DiceRoller.RollChance(50) ? MakeItemFlashlight() : MakeItemBigFlashlight()) : MakeItemPoliceRadio();
+                                    it = DiceRoller.RollChance(50) ? (DiceRoller.RollChance(50) ? MakeItemFlashlight() : MakeItemBigFlashlight()) : MakeItemPoliceRadio();
                                     break;
 
                                 // 20% truncheon
@@ -4469,13 +4452,13 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                                 // 20% pistol/ammo - 30% pistol 70% amo
                                 case 6:
                                 case 7:
-                                    it = m_DiceRoller.RollChance(30) ? MakeItemPistol() : MakeItemLightPistolAmmo();
+                                    it = DiceRoller.RollChance(30) ? MakeItemPistol() : MakeItemLightPistolAmmo();
                                     break;
 
                                 // 20% shotgun/ammo - 30% shotgun 70% amo
                                 case 8:
                                 case 9:
-                                    it = m_DiceRoller.RollChance(30) ? MakeItemShotgun() : MakeItemShotgunAmmo();
+                                    it = DiceRoller.RollChance(30) ? MakeItemShotgun() : MakeItemShotgunAmmo();
                                     break;
 
                                 default:
@@ -4503,15 +4486,12 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                     // add furniture : 1 table, 2 chairs.
                     MapObjectPlaceInGoodPosition(map, inRoomRect,
                         (pt) => map.IsWalkable(pt.X, pt.Y) && CountAdjDoors(map, pt.X, pt.Y) == 0,
-                        m_DiceRoller,
                         (pt) => MakeObjTable(GameImages.OBJ_TABLE));
                     MapObjectPlaceInGoodPosition(map, inRoomRect,
                         (pt) => map.IsWalkable(pt.X, pt.Y) && CountAdjDoors(map, pt.X, pt.Y) == 0,
-                        m_DiceRoller,
                         (pt) => MakeObjChair(GameImages.OBJ_CHAIR));
                     MapObjectPlaceInGoodPosition(map, inRoomRect,
                         (pt) => map.IsWalkable(pt.X, pt.Y) && CountAdjDoors(map, pt.X, pt.Y) == 0,
-                        m_DiceRoller,
                         (pt) => MakeObjChair(GameImages.OBJ_CHAIR));
 
                     // zone.
@@ -4539,7 +4519,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             for (int i = 0; i < nbCops; i++)
             {
                 Actor cop = CreateNewPoliceman(0);
-                ActorPlace(m_DiceRoller, map.Width * map.Height, map, cop);
+                ActorPlace(map.Width * map.Height, map, cop);
             }
 
             // done.
@@ -4598,7 +4578,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             // 3. Populate.
             // a prisoner in each cell.
             // alph10.1 the prisoner who should not be is now in one of the cell at random instead of always the last one
-            int prisonnerCell = m_DiceRoller.Roll(0, cells.Count);
+            int prisonnerCell = DiceRoller.Roll(0, cells.Count);
             for (int i = 0; i < cells.Count; i++)
             {
                 Rectangle cell = cells[i];
@@ -4670,7 +4650,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // 1. Pick a block.
             // any random block will do.
-            hospitalBlock = freeBlocks[m_DiceRoller.Roll(0, freeBlocks.Count)];
+            hospitalBlock = freeBlocks[DiceRoller.Roll(0, freeBlocks.Count)];
 
             // 2. Generate surface.
             GenerateHospitalEntryHall(map, hospitalBlock);
@@ -4818,7 +4798,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 // create.
                 Actor patient = CreateNewHospitalPatient(0);
                 // place.
-                ActorPlace(m_DiceRoller, map.Width * map.Height, map, patient, (pt) => map.HasZonePartiallyNamedAt(pt, "patient room"));
+                ActorPlace(map.Width * map.Height, map, patient, (pt) => map.HasZonePartiallyNamedAt(pt, "patient room"));
             }
 
             // nurses & doctor in corridor.
@@ -4828,7 +4808,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 // create.
                 Actor nurse = CreateNewHospitalNurse(0);
                 // place.
-                ActorPlace(m_DiceRoller, map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "corridor"));
+                ActorPlace(map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "corridor"));
             }
             const int nbDoctor = 1;
             for (int i = 0; i < nbDoctor; i++)
@@ -4836,7 +4816,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 // create.
                 Actor nurse = CreateNewHospitalDoctor(0);
                 // place.
-                ActorPlace(m_DiceRoller, map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "corridor"));
+                ActorPlace(map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "corridor"));
             }
 
             // done.
@@ -4892,7 +4872,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 // create.
                 Actor nurse = CreateNewHospitalNurse(0);
                 // place.
-                ActorPlace(m_DiceRoller, map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "office"));
+                ActorPlace(map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "office"));
             }
             const int nbDoctor = 2;
             for (int i = 0; i < nbDoctor; i++)
@@ -4900,7 +4880,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 // create.
                 Actor nurse = CreateNewHospitalDoctor(0);
                 // place.
-                ActorPlace(m_DiceRoller, map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "office"));
+                ActorPlace(map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "office"));
             }
 
             // done.
@@ -4956,7 +4936,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 // create.
                 Actor patient = CreateNewHospitalPatient(0);
                 // place.
-                ActorPlace(m_DiceRoller, map.Width * map.Height, map, patient, (pt) => map.HasZonePartiallyNamedAt(pt, "patient room"));
+                ActorPlace(map.Width * map.Height, map, patient, (pt) => map.HasZonePartiallyNamedAt(pt, "patient room"));
             }
 
             // nurses & doctor in corridor.
@@ -4966,7 +4946,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 // create.
                 Actor nurse = CreateNewHospitalNurse(0);
                 // place.
-                ActorPlace(m_DiceRoller, map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "corridor"));
+                ActorPlace(map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "corridor"));
             }
             const int nbDoctor = 2;
             for (int i = 0; i < nbDoctor; i++)
@@ -4974,7 +4954,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 // create.
                 Actor nurse = CreateNewHospitalDoctor(0);
                 // place.
-                ActorPlace(m_DiceRoller, map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "corridor"));
+                ActorPlace(map.Width * map.Height, map, nurse, (pt) => map.HasZonePartiallyNamedAt(pt, "corridor"));
             }
 
             // done.
@@ -5158,13 +5138,13 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // create.
             Actor patient = model.CreateNumberedName(m_Game.GameFactions.TheCivilians, 0);
-            SkinNakedHuman(m_DiceRoller, patient);
-            GiveNameToActor(m_DiceRoller, patient);
+            SkinNakedHuman(patient);
+            GiveNameToActor(patient);
             patient.Name = "Patient " + patient.Name;
             //patient.Controller = new CivilianAI();  // alpha10.1 defined by model like other actors
 
             // skills.
-            GiveRandomSkillsToActor(m_DiceRoller, patient, 1);
+            GiveRandomSkillsToActor(patient, 1);
 
             // add patient uniform.
             patient.Doll.AddDecoration(DollPart.TORSO, GameImages.HOSPITAL_PATIENT_UNIFORM);
@@ -5177,8 +5157,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             // create.
             Actor nurse = m_Game.GameActors.FemaleCivilian.CreateNumberedName(m_Game.GameFactions.TheCivilians, 0);
-            SkinNakedHuman(m_DiceRoller, nurse);
-            GiveNameToActor(m_DiceRoller, nurse);
+            SkinNakedHuman(nurse);
+            GiveNameToActor(nurse);
             nurse.Name = "Nurse " + nurse.Name;
             //nurse.Controller = new CivilianAI(); // alpha10.1 defined by model like other actors
 
@@ -5186,7 +5166,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             nurse.Doll.AddDecoration(DollPart.TORSO, GameImages.HOSPITAL_NURSE_UNIFORM);
 
             // skills : 1 + 1-Medic.
-            GiveRandomSkillsToActor(m_DiceRoller, nurse, 1);
+            GiveRandomSkillsToActor(nurse, 1);
             GiveStartingSkillToActor(nurse, Skills.IDs.MEDIC);
 
             // items : bandages.
@@ -5200,8 +5180,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             // create.
             Actor doctor = m_Game.GameActors.MaleCivilian.CreateNumberedName(m_Game.GameFactions.TheCivilians, 0);
-            SkinNakedHuman(m_DiceRoller, doctor);
-            GiveNameToActor(m_DiceRoller, doctor);
+            SkinNakedHuman(doctor);
+            GiveNameToActor(doctor);
             doctor.Name = "Doctor " + doctor.Name;
             //doctor.Controller = new CivilianAI(); // alpha10.1 defined by model like other actors
 
@@ -5209,7 +5189,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             doctor.Doll.AddDecoration(DollPart.TORSO, GameImages.HOSPITAL_DOCTOR_UNIFORM);
 
             // skills : 1 + 3-Medic + 1-Leadership.
-            GiveRandomSkillsToActor(m_DiceRoller, doctor, 1);
+            GiveRandomSkillsToActor(doctor, 1);
             GiveStartingSkillToActor(doctor, Skills.IDs.MEDIC);
             GiveStartingSkillToActor(doctor, Skills.IDs.MEDIC);
             GiveStartingSkillToActor(doctor, Skills.IDs.MEDIC);
@@ -5243,9 +5223,9 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             map.PlaceMapObjectAt(MakeObjNightTable(GameImages.OBJ_HOSPITAL_NIGHT_TABLE), tablePos);
 
             // chance of some meds/food/book on nightable.
-            if (m_DiceRoller.RollChance(50))
+            if (DiceRoller.RollChance(50))
             {
-                int roll = m_DiceRoller.Roll(0, 3);
+                int roll = DiceRoller.Roll(0, 3);
                 Item it = null;
                 switch (roll)
                 {
@@ -5303,7 +5283,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
                     // full stacks of meds or canned food.
                     Item it;
-                    it = m_DiceRoller.RollChance(80) ? MakeHospitalItem() : MakeItemCannedFood();
+                    it = DiceRoller.RollChance(80) ? MakeHospitalItem() : MakeItemCannedFood();
                     if (it.Model.IsStackable)
                         it.Quantity = it.Model.StackingLimit;
                     map.DropItemAt(it, pt);
@@ -5311,7 +5291,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // alpha10 
             // chance to spawn a nurse
-            if (m_DiceRoller.RollChance(20))  // alpha10.1 increased to 20% (avg 5 nurses for 24 storage rooms)
+            if (DiceRoller.RollChance(20))  // alpha10.1 increased to 20% (avg 5 nurses for 24 storage rooms)
             {
                 bool spawnedActor = false;
                 DoForEachTile(map, room,
@@ -5334,15 +5314,15 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         #region Actors
 
-        public void GiveRandomItemToActor(DiceRoller roller, Actor actor, int spawnTime)
+        public void GiveRandomItemToActor(Actor actor, int spawnTime)
         {
             Item it = null;
 
             // rare item chance after Day X
             int day = new WorldTime(spawnTime).Day;
-            if (day > Rules.GIVE_RARE_ITEM_DAY && roller.RollChance(Rules.GIVE_RARE_ITEM_CHANCE))
+            if (day > Rules.GIVE_RARE_ITEM_DAY && DiceRoller.RollChance(Rules.GIVE_RARE_ITEM_CHANCE))
             {
-                int roll = roller.Roll(0, 6);
+                int roll = DiceRoller.Roll(0, 6);
                 switch (roll)
                 {
                     case 0: it = MakeItemGrenade(); break;
@@ -5357,7 +5337,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             else
             {
                 // standard item.
-                int roll = roller.Roll(0, 10);
+                int roll = DiceRoller.Roll(0, 10);
                 switch (roll)
                 {
                     case 0: it = MakeRandomShopItem(ShopType.CONSTRUCTION); break;
@@ -5383,12 +5363,12 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             Actor newRefugee;
 
             // civilian, policeman?
-            if (m_DiceRoller.RollChance(Params.PolicemanChance))
+            if (DiceRoller.RollChance(Params.PolicemanChance))
             {
                 newRefugee = CreateNewPoliceman(spawnTime);
                 // add random items.
                 for (int i = 0; i < itemsToCarry && newRefugee.Inventory.CountItems < newRefugee.Inventory.MaxCapacity; i++)
-                    GiveRandomItemToActor(m_DiceRoller, newRefugee, spawnTime);
+                    GiveRandomItemToActor(newRefugee, spawnTime);
             }
             else
             {
@@ -5397,7 +5377,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // give skills : 1 per day + 1 for starting.
             int nbSkills = 1 + new WorldTime(spawnTime).Day;
-            base.GiveRandomSkillsToActor(m_DiceRoller, newRefugee, nbSkills);
+            base.GiveRandomSkillsToActor(newRefugee, nbSkills);
 
             // done.
             return newRefugee;
@@ -5413,8 +5393,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             Actor survivor = model.CreateNumberedName(m_Game.GameFactions.TheSurvivors, spawnTime);
 
             // setup.
-            base.GiveNameToActor(m_DiceRoller, survivor);
-            base.DressCivilian(m_DiceRoller, survivor);
+            base.GiveNameToActor(survivor);
+            base.DressCivilian(survivor);
             survivor.Doll.AddDecoration(DollPart.HEAD, isMale ? GameImages.SURVIVOR_MALE_BANDANA : GameImages.SURVIVOR_FEMALE_BANDANA);
 
             // give items, good survival gear (7 items).
@@ -5423,10 +5403,10 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             survivor.Inventory.AddAll(MakeItemCannedFood());
             survivor.Inventory.AddAll(MakeItemArmyRation());
             // 3,4. 1 fire weapon with 1 ammo box or grenade.
-            if (m_DiceRoller.RollChance(50))
+            if (DiceRoller.RollChance(50))
             {
                 survivor.Inventory.AddAll(MakeItemArmyRifle());
-                if (m_DiceRoller.RollChance(50))
+                if (DiceRoller.RollChance(50))
                     survivor.Inventory.AddAll(MakeItemHeavyRifleAmmo());
                 else
                     survivor.Inventory.AddAll(MakeItemGrenade());
@@ -5434,7 +5414,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             else
             {
                 survivor.Inventory.AddAll(MakeItemShotgun());
-                if (m_DiceRoller.RollChance(50))
+                if (DiceRoller.RollChance(50))
                     survivor.Inventory.AddAll(MakeItemShotgunAmmo());
                 else
                     survivor.Inventory.AddAll(MakeItemGrenade());
@@ -5443,7 +5423,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             survivor.Inventory.AddAll(MakeItemMedikit());
 
             // 6    1 pill item.
-            switch (m_DiceRoller.Roll(0, 3))
+            switch (DiceRoller.Roll(0, 3))
             {
                 case 0: survivor.Inventory.AddAll(MakeItemPillsSLP()); break;
                 case 1: survivor.Inventory.AddAll(MakeItemPillsSTA()); break;
@@ -5455,7 +5435,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // give skills : 1 per day + 5 as bonus.
             int nbSkills = 3 + new WorldTime(spawnTime).Day;
-            base.GiveRandomSkillsToActor(m_DiceRoller, survivor, nbSkills);
+            base.GiveRandomSkillsToActor(survivor, nbSkills);
 
             // AI.
             //survivor.Controller = new CivilianAI(); // alpha10.1 defined by model like other actors
@@ -5491,11 +5471,11 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             Actor civilian = model.CreateNumberedName(m_Game.GameFactions.TheCivilians, spawnTime);
 
             // setup.
-            base.DressCivilian(m_DiceRoller, civilian);
-            base.GiveNameToActor(m_DiceRoller, civilian);
+            base.DressCivilian(civilian);
+            base.GiveNameToActor(civilian);
             for (int i = 0; i < itemsToCarry; i++)
-                GiveRandomItemToActor(m_DiceRoller, civilian, spawnTime);
-            base.GiveRandomSkillsToActor(m_DiceRoller, civilian, skills);
+                GiveRandomItemToActor(civilian, spawnTime);
+            base.GiveRandomSkillsToActor(civilian, skills);
             //civilian.Controller = new CivilianAI();  // alpha10.1 defined by model like other actors
 
             // slightly randomize Food and Sleep - 0..25%.
@@ -5517,16 +5497,16 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             Actor newCop = model.CreateNumberedName(m_Game.GameFactions.ThePolice, spawnTime);
 
             // setup.
-            base.DressPolice(m_DiceRoller, newCop);
-            base.GiveNameToActor(m_DiceRoller, newCop);
+            base.DressPolice(newCop);
+            base.GiveNameToActor(newCop);
             newCop.Name = "Cop " + newCop.Name;
-            base.GiveRandomSkillsToActor(m_DiceRoller, newCop, 1);
+            base.GiveRandomSkillsToActor(newCop, 1);
             base.GiveStartingSkillToActor(newCop, Skills.IDs.FIREARMS);
             base.GiveStartingSkillToActor(newCop, Skills.IDs.LEADERSHIP);
             //newCop.Controller = new CivilianAI(); // alpha10.1 defined by model like other actors
 
             // give items.
-            if (m_DiceRoller.RollChance(50))
+            if (DiceRoller.RollChance(50))
             {
                 // pistol
                 newCop.Inventory.AddAll(MakeItemPistol());
@@ -5541,9 +5521,9 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             newCop.Inventory.AddAll(MakeItemTruncheon());
             newCop.Inventory.AddAll(MakeItemFlashlight());
             newCop.Inventory.AddAll(MakeItemPoliceRadio());
-            if (m_DiceRoller.RollChance(50))
+            if (DiceRoller.RollChance(50))
             {
-                if (m_DiceRoller.RollChance(80))
+                if (DiceRoller.RollChance(80))
                     newCop.Inventory.AddAll(MakeItemPoliceJacket());
                 else
                     newCop.Inventory.AddAll(MakeItemPoliceRiotArmor());
@@ -5624,7 +5604,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 return CreateNewUndead(spawnTime);
 
             // decide model. 
-            ActorModel undeadModel = m_DiceRoller.RollChance(80) ? m_Game.GameActors.RatZombie : m_Game.GameActors.Zombie;
+            ActorModel undeadModel = DiceRoller.RollChance(80) ? m_Game.GameActors.RatZombie : m_Game.GameActors.Zombie;
 
             // create.
             Actor newUndead = undeadModel.CreateNumberedName(m_Game.GameFactions.TheUndeads, spawnTime);
@@ -5665,8 +5645,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             Actor newGuard = model.CreateNumberedName(m_Game.GameFactions.TheCHARCorporation, spawnTime);
 
             // setup.
-            base.DressCHARGuard(m_DiceRoller, newGuard);
-            base.GiveNameToActor(m_DiceRoller, newGuard);
+            base.DressCHARGuard(newGuard);
+            base.GiveNameToActor(newGuard);
             newGuard.Name = "Gd. " + newGuard.Name;
 
             // give items.
@@ -5687,8 +5667,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             Actor newNat = model.CreateNumberedName(m_Game.GameFactions.TheArmy, spawnTime);
 
             // setup.
-            base.DressArmy(m_DiceRoller, newNat);
-            base.GiveNameToActor(m_DiceRoller, newNat);
+            base.DressArmy(newNat);
+            base.GiveNameToActor(newNat);
             newNat.Name = rankName + " " + newNat.Name;
 
             // give items 6/7.
@@ -5709,7 +5689,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             // give skills : 1 per day after min arrival date.
             int nbSkills = new WorldTime(spawnTime).Day - RogueGame.NATGUARD_DAY;
             if (nbSkills > 0)
-                base.GiveRandomSkillsToActor(m_DiceRoller, newNat, nbSkills);
+                base.GiveRandomSkillsToActor(newNat, nbSkills);
 
             // done.
             return newNat;
@@ -5725,18 +5705,18 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // setup.
             newBiker.GangID = (int)gangId;
-            base.DressBiker(m_DiceRoller, newBiker);
-            base.GiveNameToActor(m_DiceRoller, newBiker);
+            base.DressBiker(newBiker);
+            base.GiveNameToActor(newBiker);
             newBiker.Controller = new GangAI();
 
             // give items.
-            newBiker.Inventory.AddAll(m_DiceRoller.RollChance(50) ? MakeItemCrowbar() : MakeItemBaseballBat());
+            newBiker.Inventory.AddAll(DiceRoller.RollChance(50) ? MakeItemCrowbar() : MakeItemBaseballBat());
             newBiker.Inventory.AddAll(MakeItemBikerGangJacket(gangId));
 
             // give skills : 1 per day after min arrival date.
             int nbSkills = new WorldTime(spawnTime).Day - RogueGame.BIKERS_RAID_DAY;
             if (nbSkills > 0)
-                base.GiveRandomSkillsToActor(m_DiceRoller, newBiker, nbSkills);
+                base.GiveRandomSkillsToActor(newBiker, nbSkills);
 
             // done.
             return newBiker;
@@ -5752,18 +5732,18 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // setup.
             newGangsta.GangID = (int)gangId;
-            base.DressGangsta(m_DiceRoller, newGangsta);
-            base.GiveNameToActor(m_DiceRoller, newGangsta);
+            base.DressGangsta(newGangsta);
+            base.GiveNameToActor(newGangsta);
             newGangsta.Controller = new GangAI();
 
             // give items.
-            newGangsta.Inventory.AddAll(m_DiceRoller.RollChance(50) ? MakeItemRandomPistol() : MakeItemBaseballBat());
+            newGangsta.Inventory.AddAll(DiceRoller.RollChance(50) ? MakeItemRandomPistol() : MakeItemBaseballBat());
 
 
             // give skills : 1 per day after min arrival date.
             int nbSkills = new WorldTime(spawnTime).Day - RogueGame.GANGSTAS_RAID_DAY;
             if (nbSkills > 0)
-                base.GiveRandomSkillsToActor(m_DiceRoller, newGangsta, nbSkills);
+                base.GiveRandomSkillsToActor(newGangsta, nbSkills);
 
             // done.
             return newGangsta;
@@ -5778,8 +5758,8 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             Actor newBO = model.CreateNumberedName(m_Game.GameFactions.TheBlackOps, spawnTime);
 
             // setup.
-            base.DressBlackOps(m_DiceRoller, newBO);
-            base.GiveNameToActor(m_DiceRoller, newBO);
+            base.DressBlackOps(newBO);
+            base.GiveNameToActor(newBO);
             newBO.Name = rankName + " " + newBO.Name;
 
             // give items.
@@ -5801,7 +5781,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             newDog = m_Game.GameActors.FeralDog.CreateNumberedName(m_Game.GameFactions.TheFerals, spawnTime);
 
             // skin
-            SkinDog(m_DiceRoller, newDog);
+            SkinDog(newDog);
 
             // done.
             return newDog;

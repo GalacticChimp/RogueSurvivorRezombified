@@ -4,6 +4,7 @@ using System.Text;
 
 using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Data.Enums;
+using djack.RogueSurvivor.Data.Helpers;
 using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
@@ -101,7 +102,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 2.2 Move closer.
 
             // 2.1 If adjacent, barricade.
-            if (game.Rules.IsAdjacent(m_Actor.Location.Position, location.Position))
+            if (m_Actor.Location.Position.IsAdjacent(location.Position))
             {
                 ActorAction barricadeAction = new ActionBarricadeDoor(m_Actor, door);
                 if (barricadeAction.IsLegal())
@@ -147,7 +148,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 2.2 Move closer.
 
             // 2.1 If adjacent, build.
-            if (game.Rules.IsAdjacent(m_Actor.Location.Position, location.Position))
+            if (m_Actor.Location.Position.IsAdjacent(location.Position))
             {
                 ActorAction buildAction = new ActionBuildFortification(m_Actor, location.Position, isLarge);
                 if (buildAction.IsLegal())
@@ -180,12 +181,12 @@ namespace djack.RogueSurvivor.Gameplay.AI
             ////////////////////////////////
 
             // 1. See enemy => raise alarm.
-            List<Percept> enemies = FilterEnemies(game, percepts);
+            List<Percept> enemies = FilterEnemies(percepts);
             if (enemies != null)
             {
                 // ALAAAARRMM!!
                 SetOrder(null);
-                Actor nearestEnemy = FilterNearest(game, enemies).Percepted as Actor;
+                Actor nearestEnemy = FilterNearest(enemies).Percepted as Actor;
                 if (nearestEnemy == null)
                     throw new InvalidOperationException("null nearest enemy");
                 return new ActionShout(m_Actor, String.Format("{0} sighted!!", nearestEnemy.Name));
@@ -201,13 +202,13 @@ namespace djack.RogueSurvivor.Gameplay.AI
             /////////////////////////////
 
             // 1. Mimick leader cell phone usage.
-            ActorAction phoneAction = BehaviorEquipCellPhone(game);
+            ActorAction phoneAction = BehaviorEquipCellPhone();
             if (phoneAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
                 return phoneAction;
             }
-            phoneAction = BehaviorUnequipCellPhoneIfLeaderHasNot(game);
+            phoneAction = BehaviorUnequipCellPhoneIfLeaderHasNot();
             if (phoneAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
@@ -226,7 +227,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 3. Eat if hungry.
-            if (game.Rules.IsActorHungry(m_Actor))
+            if (m_Actor.IsActorHungry())
             {
                 ActorAction eatAction = BehaviorEat(game);
                 if (eatAction != null)
@@ -259,12 +260,12 @@ namespace djack.RogueSurvivor.Gameplay.AI
             ////////////////////////////////
 
             // 1. See enemy => raise alarm.
-            List<Percept> enemies = FilterEnemies(game, percepts);
+            List<Percept> enemies = FilterEnemies(percepts);
             if (enemies != null)
             {
                 // ALAAAARRMM!!
                 SetOrder(null);
-                Actor nearestEnemy = FilterNearest(game, enemies).Percepted as Actor;
+                Actor nearestEnemy = FilterNearest(enemies).Percepted as Actor;
                 if (nearestEnemy == null)
                     throw new InvalidOperationException("null nearest enemy");
                 return new ActionShout(m_Actor, String.Format("{0} sighted!!", nearestEnemy.Name));
@@ -287,13 +288,13 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 1. Mimick leader cell phone usage.
-            ActorAction phoneAction = BehaviorEquipCellPhone(game);
+            ActorAction phoneAction = BehaviorEquipCellPhone();
             if (phoneAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
                 return phoneAction;
             }
-            phoneAction = BehaviorUnequipCellPhoneIfLeaderHasNot(game);
+            phoneAction = BehaviorUnequipCellPhoneIfLeaderHasNot();
             if (phoneAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
@@ -312,7 +313,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 3. Eat if hungry.
-            if (game.Rules.IsActorHungry(m_Actor))
+            if (m_Actor.IsActorHungry())
             {
                 ActorAction eatAction = BehaviorEat(game);
                 if (eatAction != null)
@@ -358,7 +359,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // use drop item behaviour on the first item it can.
             for (int i = 0; i < m_Actor.Inventory.CountItems; i++)
             {
-                ActorAction dropAction = BehaviorDropItem(game, m_Actor.Inventory[i]);
+                ActorAction dropAction = BehaviorDropItem(m_Actor.Inventory[i]);
                 if (dropAction != null)
                     return dropAction;
             }
@@ -387,12 +388,12 @@ namespace djack.RogueSurvivor.Gameplay.AI
             ////////////////////////////////
 
             // 1. See enemy => raise alarm.
-            List<Percept> enemies = FilterEnemies(game, percepts);
+            List<Percept> enemies = FilterEnemies(percepts);
             if (enemies != null)
             {
                 // ALAAAARRMM!!
                 SetOrder(null);
-                Actor nearestEnemy = FilterNearest(game, enemies).Percepted as Actor;
+                Actor nearestEnemy = FilterNearest(enemies).Percepted as Actor;
                 if (nearestEnemy == null)
                     throw new InvalidOperationException("null nearest enemy");
                 return new ActionShout(m_Actor, String.Format("{0} sighted!!", nearestEnemy.Name));
@@ -462,12 +463,12 @@ namespace djack.RogueSurvivor.Gameplay.AI
         ActorAction ExecuteSleepNow(RogueGame game, List<Percept> percepts)
         {
             // interrupt if seeing an enemy.
-            List<Percept> enemies = FilterEnemies(game, percepts);
+            List<Percept> enemies = FilterEnemies(percepts);
             if (enemies != null)
             {
                 // ALAAAARRMM!!
                 SetOrder(null);
-                Actor nearestEnemy = FilterNearest(game, enemies).Percepted as Actor;
+                Actor nearestEnemy = FilterNearest(enemies).Percepted as Actor;
                 if (nearestEnemy == null)
                     throw new InvalidOperationException("null nearest enemy");
                 return new ActionShout(m_Actor, String.Format("{0} sighted!!", nearestEnemy.Name));

@@ -41,10 +41,10 @@ namespace djack.RogueSurvivor.Gameplay.AI.Sensors
         }
 
         #region Sensor
-        public override List<Percept> Sense(RogueGame game, Actor actor)
+        public override List<Percept> Sense(World world, Actor actor)
         {
             m_List.Clear();
-            int minStrength = game.Rules.ActorSmellThreshold(actor);
+            int minStrength = actor.ActorSmellThreshold();
 
             // smell adjacent & self.
             int xmin = actor.Location.Position.X - 1;

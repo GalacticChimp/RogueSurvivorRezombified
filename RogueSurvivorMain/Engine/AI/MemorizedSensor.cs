@@ -42,7 +42,7 @@ namespace djack.RogueSurvivor.Engine.AI
             m_Percepts.Clear();
         }
 
-        public override List<Percept> Sense(RogueGame game, Actor actor)
+        public override List<Percept> Sense(World world, Actor actor)
         {
             // Forget aged percepts
             for(int i = 0; i < m_Percepts.Count; )
@@ -65,7 +65,7 @@ namespace djack.RogueSurvivor.Engine.AI
             }
 
             // Get new percepts.
-            List<Percept> turnPercepts = m_Sensor.Sense(game, actor);
+            List<Percept> turnPercepts = m_Sensor.Sense(world, actor);
 
             // Update old percepts and add new ones.
             List<Percept> perceptsToAdd = null;

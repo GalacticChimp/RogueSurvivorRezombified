@@ -289,13 +289,13 @@ namespace djack.RogueSurvivor.Engine
                 });
         }
 
-        public static HashSet<Point> ComputeFOVFor(Rules rules, Actor actor, WorldTime time, Weather weather)
+        public static HashSet<Point> ComputeFOVFor(Actor actor, WorldTime time, Weather weather)
         {
             Location fromLocation = actor.Location;
             HashSet<Point> visibleSet = new HashSet<Point>();
             Point from = fromLocation.Position;
             Map map = fromLocation.Map;
-            int maxRange = rules.ActorFOV(actor, time, weather);
+            int maxRange = actor.ActorFOV(time, weather);
 
             //////////////////////////////////////////////
             // Brute force ray-casting with wall fix pass
@@ -318,7 +318,7 @@ namespace djack.RogueSurvivor.Engine
                     to.Y = y;
 
                     // Distance check.
-                    if (rules.LOSDistance(from, to) > maxRange)
+                    if (LOSDistance(from, to) > maxRange)
                         continue;
 
                     // If we already know tile is visible, pass.
@@ -374,5 +374,19 @@ namespace djack.RogueSurvivor.Engine
             return visibleSet;
         }
         #endregion
+
+        /// <summary>
+        /// Distance to use in LOS computing. Based on standard distance and modified to have a nice circle FOV.
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        public static float LOSDistance(Point from, Point to)
+        {
+            int dX = to.X - from.X;
+            int dY = to.Y - from.Y;
+            int square = dX * dX + dY * dY;
+            return (float)Math.Sqrt(0.75f * square); // nice factor to have a smooth circle (0.90: too rough)
+        }
     }
 }

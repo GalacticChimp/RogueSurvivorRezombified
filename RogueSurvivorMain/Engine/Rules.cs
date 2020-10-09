@@ -5,10 +5,12 @@ using System.Drawing;
 
 using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Data.Items;
+using djack.RogueSurvivor.Data.Helpers;
 using djack.RogueSurvivor.Gameplay;
 using djack.RogueSurvivor.Gameplay.AI;
 using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.Items;
+using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Engine
 {
@@ -393,24 +395,6 @@ namespace djack.RogueSurvivor.Engine
         #endregion
         #endregion
 
-        #region Fields
-        readonly DiceRoller m_DiceRoller;
-        #endregion
-
-        #region Properties
-        public DiceRoller DiceRoller { get { return m_DiceRoller; } }
-        #endregion
-
-        #region Init
-        public Rules(DiceRoller diceRoller)
-        {
-            if (diceRoller == null)
-                throw new ArgumentNullException("diceRoller");
-
-            m_DiceRoller = diceRoller;
-        }
-        #endregion
-
         #region Rolling & Random choices
         /// <summary>
         /// Roll in range [min, max[.
@@ -420,17 +404,17 @@ namespace djack.RogueSurvivor.Engine
         /// <returns></returns>
         public int Roll(int min, int max)
         {
-            return m_DiceRoller.Roll(min, max);
+            return DiceRoller.Roll(min, max);
         }
 
         public bool RollChance(int chance)
         {
-            return m_DiceRoller.RollChance(chance);
+            return DiceRoller.RollChance(chance);
         }
 
         public float RollFloat()
         {
-            return m_DiceRoller.RollFloat();
+            return DiceRoller.RollFloat();
         }
 
         /// <summary>
@@ -442,7 +426,7 @@ namespace djack.RogueSurvivor.Engine
         public float Randomize(float value, float deviation)
         {
             float halfDeviation = deviation/2f;
-            return value - halfDeviation * m_DiceRoller.RollFloat() + halfDeviation * m_DiceRoller.RollFloat();
+            return value - halfDeviation * DiceRoller.RollFloat() + halfDeviation * DiceRoller.RollFloat();
         }
 
         public int RollX(Map map)
@@ -450,7 +434,7 @@ namespace djack.RogueSurvivor.Engine
             if (map == null)
                 throw new ArgumentNullException("map");
 
-            return m_DiceRoller.Roll(0, map.Width);
+            return DiceRoller.Roll(0, map.Width);
         }
 
         public int RollY(Map map)
@@ -458,12 +442,12 @@ namespace djack.RogueSurvivor.Engine
             if (map == null)
                 throw new ArgumentNullException("map");
 
-            return m_DiceRoller.Roll(0, map.Height);
+            return DiceRoller.Roll(0, map.Height);
         }
 
         public Direction RollDirection()
         {
-            return Direction.COMPASS[m_DiceRoller.Roll(0, 8)];
+            return Direction.COMPASS[DiceRoller.Roll(0, 8)];
         }
 
         /// <summary>
@@ -476,7 +460,7 @@ namespace djack.RogueSurvivor.Engine
             if (skillValue <= 0)
                 return 0;
             // bell curve results = less extremes => favor higher skill vs lower skill
-            return (m_DiceRoller.Roll(0, skillValue + 1) + m_DiceRoller.Roll(0, skillValue + 1)) / 2;
+            return (DiceRoller.Roll(0, skillValue + 1) + DiceRoller.Roll(0, skillValue + 1)) / 2;
         }
 
         /// <summary>
@@ -488,7 +472,7 @@ namespace djack.RogueSurvivor.Engine
         {
             if (damageValue <= 0)
                 return 0;
-            return m_DiceRoller.Roll(damageValue / 2, damageValue + 1);
+            return DiceRoller.Roll(damageValue / 2, damageValue + 1);
         }
 
         public Location RollNeighbourInMap(Location from)
@@ -598,7 +582,7 @@ namespace djack.RogueSurvivor.Engine
             /////////////////////////////////
 
             // 1. Target is enemy.
-            if (AreEnemies(actor, target))
+            if (actor.IsEnemiesWith(target))
             {
                 reason = "enemy";
                 return false;
@@ -669,86 +653,6 @@ namespace djack.RogueSurvivor.Engine
             return true;
         }
 
-        public bool IsActorTired(Actor actor)
-        {
-            if (actor == null)
-                throw new ArgumentNullException("actor");
-
-            return actor.Model.Abilities.CanTire && actor.StaminaPoints < STAMINA_MIN_FOR_ACTIVITY;
-        }
-
-        public bool CanActorMeleeAttack(Actor actor, Actor target)
-        {
-            string reason;
-            return CanActorMeleeAttack(actor, target, out reason);
-        }
-
-        public bool CanActorMeleeAttack(Actor actor, Actor target, out string reason)
-        {
-            if (actor == null)
-                throw new ArgumentNullException("actor");
-            if (target == null)
-                throw new ArgumentNullException("target");
-
-            //////////////////////////////
-            // Cant run if any is true:
-            // 1. Target not adjacent in map or not sharing an exit.
-            // 2. Stamina below min level.
-            // 3. Target is dead (doh!).
-            //////////////////////////////
-
-            // 1. Target not adjacent in map or not sharing an exit.
-            if (actor.Location.Map == target.Location.Map)
-            {
-                if (!IsAdjacent(actor.Location.Position, target.Location.Position))
-                {
-                    reason = "not adjacent";
-                    return false;
-                }
-            }
-            else
-            {
-                // check there is an exit at both positions.
-                Exit fromExit = actor.Location.Map.GetExitAt(actor.Location.Position);
-                if (fromExit == null)
-                {
-                    reason = "not reachable";
-                    return false;
-                }
-                Exit toExit = target.Location.Map.GetExitAt(target.Location.Position);
-                if (toExit == null)
-                {
-                    reason = "not reachable";
-                    return false;
-                }
-                // check the target stands on the exit.
-                if (fromExit.ToMap != target.Location.Map ||fromExit.ToPosition != target.Location.Position)
-                {
-                    reason = "not reachable";
-                    return false;
-                }                                
-            }
-
-            // 2. Stamina below min level.
-            if (actor.StaminaPoints < STAMINA_MIN_FOR_ACTIVITY)
-            {
-                reason = "not enough stamina to attack";
-                return false;
-            }
-
-            // 3. Target is dead (doh!).
-            // oddly this can happen for the AI when simulating... not clear why...
-            // so this is a lame fix to prevent KillingActor from throwing an exception :-)
-            if (target.IsDead)
-            {
-                reason = "already dead!";
-                return false;
-            }
-
-            // all clear.
-            reason = "";
-            return true;
-        }
 
         public bool HasActorJumpAbility(Actor actor)
         {
@@ -865,7 +769,7 @@ namespace djack.RogueSurvivor.Engine
             }
 
             // 2. Actor is tired.
-            if (IsActorTired(actor))
+            if (actor.IsActorTired())
             {
                 reason = "tired";
                 return false;
@@ -967,7 +871,7 @@ namespace djack.RogueSurvivor.Engine
                     continue;
                 if (other == actor)
                     continue;
-                if (!AreEnemies(actor, other))
+                if (!actor.IsEnemiesWith(other))
                     continue;
 
                 if (list == null)
@@ -979,8 +883,8 @@ namespace djack.RogueSurvivor.Engine
             {
                 list.Sort((a, b) =>
                     {
-                        float dA = StdDistance(a.Location.Position, actor.Location.Position);
-                        float dB = StdDistance(b.Location.Position, actor.Location.Position);
+                        float dA = DistanceHelpers.StdDistance(a.Location.Position, actor.Location.Position);
+                        float dB = DistanceHelpers.StdDistance(b.Location.Position, actor.Location.Position);
 
                         return dA < dB ? -1 :
                             dA > dB ? 1 :
@@ -995,25 +899,7 @@ namespace djack.RogueSurvivor.Engine
         #endregion
 
         #region Hunger/Rot & Sleep & Sanity
-        public bool IsActorHungry(Actor a)
-        {
-            return a.Model.Abilities.HasToEat && a.FoodPoints <= FOOD_HUNGRY_LEVEL;
-        }
 
-        public bool IsActorStarving(Actor a)
-        {
-            return a.Model.Abilities.HasToEat && a.FoodPoints <= 0;
-        }
-
-        public bool IsRottingActorHungry(Actor a)
-        {
-            return a.Model.Abilities.IsRotting && a.FoodPoints <= ROT_HUNGRY_LEVEL;
-        }
-
-        public bool IsRottingActorStarving(Actor a)
-        {
-            return a.Model.Abilities.IsRotting && a.FoodPoints <= 0;
-        }
 
         public bool IsFoodStillFresh(ItemFood food, int turnCounter)
         {
@@ -1049,22 +935,9 @@ namespace djack.RogueSurvivor.Engine
             return a.Model.Abilities.HasToSleep && a.SleepPoints <= 0;
         }
         
-        public int SleepToHoursUntilSleepy(int sleep, bool isNight)
-        {
-            int left = sleep - Rules.SLEEP_SLEEPY_LEVEL;
-            if (isNight)
-                left /= 2;
-            if (left <= 0)
-                return 0;
-            return left / WorldTime.TURNS_PER_HOUR;
-        }
 
-        public bool IsAlmostSleepy(Actor actor)
-        {
-            if (!actor.Model.Abilities.HasToSleep)
-                return false;
-            return SleepToHoursUntilSleepy(actor.SleepPoints, actor.Location.Map.LocalTime.IsNight) <= 3;
-        }
+
+
 
         public bool IsOnCouch(Actor actor)
         {
@@ -1207,7 +1080,7 @@ namespace djack.RogueSurvivor.Engine
             // 2. Corpse not in same tile as actor.
             ////////////////////////////////////////
             // 1. Actor tired.
-            if (IsActorTired(actor))
+            if (actor.IsActorTired())
             {
                 reason = "tired";
                 return false;
@@ -1233,59 +1106,7 @@ namespace djack.RogueSurvivor.Engine
 
         #region Distances
 
-        public bool IsAdjacent(Location a, Location b)
-        {
-            if (a.Map != b.Map) return false;
-            return IsAdjacent(a.Position, b.Position);
-        }
 
-        public bool IsAdjacent(Point pA, Point pB)
-        {
-            return Math.Abs(pA.X - pB.X) < 2 && Math.Abs(pA.Y - pB.Y) < 2;
-        }
-
-        public int GridDistance(Point pA, int bX, int bY)
-        {
-            return Math.Max(Math.Abs(pA.X - bX), Math.Abs(pA.Y - bY));
-        }
-
-        public int GridDistance(Point pA, Point pB)
-        {
-            return Math.Max(Math.Abs(pA.X - pB.X), Math.Abs(pA.Y - pB.Y));
-        }
-
-        /// <summary>
-        /// Standard distance formula: square root of summed squares.
-        /// </summary>
-        /// <param name="from"></param>
-        /// <param name="to"></param>
-        /// <returns></returns>
-        public float StdDistance(Point from, Point to)
-        {
-            int dX = to.X - from.X;
-            int dY = to.Y - from.Y;
-            int square = dX * dX + dY * dY;
-            return (float)Math.Sqrt(square);
-        }
-
-        public float StdDistance(Point v)
-        {
-            return (float)Math.Sqrt(v.X * v.X + v.Y * v.Y);
-        }
-
-        /// <summary>
-        /// Distance to use in LOS computing. Based on standard distance and modified to have a nice circle FOV.
-        /// </summary>
-        /// <param name="from"></param>
-        /// <param name="to"></param>
-        /// <returns></returns>
-        public float LOSDistance(Point from, Point to)
-        {
-            int dX = to.X - from.X;
-            int dY = to.Y - from.Y;
-            int square = dX * dX + dY * dY;
-            return (float)Math.Sqrt(0.75f * square); // nice factor to have a smooth circle (0.90: too rough)
-        }
         #endregion
 
         #region Actor turn ordering
@@ -1389,131 +1210,7 @@ namespace djack.RogueSurvivor.Engine
         #endregion
 
         #region Actors relations
-        // alpha10 refactored and rewrote
-        /// <summary>
-        /// Check if both actors are enemies.
-        /// - enemy factions
-        /// - enemy gangs
-        /// - personal enemies
-        /// - group enemies (if checkGroups)
-        /// Symetrical, don't need to call for actorB,actorA.
-        /// </summary>
-        /// <param name="actor"></param>
-        /// <param name="actorB"></param>
-        /// <param name="checkGroups"></param>
-        /// <returns></returns>
-        public bool AreEnemies(Actor actorA, Actor actorB, bool checkGroups=true)
-        {
-            if (actorA == null || actorB == null)
-                return false;
-            if (actorA == actorB)  // alpha10 silly fix
-                return false;
 
-            // Enemy factions? (symetrical)
-            if (actorA.Faction.IsEnemyOf(actorB.Faction))
-                return true;
-
-            // Enemy gangs? (symetrical)
-            if (actorA.Faction == actorB.Faction && actorA.IsInAGang && actorB.IsInAGang && actorA.GangID != actorB.GangID)
-                    return true;
-
-            // alpha10 
-            // Personal enemies? (symetrical)
-            if (ArePersonalEnemies(actorA, actorB))
-                return true;
-
-            // alpha10
-            // Enemy of groups (symetrical)
-            if (checkGroups && AreGroupEnemies(actorA, actorB))
-                return true;
-
-            // Not enemies.
-            return false;
-        }
-
-        // alpha10
-        /// <summary>
-        /// Check if they are in an agressor-selfdefence reliation.
-        /// Symetrical, don't need to call for actorB,actorA.
-        /// </summary>
-        /// <param name="actorA"></param>
-        /// <param name="actorB"></param>
-        /// <returns></returns>
-        public bool ArePersonalEnemies(Actor actorA, Actor actorB)
-        {
-            if (actorA == null || actorB == null)
-                return false;
-            if (actorA == actorB)
-                return false;
-
-            if (actorA.IsAggressorOf(actorB))
-                return true;
-
-            if (actorA.IsSelfDefenceFrom(actorB))
-                return true;
-
-            // doesnt need to check for target as the relation is symetrical (aggressor of <-> self defence from)
-            return false;
-        }
-
-        // alpha10
-        /// <summary>
-        /// Check if they are enmemies through group relations : 
-        /// - my leader enemies are my enemies
-        /// - my mates enemies are my enemies.
-        /// - my follower enemies are my enemies.
-        /// Symetrical, don't need to call for actorB,actorA.
-        /// </summary>
-        /// <param name="actorA"></param>
-        /// <param name="actorB"></param>
-        /// <returns></returns>
-        public bool AreGroupEnemies(Actor actorA, Actor actorB)
-        {
-            if (actorA == null || actorB == null)
-                return false;
-            if (actorA == actorB)
-                return false;
-
-            // my leader enemies are my enemies.
-            // my mates enemies are my enemies.
-            bool IsEnemyOfMyLeaderOrMates(Actor groupActor, Actor target)
-            {
-                if (AreEnemies(groupActor.Leader, target, false))
-                    return true;
-                foreach (Actor mate in groupActor.Leader.Followers)
-                    if (mate != groupActor && AreEnemies(mate, target, false))
-                        return true;
-                return false;
-            }
-
-            // my followers enemies are my enemies
-            bool IsEnemyOfMyFollowers(Actor groupActor, Actor target)
-            {
-                foreach (Actor follower in groupActor.Followers)
-                    if (AreEnemies(follower, target, false))
-                        return true;
-                return false;
-            }
-
-            // check A group
-            if (actorA.HasLeader)
-                if (IsEnemyOfMyLeaderOrMates(actorA, actorB))
-                    return true;
-            if (actorA.CountFollowers > 0)
-                if (IsEnemyOfMyFollowers(actorA, actorB))
-                    return true;
-
-            // check B group
-            if (actorB.HasLeader)
-                if (IsEnemyOfMyLeaderOrMates(actorB, actorA))
-                    return true;
-            if (actorB.CountFollowers > 0)
-                if (IsEnemyOfMyFollowers(actorB, actorA))
-                    return true;
-
-            // nope
-            return false;
-        }
 
         public bool IsMurder(Actor killer, Actor victim)
         {
@@ -1547,7 +1244,7 @@ namespace djack.RogueSurvivor.Engine
             float speed = actor.Doll.Body.Speed;
 
             // stamina.
-            if (IsActorTired(actor))
+            if (actor.IsActorTired())
                 speed *= 2f / 3f;
 
             // sleep.
@@ -1764,7 +1461,7 @@ namespace djack.RogueSurvivor.Engine
             }
 
             // stamina penalty.
-            if (IsActorTired(actor))
+            if (actor.IsActorTired())
             {
                 hit *= FIRING_WHEN_STA_TIRED;
                 rapidHit1 *= FIRING_WHEN_STA_TIRED;
@@ -1792,7 +1489,7 @@ namespace djack.RogueSurvivor.Engine
         /// <returns>[0..100]</returns>
         public int ComputeChancesRangedHit(Actor actor, Actor target, int shotCounter)
         {
-            Attack attack = ActorRangedAttack(actor, actor.CurrentRangedAttack, GridDistance(actor.Location.Position, target.Location.Position), target);
+            Attack attack = ActorRangedAttack(actor, actor.CurrentRangedAttack, DistanceHelpers.GridDistance(actor.Location.Position, target.Location.Position), target);
             Defence defence = ActorDefence(target, target.CurrentDefence);
 
             int hitValue = (shotCounter == 0 ? attack.HitValue : shotCounter == 1 ? attack.Hit2Value : attack.Hit3Value);
@@ -1875,91 +1572,6 @@ namespace djack.RogueSurvivor.Engine
             return SKILL_LEADERSHIP_FOLLOWER_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.LEADERSHIP);
         }
 
-        public int ActorFOV(Actor actor, WorldTime time, Weather weather)
-        {
-            // Sleeping actors have no FOV.
-            if (actor.IsSleeping)
-                return 0;
-
-            // base value.
-            int FOV = actor.Sheet.BaseViewRange;
-
-            // lighting/weather
-            Lighting light = actor.Location.Map.Lighting;
-            switch (light)
-            {
-                case Lighting.DARKNESS:
-                    // FoV in darkness depends on actor.
-                    FOV = DarknessFov(actor);
-                    break;
-                case Lighting.LIT:
-                    // nothing to do, unmodified base FOV.
-                    break;
-                case Lighting.OUTSIDE:
-                    // night & weather penalty
-                    FOV -= NightFovPenalty(actor, time);
-                    FOV -= WeatherFovPenalty(actor, weather);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("unhandled lighting");
-            }
-
-            // sleep penalty.
-            if (IsActorExhausted(actor))
-                FOV -= 2;
-            else if (IsActorSleepy(actor))
-                FOV -= 1;
-
-            // light equipped or standing next to someone with light.
-            // works only in darkness or during the night.
-            if (light == Lighting.DARKNESS || (light == Lighting.OUTSIDE && time.IsNight))
-            {
-                int lightBonus = 0;
-
-                lightBonus = GetLightBonusEquipped(actor);
-                if (lightBonus == 0)
-                {
-                    Map map = actor.Location.Map;
-                    if (map.HasAnyAdjacentInMap(actor.Location.Position,
-                        (pt) =>
-                        {
-                            Actor other = map.GetActorAt(pt);
-                            if (other == null)
-                                return false;
-                            return HasLightOnEquipped(other);
-                        }))
-                        lightBonus = 1;
-                }
-                FOV += lightBonus;
-            }
-
-            // standing on some map objects.
-            MapObject mobj = actor.Location.Map.GetMapObjectAt(actor.Location.Position);
-            if (mobj != null && mobj.StandOnFovBonus)
-                ++FOV;
-
-            // done.
-            FOV = Math.Max(MINIMAL_FOV, FOV);
-            return FOV;
-        }
-
-        public float ActorSmell(Actor actor)
-        {
-            return (1.0f + SKILL_ZTRACKER_SMELL_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_TRACKER)) * actor.Model.StartingSheet.BaseSmellRating;
-        }
-
-        public int ActorSmellThreshold(Actor actor)
-        {
-            // sleeping actors can't smell.
-            if (actor.IsSleeping)
-                return -1;
-
-            // actor model base value.
-            float smellRating = ActorSmell(actor);
-            int minSmell = 1 + OdorScent.MAX_STRENGTH - (int)(smellRating * OdorScent.MAX_STRENGTH);
-            return minSmell;
-        }
-
         bool HasLightOnEquipped(Actor actor)
         {
             ItemLight light = actor.GetEquippedItem(DollPart.LEFT_HAND) as ItemLight;
@@ -2034,7 +1646,7 @@ namespace djack.RogueSurvivor.Engine
         public int ActorSpotMurdererChance(Actor spotter, Actor murderer)
         {
             int spotterBonus = MURDER_SPOTTING_MURDERCOUNTER_BONUS * murderer.MurdersCounter;
-            int distancePenalty = MURDERER_SPOTTING_DISTANCE_PENALTY * GridDistance(spotter.Location.Position, murderer.Location.Position);
+            int distancePenalty = MURDERER_SPOTTING_DISTANCE_PENALTY * DistanceHelpers.GridDistance(spotter.Location.Position, murderer.Location.Position);
 
             return MURDERER_SPOTTING_BASE_CHANCE + spotterBonus - distancePenalty;
         }

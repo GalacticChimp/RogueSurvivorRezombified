@@ -8,6 +8,7 @@ using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
 using djack.RogueSurvivor.Gameplay.AI.Sensors;
+using djack.RogueSurvivor.Data.Helpers;
 
 namespace djack.RogueSurvivor.Gameplay.AI
 {
@@ -94,16 +95,16 @@ namespace djack.RogueSurvivor.Gameplay.AI
             m_LOSSensor = new LOSSensor(LOSSensor.SensingFilter.ACTORS);
         }
 
-        protected override List<Percept> UpdateSensors(RogueGame game)
+        protected override List<Percept> UpdateSensors(World world)
         {
-            List<Percept> list = m_LOSSensor.Sense(game, m_Actor);
+            List<Percept> list = m_LOSSensor.Sense(world, m_Actor);
             return list;
         }
 
         protected override ActorAction SelectAction(RogueGame game, List<Percept> percepts)
         {
             HashSet<Point> fov = m_LOSSensor.FOV;
-            List<Percept> mapPercepts = FilterSameMap(game, percepts);
+            List<Percept> mapPercepts = FilterSameMap(percepts);
 
             ///////////////////////////////////////////////////////////////////////
             // alpha10 OBSOLETE 1 equip weapon
@@ -118,7 +119,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             m_Actor.IsRunning = false;
 
             // 1 equip best items
-            ActorAction bestEquip = BehaviorEquipBestItems(game, false, false);
+            ActorAction bestEquip = BehaviorEquipBestItems(false, false);
             if (bestEquip != null)
             {
                 return bestEquip;
@@ -136,11 +137,11 @@ namespace djack.RogueSurvivor.Gameplay.AI
             #region
             // alpha10.1 always try to attack if (game.Rules.RollChance(ATTACK_CHANCE))
             {
-                List<Percept> enemies = FilterEnemies(game, mapPercepts);
+                List<Percept> enemies = FilterEnemies(mapPercepts);
                 if (enemies != null)
                 {
                     // try visible enemies first, the closer the best.
-                    List<Percept> visibleEnemies = Filter(game, enemies, (p) => p.Turn == m_Actor.Location.Map.LocalTime.TurnCounter);
+                    List<Percept> visibleEnemies = Filter(enemies, (p) => p.Turn == m_Actor.Location.Map.LocalTime.TurnCounter);
                     if (visibleEnemies != null)
                     {
                         Percept bestEnemyPercept = null;
@@ -149,7 +150,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
                         foreach (Percept enemyP in visibleEnemies)
                         {
-                            float distance = game.Rules.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
+                            float distance = DistanceHelpers.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
                             if (distance < closest)
                             {
                                 ActorAction bumpAction = BehaviorStupidBumpToward(game, enemyP.Location.Position, true, true);
@@ -171,7 +172,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     }
 
                     // then try rest, the closer the best.
-                    List<Percept> oldEnemies = Filter(game, enemies, (p) => p.Turn != m_Actor.Location.Map.LocalTime.TurnCounter);
+                    List<Percept> oldEnemies = Filter(enemies, (p) => p.Turn != m_Actor.Location.Map.LocalTime.TurnCounter);
                     if (oldEnemies != null)
                     {
                         Percept bestEnemyPercept = null;
@@ -180,7 +181,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
                         foreach (Percept enemyP in oldEnemies)
                         {
-                            float distance = game.Rules.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
+                            float distance = DistanceHelpers.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
                             if (distance < closest)
                             {
                                 ActorAction bumpAction = BehaviorStupidBumpToward(game, enemyP.Location.Position, true, true);

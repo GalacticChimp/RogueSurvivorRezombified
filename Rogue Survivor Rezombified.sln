@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RogueSurvivorMain", "RogueS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Config", "Config\Config.csproj", "{84198FC5-DB62-4AC0-B692-F91836CE148A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RogueSurvivor.Data", "RogueSurvivor.Data\RogueSurvivor.Data.csproj", "{2EEF55C2-F917-45EE-8B85-07187CE11037}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RogueSurvivor.Data", "RogueSurvivor.Data\RogueSurvivor.Data.csproj", "{2EEF55C2-F917-45EE-8B85-07187CE11037}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RogueSurvivor.Common", "RogueSurvivor.Common\RogueSurvivor.Common.csproj", "{CD4D7121-6DA8-4019-9061-5641E1ADA508}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,14 @@ Global
 		{2EEF55C2-F917-45EE-8B85-07187CE11037}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2EEF55C2-F917-45EE-8B85-07187CE11037}.Release|x86.ActiveCfg = Release|Any CPU
 		{2EEF55C2-F917-45EE-8B85-07187CE11037}.Release|x86.Build.0 = Release|Any CPU
+		{CD4D7121-6DA8-4019-9061-5641E1ADA508}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD4D7121-6DA8-4019-9061-5641E1ADA508}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD4D7121-6DA8-4019-9061-5641E1ADA508}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CD4D7121-6DA8-4019-9061-5641E1ADA508}.Debug|x86.Build.0 = Debug|Any CPU
+		{CD4D7121-6DA8-4019-9061-5641E1ADA508}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD4D7121-6DA8-4019-9061-5641E1ADA508}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD4D7121-6DA8-4019-9061-5641E1ADA508}.Release|x86.ActiveCfg = Release|Any CPU
+		{CD4D7121-6DA8-4019-9061-5641E1ADA508}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -8,7 +8,7 @@ using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
 using djack.RogueSurvivor.Gameplay.AI.Sensors;
-
+using djack.RogueSurvivor.Data.Helpers;
 
 namespace djack.RogueSurvivor.Gameplay.AI
 {
@@ -30,17 +30,17 @@ namespace djack.RogueSurvivor.Gameplay.AI
             m_LivingSmellSensor = new SmellSensor(Odor.LIVING);
         }
 
-        protected override List<Percept> UpdateSensors(RogueGame game)
+        protected override List<Percept> UpdateSensors(World world)
         {
-            List<Percept> list = m_LOSSensor.Sense(game, m_Actor);
-            list.AddRange(m_LivingSmellSensor.Sense(game, m_Actor));
+            List<Percept> list = m_LOSSensor.Sense(world, m_Actor);
+            list.AddRange(m_LivingSmellSensor.Sense(world, m_Actor));
             return list;
         }
 
         protected override ActorAction SelectAction(RogueGame game, List<Percept> percepts)
         {
             HashSet<Point> fov = m_LOSSensor.FOV;
-            List<Percept> mapPercepts = FilterSameMap(game, percepts);
+            List<Percept> mapPercepts = FilterSameMap(percepts);
 
             //////////////////////////////////////////////////////////////
             // 1 move closer to an enemy, nearest & visible enemies first
@@ -51,11 +51,11 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 1 move closer to an enemy, nearest & visible enemies first
             #region
-            List<Percept> enemies = FilterEnemies(game, mapPercepts);
+            List<Percept> enemies = FilterEnemies(mapPercepts);
             if (enemies != null)
             {
                 // try visible enemies first, the closer the best.
-                List<Percept> visibleEnemies = Filter(game, enemies, (p) => p.Turn == m_Actor.Location.Map.LocalTime.TurnCounter);
+                List<Percept> visibleEnemies = Filter(enemies, (p) => p.Turn == m_Actor.Location.Map.LocalTime.TurnCounter);
                 if (visibleEnemies != null)
                 {
                     Percept bestEnemyPercept = null;
@@ -64,7 +64,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
                     foreach (Percept enemyP in visibleEnemies)
                     {
-                        float distance = game.Rules.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
+                        float distance = DistanceHelpers.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
                         if (distance < closest)
                         {
                             ActorAction bumpAction = BehaviorStupidBumpToward(game, enemyP.Location.Position, false, false);
@@ -86,7 +86,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 }
 
                 // then try rest, the closer the best.
-                List<Percept> oldEnemies = Filter(game, enemies, (p) => p.Turn != m_Actor.Location.Map.LocalTime.TurnCounter);
+                List<Percept> oldEnemies = Filter(enemies, (p) => p.Turn != m_Actor.Location.Map.LocalTime.TurnCounter);
                 if (oldEnemies != null)
                 {
                     Percept bestEnemyPercept = null;
@@ -95,7 +95,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
                     foreach (Percept enemyP in oldEnemies)
                     {
-                        float distance = game.Rules.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
+                        float distance = DistanceHelpers.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
                         if (distance < closest)
                         {
                             ActorAction bumpAction = BehaviorStupidBumpToward(game, enemyP.Location.Position, false, false);
@@ -119,7 +119,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             #endregion
 
             // 2 eat corpses.
-            List<Percept> corpses = FilterCorpses(game, mapPercepts);
+            List<Percept> corpses = FilterCorpses(mapPercepts);
             if (corpses != null)
             {
                 ActorAction eatCorpses = BehaviorGoEatCorpse(game, corpses);

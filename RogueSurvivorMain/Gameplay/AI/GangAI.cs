@@ -65,22 +65,22 @@ namespace djack.RogueSurvivor.Gameplay.AI
             m_MemorizedSensor = new MemorizedSensor(m_LOSSensor, LOS_MEMORY);
         }
 
-        protected override List<Percept> UpdateSensors(RogueGame game)
+        protected override List<Percept> UpdateSensors(World world)
         {
-            return m_MemorizedSensor.Sense(game, m_Actor);
+            return m_MemorizedSensor.Sense(world, m_Actor);
         }
 
         protected override ActorAction SelectAction(RogueGame game, List<Percept> percepts)
         {
             HashSet<Point> FOV = m_LOSSensor.FOV;
-            List<Percept> mapPercepts = FilterSameMap(game, percepts);
+            List<Percept> mapPercepts = FilterSameMap(percepts);
 
             // alpha10
             // don't run by default.
             m_Actor.IsRunning = false;
 
             // 0. Equip best item
-            ActorAction bestEquip = BehaviorEquipBestItems(game, true, true);
+            ActorAction bestEquip = BehaviorEquipBestItems(true, true);
             if (bestEquip != null)
             {
                 return bestEquip;
@@ -129,13 +129,13 @@ namespace djack.RogueSurvivor.Gameplay.AI
             //////////////////////////////////////////////////////////////////////
 
             // get data.
-            List<Percept> allEnemies = FilterEnemies(game, mapPercepts);
-            List<Percept> currentEnemies = FilterCurrent(game, allEnemies);
+            List<Percept> allEnemies = FilterEnemies(mapPercepts);
+            List<Percept> currentEnemies = FilterCurrent(allEnemies);
             bool hasCurrentEnemies = currentEnemies != null;
             bool hasAnyEnemies = allEnemies != null;
             bool checkOurLeader = m_Actor.HasLeader && !DontFollowLeader;
             bool seeLeader = checkOurLeader && FOV.Contains(m_Actor.Leader.Location.Position);
-            bool isLeaderFighting = checkOurLeader && IsAdjacentToEnemy(game, m_Actor.Leader);
+            bool isLeaderFighting = checkOurLeader && IsAdjacentToEnemy(m_Actor.Leader);
             bool isCourageous = !game.Rules.IsActorTired(m_Actor);
 
             // exploration.
@@ -170,10 +170,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
             #region
             if (hasCurrentEnemies && (checkOurLeader || game.Rules.RollChance(50)))
             {
-                List<Percept> fireTargets = FilterFireTargets(game, currentEnemies);
+                List<Percept> fireTargets = FilterFireTargets(currentEnemies);
                 if (fireTargets != null)
                 {
-                    Percept nearestTarget = FilterNearest(game, fireTargets);
+                    Percept nearestTarget = FilterNearest(fireTargets);
                     ActorAction fireAction = BehaviorRangedAttack(game, nearestTarget);
                     if (fireAction != null)
                     {
@@ -192,10 +192,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 // shout?
                 if (game.Rules.RollChance(50))
                 {
-                    List<Percept> friends = FilterNonEnemies(game, mapPercepts);
+                    List<Percept> friends = FilterNonEnemies(mapPercepts);
                     if (friends != null)
                     {
-                        ActorAction shoutAction = BehaviorWarnFriends(game, friends, FilterNearest(game, currentEnemies).Percepted as Actor);
+                        ActorAction shoutAction = BehaviorWarnFriends(friends, FilterNearest(currentEnemies).Percepted as Actor);
                         if (shoutAction != null)
                         {
                             m_Actor.Activity = Activity.IDLE;
@@ -228,7 +228,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 5 rest if tired
             #region
-            ActorAction restAction = BehaviorRestIfTired(game);
+            ActorAction restAction = BehaviorRestIfTired();
             if (restAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
@@ -255,7 +255,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 7 eat when hungry (also eat corpses)
             #region
-            if (game.Rules.IsActorHungry(m_Actor))
+            if (m_Actor.IsActorHungry())
             {
                 ActorAction eatAction = BehaviorEat(game);
                 if (eatAction != null)
@@ -263,9 +263,9 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     m_Actor.Activity = Activity.IDLE;
                     return eatAction;
                 }
-                if (game.Rules.IsActorStarving(m_Actor) || game.Rules.IsActorInsane(m_Actor))
+                if (m_Actor.IsActorStarving() || game.Rules.IsActorInsane(m_Actor))
                 {
-                    eatAction = BehaviorGoEatCorpse(game, FilterCorpses(game, mapPercepts));
+                    eatAction = BehaviorGoEatCorpse(game, FilterCorpses(mapPercepts));
                     if (eatAction != null)
                     {
                         m_Actor.Activity = Activity.IDLE;
@@ -384,10 +384,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
             if (!hasCurrentEnemies)
             {
                 Map map = m_Actor.Location.Map;
-                List<Percept> mayStealFrom = FilterActors(game, FilterCurrent(game, mapPercepts),
+                List<Percept> mayStealFrom = FilterActors(FilterCurrent(mapPercepts),
                     (a) =>
                     {
-                        if (a.Inventory == null || a.Inventory.CountItems == 0 || IsFriendOf(game, a))
+                        if (a.Inventory == null || a.Inventory.CountItems == 0 || IsFriendOf(a))
                             return false;
                         if (game.Rules.RollChance(game.Rules.ActorUnsuspicousChance(m_Actor, a)))
                         {
@@ -411,7 +411,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     if (mayStealFrom.Count > 0)
                     {
                         // get data.
-                        Percept nearest = FilterNearest(game, mayStealFrom);
+                        Percept nearest = FilterNearest(mayStealFrom);
                         Actor victim = nearest.Percepted as Actor;
                         Item wantIt = FirstInterestingItem(game, victim.Inventory, ItemSource.ANOTHER_ACTOR);
 
@@ -456,7 +456,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             bool canLead = !checkOurLeader && isLeader && m_Actor.CountFollowers < game.Rules.ActorMaxFollowers(m_Actor);
             if (canLead)
             {
-                Percept nearestFriend = FilterNearest(game, FilterNonEnemies(game, mapPercepts));
+                Percept nearestFriend = FilterNearest(FilterNonEnemies(mapPercepts));
                 if (nearestFriend != null)
                 {
                     ActorAction leadAction = BehaviorLeadActor(game, nearestFriend);

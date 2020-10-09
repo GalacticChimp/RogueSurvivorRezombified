@@ -11,7 +11,7 @@ namespace djack.RogueSurvivor.Engine.AI
     abstract class Sensor
     {
         #region Sensing
-        public abstract List<Percept> Sense(RogueGame game, Actor actor);
+        public abstract List<Percept> Sense(World world, Actor actor);
         #endregion
     }
 }

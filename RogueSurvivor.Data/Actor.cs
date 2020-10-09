@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Data.Enums;
+using djack.RogueSurvivor.Data.Helpers;
 
 namespace djack.RogueSurvivor.Data
 {
@@ -17,6 +18,16 @@ namespace djack.RogueSurvivor.Data
     public class Actor
     {
         public const int BARRICADING_MAX = 2 * DoorWindow.BASE_HITPOINTS;
+        public static float SKILL_ZTRACKER_SMELL_BONUS = 0.10f;
+        public const int FOOD_BASE_POINTS = WorldTime.TURNS_PER_HOUR * 48;
+        public const int FOOD_HUNGRY_LEVEL = FOOD_BASE_POINTS / 2;
+
+        public const int ROT_BASE_POINTS = WorldTime.TURNS_PER_DAY * 4;
+        public const int ROT_HUNGRY_LEVEL = ROT_BASE_POINTS / 2;
+
+        public const int SLEEP_BASE_POINTS = WorldTime.TURNS_PER_HOUR * 60;  // 60 = starting game at midnight => sleepy in late evening.
+        public const int SLEEP_SLEEPY_LEVEL = SLEEP_BASE_POINTS / 2;
+        public const int STAMINA_MIN_FOR_ACTIVITY = 10;
 
         [Flags]
         enum Flags
@@ -4539,5 +4550,339 @@ namespace djack.RogueSurvivor.Data
 
         //
         // End Actions
+
+        // Smell
+
+        public float ActorSmell()
+        {
+            return (1.0f + SKILL_ZTRACKER_SMELL_BONUS * Model.StartingSheet.BaseSmellRating); //TODO * Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_TRACKER)) ;
+        }
+
+        public int ActorSmellThreshold()
+        {
+            // sleeping actors can't smell.
+            if (IsSleeping)
+                return -1;
+
+            // actor model base value.
+            float smellRating = ActorSmell();
+            int minSmell = 1 + OdorScent.MAX_STRENGTH - (int)(smellRating * OdorScent.MAX_STRENGTH);
+            return minSmell;
+        }
+
+
+        public int ActorFOV(WorldTime time, Weather weather)
+        {
+            /*
+            // Sleeping actors have no FOV.
+            if (actor.IsSleeping)
+                return 0;
+
+            // base value.
+            int FOV = actor.Sheet.BaseViewRange;
+
+            // lighting/weather
+            Lighting light = actor.Location.Map.Lighting;
+            switch (light)
+            {
+                case Lighting.DARKNESS:
+                    // FoV in darkness depends on actor.
+                    FOV = DarknessFov(actor);
+                    break;
+                case Lighting.LIT:
+                    // nothing to do, unmodified base FOV.
+                    break;
+                case Lighting.OUTSIDE:
+                    // night & weather penalty
+                    FOV -= NightFovPenalty(actor, time);
+                    FOV -= WeatherFovPenalty(actor, weather);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("unhandled lighting");
+            }
+
+            // sleep penalty.
+            if (IsActorExhausted(actor))
+                FOV -= 2;
+            else if (IsActorSleepy(actor))
+                FOV -= 1;
+
+            // light equipped or standing next to someone with light.
+            // works only in darkness or during the night.
+            if (light == Lighting.DARKNESS || (light == Lighting.OUTSIDE && time.IsNight))
+            {
+                int lightBonus = 0;
+
+                lightBonus = GetLightBonusEquipped(actor);
+                if (lightBonus == 0)
+                {
+                    Map map = actor.Location.Map;
+                    if (map.HasAnyAdjacentInMap(actor.Location.Position,
+                        (pt) =>
+                        {
+                            Actor other = map.GetActorAt(pt);
+                            if (other == null)
+                                return false;
+                            return HasLightOnEquipped(other);
+                        }))
+                        lightBonus = 1;
+                }
+                FOV += lightBonus;
+            }
+
+            // standing on some map objects.
+            MapObject mobj = actor.Location.Map.GetMapObjectAt(actor.Location.Position);
+            if (mobj != null && mobj.StandOnFovBonus)
+                ++FOV;
+
+            // done.
+            FOV = Math.Max(MINIMAL_FOV, FOV);
+            return FOV;
+            */
+            return 1;
+        }
+
+        //
+        // End Smell
+
+        // Actor relations
+        // alpha10 refactored and rewrote
+        /// <summary>
+        /// Check if both actors are enemies.
+        /// - enemy factions
+        /// - enemy gangs
+        /// - personal enemies
+        /// - group enemies (if checkGroups)
+        /// Symetrical, don't need to call for actorB,actorA.
+        /// </summary>
+        /// <param name="actor"></param>
+        /// <param name="other"></param>
+        /// <param name="checkGroups"></param>
+        /// <returns></returns>
+        public bool IsEnemiesWith(Actor other, bool checkGroups = true)
+        {
+            if (other == null)
+                return false;
+            if (this == other)  // alpha10 silly fix
+                return false;
+
+            // Enemy factions? (symetrical)
+            if (Faction.IsEnemyOf(other.Faction))
+                return true;
+
+            // Enemy gangs? (symetrical)
+            if (Faction == other.Faction && IsInAGang && other.IsInAGang && GangID != other.GangID)
+                return true;
+
+            // alpha10 
+            // Personal enemies? (symetrical)
+            if (IsPersonalEnemyWith(other))
+                return true;
+
+            // alpha10
+            // Enemy of groups (symetrical)
+            if (checkGroups && IsGroupEnemiesWith(other))
+                return true;
+
+            // Not enemies.
+            return false;
+        }
+
+        // alpha10
+        /// <summary>
+        /// Check if they are in an agressor-selfdefence reliation.
+        /// Symetrical, don't need to call for actorB,actorA.
+        /// </summary>
+        /// <param name="actorA"></param>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public bool IsPersonalEnemyWith(Actor other)
+        {
+            if (other == null)
+                return false;
+            if (this == other)
+                return false;
+
+            if (IsAggressorOf(other))
+                return true;
+
+            if (IsSelfDefenceFrom(other))
+                return true;
+
+            // doesnt need to check for target as the relation is symetrical (aggressor of <-> self defence from)
+            return false;
+        }
+
+        // alpha10
+        /// <summary>
+        /// Check if they are enmemies through group relations : 
+        /// - my leader enemies are my enemies
+        /// - my mates enemies are my enemies.
+        /// - my follower enemies are my enemies.
+        /// Symetrical, don't need to call for actorB,actorA.
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public bool IsGroupEnemiesWith(Actor other)
+        {
+            if (other == null)
+                return false;
+            if (this == other)
+                return false;
+
+            // my leader enemies are my enemies.
+            // my mates enemies are my enemies.
+            bool IsEnemyOfMyLeaderOrMates(Actor groupActor, Actor target)
+            {
+                if (groupActor.Leader.IsEnemiesWith(target, false))
+                    return true;
+                foreach (Actor mate in groupActor.Leader.Followers)
+                    if (mate != groupActor && mate.IsEnemiesWith(target, false))
+                        return true;
+                return false;
+            }
+
+            // my followers enemies are my enemies
+            bool IsEnemyOfMyFollowers(Actor groupActor, Actor target)
+            {
+                foreach (Actor follower in groupActor.Followers)
+                    if (follower.IsEnemiesWith(target, false))
+                        return true;
+                return false;
+            }
+
+            // check A group
+            if (HasLeader)
+                if (IsEnemyOfMyLeaderOrMates(this, other))
+                    return true;
+            if (CountFollowers > 0)
+                if (IsEnemyOfMyFollowers(this, other))
+                    return true;
+
+            // check B group
+            if (other.HasLeader)
+                if (IsEnemyOfMyLeaderOrMates(other, this))
+                    return true;
+            if (other.CountFollowers > 0)
+                if (IsEnemyOfMyFollowers(other, this))
+                    return true;
+
+            // nope
+            return false;
+        }
+
+        // End Actor Relations
+
+        // Actor food
+
+        public bool IsActorHungry()
+        {
+            return Model.Abilities.HasToEat && FoodPoints <= FOOD_HUNGRY_LEVEL;
+        }
+
+        public bool IsActorStarving()
+        {
+            return Model.Abilities.HasToEat && FoodPoints <= 0;
+        }
+
+        public bool IsRottingActorHungry()
+        {
+            return Model.Abilities.IsRotting && FoodPoints <= ROT_HUNGRY_LEVEL;
+        }
+
+        public bool IsRottingActorStarving()
+        {
+            return Model.Abilities.IsRotting && FoodPoints <= 0;
+        }
+
+        // End Actor food
+
+        public bool IsAlmostSleepy()
+        {
+            if (!Model.Abilities.HasToSleep)
+                return false;
+            return SleepToHoursUntilSleepy(SleepPoints, Location.Map.LocalTime.IsNight) <= 3;
+        }
+
+        public int SleepToHoursUntilSleepy(int sleep, bool isNight)
+        {
+            int left = sleep - SLEEP_SLEEPY_LEVEL;
+            if (isNight)
+                left /= 2;
+            if (left <= 0)
+                return 0;
+            return left / WorldTime.TURNS_PER_HOUR;
+        }
+
+        public bool IsActorTired()
+        {
+            return Model.Abilities.CanTire && StaminaPoints < STAMINA_MIN_FOR_ACTIVITY;
+        }
+
+        public bool CanActorMeleeAttack(Actor target, out string reason)
+        {
+            if (target == null)
+                throw new ArgumentNullException("target");
+
+            //////////////////////////////
+            // Cant run if any is true:
+            // 1. Target not adjacent in map or not sharing an exit.
+            // 2. Stamina below min level.
+            // 3. Target is dead (doh!).
+            //////////////////////////////
+
+            // 1. Target not adjacent in map or not sharing an exit.
+            if (Location.Map == target.Location.Map)
+            {
+                if (!Location.Position.IsAdjacent(target.Location.Position))
+                {
+                    reason = "not adjacent";
+                    return false;
+                }
+            }
+            else
+            {
+                // check there is an exit at both positions.
+                Exit fromExit = Location.Map.GetExitAt(Location.Position);
+                if (fromExit == null)
+                {
+                    reason = "not reachable";
+                    return false;
+                }
+                Exit toExit = target.Location.Map.GetExitAt(target.Location.Position);
+                if (toExit == null)
+                {
+                    reason = "not reachable";
+                    return false;
+                }
+                // check the target stands on the exit.
+                if (fromExit.ToMap != target.Location.Map || fromExit.ToPosition != target.Location.Position)
+                {
+                    reason = "not reachable";
+                    return false;
+                }
+            }
+
+            // 2. Stamina below min level.
+            if (StaminaPoints < STAMINA_MIN_FOR_ACTIVITY)
+            {
+                reason = "not enough stamina to attack";
+                return false;
+            }
+
+            // 3. Target is dead (doh!).
+            // oddly this can happen for the AI when simulating... not clear why...
+            // so this is a lame fix to prevent KillingActor from throwing an exception :-)
+            if (target.IsDead)
+            {
+                reason = "already dead!";
+                return false;
+            }
+
+            // all clear.
+            reason = "";
+            return true;
+        }
+
     }
 }
