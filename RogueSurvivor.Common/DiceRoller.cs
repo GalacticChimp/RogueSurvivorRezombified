@@ -56,5 +56,18 @@ namespace djack.RogueSurvivor.Common
         {
             return Roll(0, 100) < chance;
         }
+
+        /// <summary>
+        /// [0,skillValue]
+        /// </summary>
+        /// <param name="skillValue"></param>
+        /// <returns></returns>
+        public static int RollSkill(int skillValue)
+        {
+            if (skillValue <= 0)
+                return 0;
+            // bell curve results = less extremes => favor higher skill vs lower skill
+            return (Roll(0, skillValue + 1) + Roll(0, skillValue + 1)) / 2;
+        }
     }
 }

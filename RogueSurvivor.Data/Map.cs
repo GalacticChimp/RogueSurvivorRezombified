@@ -1292,5 +1292,19 @@ namespace djack.RogueSurvivor.Data
         {
             return m_Name.GetHashCode() ^ m_District.GetHashCode();
         }
+
+        public bool IsActorBeforeInMapList(Actor actor, Actor other)
+        {
+            foreach (Actor a in Actors)
+            {
+                if (a == actor)
+                    return true;
+                if (a == other)
+                    return false;
+            }
+
+            // by default, assume yes.
+            return true;
+        }
     }
 }

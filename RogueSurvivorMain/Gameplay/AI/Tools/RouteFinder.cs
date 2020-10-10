@@ -117,7 +117,7 @@ namespace djack.RogueSurvivor.Gameplay.AI.Tools
         /// <param name="distanceFn"></param>
         /// <returns></returns>
         /// <see cref="BaseAI.BehaviorBumpToward(RogueGame, Point, Func{Point, Point, float})"/>
-        public bool CanReachSimple(RogueGame game, Point dest, int maxDist, Func<Point,Point,int> distanceFn)
+        public bool CanReachSimple(Point dest, int maxDist, Func<Point,Point,int> distanceFn)
         {
             Actor a = m_AI.ControlledActor;
             Point start = a.Location.Position;
@@ -129,7 +129,7 @@ namespace djack.RogueSurvivor.Gameplay.AI.Tools
             {
                 if (adjToDestIsGoal)
                     return true;
-                return CanMoveIn(game, a, map, dest);
+                return CanMoveIn(a, map, dest);
             }
 
             // search similar to A*...
@@ -174,7 +174,7 @@ namespace djack.RogueSurvivor.Gameplay.AI.Tools
                     if (adjDistToGoal >= currentDistToGoal || adjDistToGoal > maxDist)
                         continue;
 
-                    if (!CanMoveIn(game, a, map, adj))
+                    if (!CanMoveIn(a, map, adj))
                         continue;
 
                     Node adjNode = GetNode(adj);
@@ -243,7 +243,7 @@ namespace djack.RogueSurvivor.Gameplay.AI.Tools
         /// <returns></returns>
         /// <see cref="Map.IsWalkable(Point)"/>
         /// <see cref="AllowedActions"/>
-        bool CanMoveIn(RogueGame game, Actor a, Map map, Point pos)
+        bool CanMoveIn(Actor a, Map map, Point pos)
         {
             string reason;
             // check tile & mapobj
@@ -275,7 +275,7 @@ namespace djack.RogueSurvivor.Gameplay.AI.Tools
             }
 
             //... a jumpable?
-            if (((AllowedActions & SpecialActions.JUMP) != 0) && mobj.IsJumpable && game.Rules.HasActorJumpAbility(a))
+            if (((AllowedActions & SpecialActions.JUMP) != 0) && mobj.IsJumpable && a.HasActorJumpAbility())
                 return true;
 
             //... a pushable?

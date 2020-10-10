@@ -4,6 +4,7 @@ using System.Drawing;
 using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Data.Enums;
 using djack.RogueSurvivor.Data.Helpers;
+using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Data
 {
@@ -28,6 +29,32 @@ namespace djack.RogueSurvivor.Data
         public const int SLEEP_BASE_POINTS = WorldTime.TURNS_PER_HOUR * 60;  // 60 = starting game at midnight => sleepy in late evening.
         public const int SLEEP_SLEEPY_LEVEL = SLEEP_BASE_POINTS / 2;
         public const int STAMINA_MIN_FOR_ACTIVITY = 10;
+
+        public const int MURDERER_SPOTTING_BASE_CHANCE = 5;
+        public const int MURDERER_SPOTTING_DISTANCE_PENALTY = 1;
+        public const int MURDER_SPOTTING_MURDERCOUNTER_BONUS = 5;
+
+        public const int SANITY_BASE_POINTS = WorldTime.TURNS_PER_DAY * 4;
+        public const int SANITY_UNSTABLE_LEVEL = SANITY_BASE_POINTS / 2;
+
+        public const int TRUST_TRUSTING_THRESHOLD = 12 * WorldTime.TURNS_PER_HOUR; // 12h of sticking together.
+
+        public static int SKILL_LEADERSHIP_FOLLOWER_BONUS = 1;
+
+        /// <summary>
+        /// When sleeping on a couch, how many sleep points per turn are regenerated.
+        /// </summary>
+        const int SLEEP_COUCH_SLEEPING_REGEN = 1 + SLEEP_BASE_POINTS / (12 * WorldTime.TURNS_PER_HOUR);
+
+        /// <summary>
+        /// When sleeping out of a couch, how many sleep points per turn are regenerated.
+        /// </summary>
+        public const int SLEEP_NOCOUCH_SLEEPING_REGEN = (2 * SLEEP_COUCH_SLEEPING_REGEN) / 3;
+
+        /// <summary>
+        /// When sleeping on a couch, chance to heal per turn.
+        /// </summary>
+        public const int SLEEP_ON_COUCH_HEAL_CHANCE = 5;
 
         [Flags]
         enum Flags
@@ -4884,5 +4911,412 @@ namespace djack.RogueSurvivor.Data
             return true;
         }
 
+        public bool HasActorPushAbility()
+        {
+            return Model.Abilities.CanPush;
+            //||
+            //    actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.STRONG) > 0 ||
+            //    actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_STRONG) > 0;
+        }
+
+        public Attack ActorRangedAttack(Attack baseAttack, int distance, Actor target)
+        {
+            int hitMod = 0;
+            int dmgBonus = 0;
+
+            // skill bonuses.
+            //switch (baseAttack.Kind)
+            //{
+            //    case AttackKind.BOW:
+            //        hitMod = SKILL_BOWS_ATK_BONUS * Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.BOWS);
+            //        dmgBonus = SKILL_BOWS_DMG_BONUS * Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.BOWS);
+            //        break;
+            //    case AttackKind.FIREARM:
+            //        hitMod = SKILL_FIREARMS_ATK_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.FIREARMS);
+            //        dmgBonus = SKILL_FIREARMS_DMG_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.FIREARMS);
+            //        break;
+            //}
+
+            //if (target != null && target.Model.Abilities.IsUndead)
+            //    dmgBonus += ActorDamageBonusVsUndeads();
+
+            // distance vs range penalties/bonus.
+            int efficientRange = baseAttack.EfficientRange;
+            // alpha10 distance as % modifier instead of flat bonus
+            float distanceMod = 1;
+            if (distance != efficientRange)
+            {
+                float distanceScale = (efficientRange - distance) / (float)baseAttack.Range;
+                // bigger effect (penalty) beyond efficient range
+                if (distance > efficientRange)
+                    distanceScale *= 2;
+
+                distanceMod = 1 + distanceScale;
+            }
+            float hit = (baseAttack.HitValue + hitMod) * distanceMod;
+            float rapidHit1 = (baseAttack.Hit2Value + hitMod) * distanceMod;
+            float rapidHit2 = (baseAttack.Hit3Value + hitMod) * distanceMod;
+
+            float dmg = baseAttack.DamageValue + dmgBonus;
+
+            //// sleep penalty.
+            //if (IsActorExhausted())
+            //{
+            //    hit *= FIRING_WHEN_SLP_EXHAUSTED;
+            //    rapidHit1 *= FIRING_WHEN_SLP_EXHAUSTED;
+            //    rapidHit2 *= FIRING_WHEN_SLP_EXHAUSTED;
+            //}
+            //else if (IsActorSleepy())
+            //{
+            //    hit *= FIRING_WHEN_SLP_SLEEPY;
+            //    rapidHit1 *= FIRING_WHEN_SLP_SLEEPY;
+            //    rapidHit2 *= FIRING_WHEN_SLP_SLEEPY;
+            //}
+
+            //// stamina penalty.
+            //if (actor.IsActorTired())
+            //{
+            //    hit *= FIRING_WHEN_STA_TIRED;
+            //    rapidHit1 *= FIRING_WHEN_STA_TIRED;
+            //    rapidHit2 *= FIRING_WHEN_STA_TIRED;
+            //}
+            //else if (actor.StaminaPoints < ActorMaxSTA(actor))
+            //{
+            //    hit *= FIRING_WHEN_STA_NOT_FULL;
+            //    rapidHit1 *= FIRING_WHEN_STA_NOT_FULL;
+            //    rapidHit2 *= FIRING_WHEN_STA_NOT_FULL;
+            //}
+
+            // return attack.
+            return Attack.RangedAttack(baseAttack.Kind, baseAttack.Verb, (int)hit, (int)rapidHit1, (int)rapidHit2, (int)dmg, baseAttack.Range);
+        }
+
+        // alpha10
+        /// <summary>
+        /// Estimate chances to hit with a ranged attack. <br></br>
+        /// Simulate a large number of rolls attack vs defence and returns % of hits.
+        /// </summary>
+        /// <param name="actor"></param>
+        /// <param name="target"></param>
+        /// <param name="shotCounter">0 for normal shot, 1 for 1st rapid fire shot, 2 for 2nd rapid fire shot</param>
+        /// <returns>[0..100]</returns>
+        public int ComputeChancesRangedHit(Actor target, int shotCounter)
+        {
+            Attack attack = ActorRangedAttack(CurrentRangedAttack, DistanceHelpers.GridDistance(Location.Position, target.Location.Position), target);
+            Defence defence = ActorDefence(target.CurrentDefence);
+
+            int hitValue = (shotCounter == 0 ? attack.HitValue : shotCounter == 1 ? attack.Hit2Value : attack.Hit3Value);
+            int defValue = defence.Value;
+
+            const int ROLLS = 1000;
+            int hits = 0;
+            for (int i = 0; i < ROLLS; i++)
+            {
+                int atkRoll = DiceRoller.RollSkill(hitValue);
+                int defRoll = DiceRoller.RollSkill(defValue);
+                if (atkRoll > defRoll)
+                    hits++;
+            }
+
+            int percent = (100 * hits) / ROLLS;
+            return percent;
+        }
+
+        public Defence ActorDefence(Defence baseDefence)
+        {
+            // Sleeping actors are defenceless.
+            if (IsSleeping)
+                return new Defence(0, 0, 0);
+
+            // Base value + skill.
+            //int defBonus = SKILL_AGILE_DEF_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.AGILE) +
+            //    SKILL_ZAGILE_DEF_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_AGILE);
+            float def = baseDefence.Value + 0;//+ defBonus;
+
+            // Sleepy effect.
+            if (IsActorExhausted())
+                def /= 2f;
+            else if (IsActorSleepy())
+                def *= 3f / 4f;
+
+            // done.
+            return new Defence((int)def, baseDefence.Protection_Hit, baseDefence.Protection_Shot);
+        }
+
+        public bool IsActorSleepy()
+        {
+            return Model.Abilities.HasToSleep && SleepPoints <= SLEEP_SLEEPY_LEVEL;
+        }
+
+        public bool IsActorExhausted()
+        {
+            return Model.Abilities.HasToSleep && SleepPoints <= 0;
+        }
+
+
+        public bool IsOnCouch()
+        {
+            MapObject mapObj = Location.Map.GetMapObjectAt(Location.Position);
+            if (mapObj == null)
+                return false;
+
+            return mapObj.IsCouch;
+        }
+
+        // alpha10
+        public bool IsSafeFromTrap(ItemTrap trap)
+        {
+            if (trap.Owner == null)
+                return false;
+            if (trap.Owner == this)
+                return true;
+            return IsInGroupWith(trap.Owner);
+        }
+
+        public int CountBarricadingMaterial()
+        {
+            if (Inventory.IsEmpty)
+                return 0;
+
+            int count = 0;
+            foreach (Item it in Inventory.Items)
+                if (it is ItemBarricadeMaterial)
+                    count += it.Quantity;
+            return count;
+        }
+
+        public int ActorBarricadingMaterialNeedForFortification(bool isLarge)
+        {
+            int baseCost = isLarge ? 4 : 2;
+            //int skillBonus = (builder.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.CARPENTRY) >= 3 ? SKILL_CARPENTRY_LEVEL3_BUILD_BONUS : 0);
+            int skillBonus = 0;
+            return Math.Max(1, baseCost - skillBonus);
+        }
+
+        public int ActorMaxHPs()
+        {
+            //int skillBonus = (SKILL_TOUGH_HP_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.TOUGH))
+            //    + (SKILL_ZTOUGH_HP_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_TOUGH));
+            int skillBonus = 1;
+            return Sheet.BaseHitPoints + skillBonus;
+        }
+
+        public int ActorMaxSanity()
+        {
+            return Sheet.BaseSanity;
+        }
+
+        public int ActorMaxThrowRange(int baseRange)
+        {
+            int bonus = 1;//SKILL_STRONG_THROW_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.STRONG);
+
+            return baseRange + bonus;
+        }
+
+        public int ActorMaxInv()
+        {
+            int skillBonus = 1;//SKILL_HAULER_INV_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.HAULER);
+
+            return Sheet.BaseInventoryCapacity + skillBonus;
+        }
+
+        public int ActorUnsuspicousChance(Actor actor)
+        {
+            // base = unsuspicious skill.
+            int baseChance = 50;//SKILL_UNSUSPICIOUS_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.UNSUSPICIOUS);
+
+            // bonus.
+            int bonus = 0;
+
+            // wearing some outfit.
+            //ItemBodyArmor armor = actor.GetEquippedItem(DollPart.TORSO) as ItemBodyArmor;
+            //if (armor != null)
+            //{
+            //    if (observer.Faction.ID == (int)GameFactions.IDs.ThePolice)
+            //    {
+            //        if (armor.IsHostileForCops())
+            //            bonus -= UNSUSPICIOUS_BAD_OUTFIT_PENALTY;
+            //        else if (armor.IsFriendlyForCops())
+            //            bonus += UNSUSPICIOUS_GOOD_OUTFIT_BONUS;
+            //    }
+            //    else if (observer.Faction.ID == (int)GameFactions.IDs.TheBikers)
+            //    {
+            //        if (armor.IsHostileForBiker((GameGangs.IDs)observer.GangID))
+            //            bonus -= UNSUSPICIOUS_BAD_OUTFIT_PENALTY;
+            //        else if (armor.IsFriendlyForBiker((GameGangs.IDs)observer.GangID))
+            //            bonus += UNSUSPICIOUS_GOOD_OUTFIT_BONUS;
+            //    }
+            //}
+
+            return baseChance + bonus;
+        }
+
+        public int ActorSpotMurdererChance(Actor murderer)
+        {
+            int spotterBonus = MURDER_SPOTTING_MURDERCOUNTER_BONUS * murderer.MurdersCounter;
+            int distancePenalty = MURDERER_SPOTTING_DISTANCE_PENALTY * DistanceHelpers.GridDistance(Location.Position, murderer.Location.Position);
+
+            return MURDERER_SPOTTING_BASE_CHANCE + spotterBonus - distancePenalty;
+        }
+
+        public int ActorMaxFood()
+        {
+            int skillBonus = (int)(Sheet.BaseFoodPoints);// * SKILL_LIGHT_EATER_MAXFOOD_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.LIGHT_EATER));
+
+            return Sheet.BaseFoodPoints + skillBonus;
+        }
+
+        public int ActorMaxSTA()
+        {
+            int skillBonus = 1;// (SKILL_HIGH_STAMINA_STA_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.HIGH_STAMINA));
+
+            return Sheet.BaseStaminaPoints + skillBonus;
+        }
+
+        public int ActorItemNutritionValue(int baseValue)
+        {
+            int skillBonus = (int)(baseValue); // * SKILL_LIGHT_EATER_FOOD_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.LIGHT_EATER));
+
+            return baseValue + skillBonus;
+        }
+
+
+
+        public int ActorMaxRot()
+        {
+            int skillBonus = (int)(Sheet.BaseFoodPoints);// * SKILL_ZLIGHT_EATER_MAXFOOD_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_LIGHT_EATER));
+
+            return Sheet.BaseFoodPoints + skillBonus;
+        }
+
+        public int ActorMaxSleep()
+        {
+            int skillBonus = (int)(Sheet.BaseSleepPoints);// * SKILL_AWAKE_SLEEP_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.AWAKE));
+
+            return (Sheet.BaseSleepPoints + skillBonus);
+        }
+
+        public int ActorSleepRegen(bool isOnCouch)
+        {
+            int baseRegen = isOnCouch ? SLEEP_COUCH_SLEEPING_REGEN : SLEEP_NOCOUCH_SLEEPING_REGEN;
+            int skillBonus = (int)(baseRegen);// * SKILL_AWAKE_SLEEP_REGEN_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.AWAKE));
+
+            return baseRegen + skillBonus;
+        }
+
+        public bool IsActorDisturbed()
+        {
+            return Model.Abilities.HasSanity && Sanity <= ActorDisturbedLevel();
+        }
+
+        public bool IsActorInsane()
+        {
+            return Model.Abilities.HasSanity && Sanity <= 0;
+        }
+
+        public int ActorDisturbedLevel()
+        {
+            float factor = 1.0f;// SKILL_STRONG_PSYCHE_LEVEL_BONUS * Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.STRONG_PSYCHE);
+            return (int)(SANITY_UNSTABLE_LEVEL * factor);
+        }
+
+        public bool IsActorTrustingLeader()
+        {
+            if (!HasLeader)
+                return false;
+
+            return TrustInLeader >= TRUST_TRUSTING_THRESHOLD;
+        }
+
+        public bool CanActorRun(out string reason)
+        {
+            //////////////////////////////
+            // Cant run if any is true:
+            // 1. Has not CanRun ability.
+            // 2. Stamina below min level.
+            //////////////////////////////
+
+            // 1. Has not CanRun ability.
+            if (!Model.Abilities.CanRun)
+            {
+                reason = "no ability to run";
+                return false;
+            }
+
+            // 2. Stamina below min level.
+            if (StaminaPoints < STAMINA_MIN_FOR_ACTIVITY)
+            {
+                reason = "not enough stamina to run";
+                return false;
+            }
+
+            // all clear.
+            reason = "";
+            return true;
+        }
+
+        public int ActorSpeed()
+        {
+            float speed = Doll.Body.Speed;
+
+            // stamina.
+            if (IsActorTired())
+                speed *= 2f / 3f;
+
+            // sleep.
+            if (IsActorExhausted())
+                speed /= 2f;
+            else if (IsActorSleepy())
+                speed *= 2f / 3f;
+
+            // wearing armor.
+            //ItemBodyArmor armor = actor.GetEquippedItem(DollPart.TORSO) as ItemBodyArmor;
+            //if (armor != null)
+            //    speed -= armor.Weight;
+
+            // dragging corpses.
+            if (DraggedCorpse != null)
+                speed /= 2f;
+
+            // done, speed must be >= 0.
+            return Math.Max((int)speed, 0);
+        }
+
+        /// <summary>
+        /// If actor spend a turn now, will actor get the chance to act before other?
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public bool WillActorActAgainBefore(Actor other)
+        {
+            // if other can still act, nope.
+            if (other.ActionPoints > 0)
+                return false;
+
+            // if other will be able to act next turn BEFORE actor, nope.
+            if (other.ActionPoints + other.ActorSpeed() > 0 && Location.Map.IsActorBeforeInMapList(other, this))
+                return false;
+
+            // safe!
+            return true;
+        }
+
+        public void DoEmote(string text, bool isDanger = false)
+        {
+           // if (IsVisibleToPlayer(actor))
+           //     AddMessage(new Message(String.Format("{0} : {1}", actor.Name, text), actor.Location.Map.LocalTime.TurnCounter, isDanger ? SAYOREMOTE_DANGER_COLOR : SAYOREMOTE_NORMAL_COLOR));
+        }
+
+        public bool HasActorJumpAbility()
+        {
+            return Model.Abilities.CanJump;// ||
+               // actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.AGILE) > 0 ||
+              //  actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_AGILE) > 0;
+        }
+
+        public int ActorMaxFollowers()
+        {
+            return SKILL_LEADERSHIP_FOLLOWER_BONUS; //* actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.LEADERSHIP);
+        }
     }
 }

@@ -21,5 +21,13 @@ namespace djack.RogueSurvivor.Data
             this.CanDamageObjects = canDamageObjects;
             this.CanDestroyWalls = canDestroyWalls;
         }
+
+        public int BlastDamage(int distance, BlastAttack attack)
+        {
+            if (distance < 0 || distance > attack.Radius)
+                throw new ArgumentOutOfRangeException(String.Format("blast distance {0} out of range", distance));
+
+            return attack.Damage[distance];
+        }
     }
 }

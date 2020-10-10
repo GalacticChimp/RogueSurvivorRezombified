@@ -20,6 +20,7 @@ using Message = djack.RogueSurvivor.Data.Message;
 using djack.RogueSurvivor.Engine.Tasks;
 using ItemRating = djack.RogueSurvivor.Gameplay.AI.BaseAI.ItemRating;
 using TradeRating = djack.RogueSurvivor.Gameplay.AI.BaseAI.TradeRating;
+using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Engine
 {
@@ -807,7 +808,7 @@ namespace djack.RogueSurvivor.Engine
 
             m_Session = Session.Get;
             Logger.WriteLine(Logger.Stage.INIT_MAIN, "creating Rules");
-            m_Rules = new Rules(new DiceRoller(m_Session.Seed));
+            m_Rules = new Rules();
 
             BaseTownGenerator.Parameters genParams = BaseTownGenerator.DEFAULT_PARAMS;
             genParams.MapWidth = genParams.MapHeight = 100;
@@ -1222,7 +1223,7 @@ namespace djack.RogueSurvivor.Engine
 
                 // alpha10
                 // roll player charisma for this turn
-                m_Session.Player_TurnCharismaRoll = m_Rules.Roll(0, 100);
+                m_Session.Player_TurnCharismaRoll = DiceRoller.Roll(0, 100);
 
                 // play.
                 m_HasLoadedGame = false;
@@ -1327,8 +1328,8 @@ namespace djack.RogueSurvivor.Engine
                     const int NB_SANTAS = 10;
                     for (int i = 0; i < NB_SANTAS; i++)
                     {
-                        int santax = m_Rules.Roll(0, 1024);
-                        int santay = m_Rules.Roll(0, 768);
+                        int santax = DiceRoller.Roll(0, 1024);
+                        int santay = DiceRoller.Roll(0, 768);
                         m_UI.UI_DrawImage(GameImages.ACTOR_SANTAMAN, santax, santay);
                         m_UI.UI_DrawStringBold(Color.Snow, "* Merry Christmas *", santax - 60, santay - 10);
                     }
@@ -1417,8 +1418,6 @@ namespace djack.RogueSurvivor.Engine
         #region Character creation
         bool HandleNewCharacter()
         {
-            DiceRoller roller = new DiceRoller();
-
             /////////////////
             // Reset session
             /////////////////
@@ -1434,7 +1433,7 @@ namespace djack.RogueSurvivor.Engine
             // Choose living/undead 
             ////////////////////////
             bool isUndead;
-            if (!HandleNewCharacterRace(roller, out isUndead))
+            if (!HandleNewCharacterRace(out isUndead))
                 return false;
             m_CharGen.IsUndead = isUndead;
 
@@ -1444,14 +1443,14 @@ namespace djack.RogueSurvivor.Engine
             if (isUndead)
             {
                 GameActors.IDs modelID;
-                if (!HandleNewCharacterUndeadType(roller, out modelID))
+                if (!HandleNewCharacterUndeadType(out modelID))
                     return false;
                 m_CharGen.UndeadModel = modelID;
             }
             else
             {
                 bool isMale;
-                if (!HandleNewCharacterGender(roller, out isMale))
+                if (!HandleNewCharacterGender(out isMale))
                     return false;
                 m_CharGen.IsMale = isMale;
             }
@@ -1462,7 +1461,7 @@ namespace djack.RogueSurvivor.Engine
             if (!isUndead)
             {
                 Skills.IDs skID;
-                if (!HandleNewCharacterSkill(roller, out skID))
+                if (!HandleNewCharacterSkill(out skID))
                     return false;
                 m_CharGen.StartingSkill = skID;
                 // scoring : starting skill.
@@ -1627,7 +1626,7 @@ namespace djack.RogueSurvivor.Engine
             return choiceDone;
         }
 
-        bool HandleNewCharacterRace(DiceRoller roller, out bool isUndead)
+        bool HandleNewCharacterRace(out bool isUndead)
         {
             string[] menuEntries = new string[]
             {
@@ -1682,7 +1681,7 @@ namespace djack.RogueSurvivor.Engine
                             switch (selected)
                             {
                                 case 0: // random
-                                    isUndead = roller.RollChance(50);
+                                    isUndead = DiceRoller.RollChance(50);
 
                                     gy += BOLD_LINE_SPACING;
                                     m_UI.UI_DrawStringBold(Color.White, String.Format("Race : {0}.", isUndead ? "Undead" : "Living"), gx, gy);
@@ -1719,7 +1718,7 @@ namespace djack.RogueSurvivor.Engine
             return choiceDone;
         }
 
-        bool HandleNewCharacterGender(DiceRoller roller, out bool isMale)
+        bool HandleNewCharacterGender(out bool isMale)
         {
             ActorModel maleModel = GameActors.MaleCivilian;
             ActorModel femaleModel = GameActors.FemaleCivilian;
@@ -1775,7 +1774,7 @@ namespace djack.RogueSurvivor.Engine
                             switch (selected)
                             {
                                 case 0: // random
-                                    isMale = roller.RollChance(50);
+                                    isMale = DiceRoller.RollChance(50);
 
                                     gy += BOLD_LINE_SPACING;
                                     m_UI.UI_DrawStringBold(Color.White, String.Format("Gender : {0}.", isMale ? "Male" : "Female"), gx, gy);
@@ -1820,7 +1819,7 @@ namespace djack.RogueSurvivor.Engine
                 m.StartingSheet.BaseViewRange, m.StartingSheet.BaseSmellRating);
         }
 
-        bool HandleNewCharacterUndeadType(DiceRoller roller, out GameActors.IDs modelID)
+        bool HandleNewCharacterUndeadType(out GameActors.IDs modelID)
         {
             ActorModel skeletonModel = GameActors.Skeleton;
             ActorModel shamblerModel = GameActors.Zombie;
@@ -1885,7 +1884,7 @@ namespace djack.RogueSurvivor.Engine
                             switch (selected)
                             {
                                 case 0: // random
-                                    selected = roller.Roll(0, 5);
+                                    selected = DiceRoller.Roll(0, 5);
                                     switch (selected)
                                     {
                                         case 0: modelID = GameActors.IDs.UNDEAD_SKELETON; break;
@@ -1952,7 +1951,7 @@ namespace djack.RogueSurvivor.Engine
             return choiceDone;
         }
 
-        bool HandleNewCharacterSkill(DiceRoller roller, out Skills.IDs skID)
+        bool HandleNewCharacterSkill(out Skills.IDs skID)
         {
             /////////////////////////////
             // Make table of all skills.
@@ -2009,7 +2008,7 @@ namespace djack.RogueSurvivor.Engine
 
                     case Keys.Enter:    // validate
                         if (selected == 0) // random
-                            skID = Skills.RollLiving(roller);
+                            skID = Skills.RollLiving();
                         else
                             skID = (Skills.IDs)(selected - 1 + (int)Skills.IDs._FIRST);
 
@@ -2944,7 +2943,7 @@ namespace djack.RogueSurvivor.Engine
                     if (m_Session.WorldTime.TurnCounter >= m_Session.World.NextWeatherCheckTurn)
                     {
                         ChangeWeather();
-                        m_Session.World.NextWeatherCheckTurn = m_Session.WorldTime.TurnCounter + m_Rules.Roll(WEATHER_MIN_DURATION, WEATHER_MAX_DURATION);
+                        m_Session.World.NextWeatherCheckTurn = m_Session.WorldTime.TurnCounter + DiceRoller.Roll(WEATHER_MIN_DURATION, WEATHER_MAX_DURATION);
                     }
                 }
                 #endregion
@@ -3139,7 +3138,7 @@ namespace djack.RogueSurvivor.Engine
                     staminaCost += m_Rules.NightStaminaPenalty(actor);
 
                 // exhausted?
-                if (m_Rules.IsActorExhausted(actor))
+                if (actor.IsActorExhausted())
                     staminaCost *= 2;
 
                 // apply.
@@ -3152,19 +3151,19 @@ namespace djack.RogueSurvivor.Engine
         void RegenActorStaminaPoints(Actor actor, int staminaRegen)
         {
             if (actor.Model.Abilities.CanTire)
-                actor.StaminaPoints = Math.Min(m_Rules.ActorMaxSTA(actor), actor.StaminaPoints + staminaRegen);
+                actor.StaminaPoints = Math.Min(actor.ActorMaxSTA(), actor.StaminaPoints + staminaRegen);
             else
                 actor.StaminaPoints = Rules.STAMINA_INFINITE;
         }
 
         void RegenActorHitPoints(Actor actor, int hpRegen)
         {
-            actor.HitPoints = Math.Min(m_Rules.ActorMaxHPs(actor), actor.HitPoints + hpRegen);
+            actor.HitPoints = Math.Min(actor.ActorMaxHPs(), actor.HitPoints + hpRegen);
         }
 
         void RegenActorSleep(Actor actor, int sleepRegen)
         {
-            actor.SleepPoints = Math.Min(m_Rules.ActorMaxSleep(actor), actor.SleepPoints + sleepRegen);
+            actor.SleepPoints = Math.Min(actor.ActorMaxSleep(), actor.SleepPoints + sleepRegen);
         }
 
         void SpendActorSanity(Actor actor, int sanCost)
@@ -3175,7 +3174,7 @@ namespace djack.RogueSurvivor.Engine
 
         void RegenActorSanity(Actor actor, int sanRegen)
         {
-            actor.Sanity = Math.Min(m_Rules.ActorMaxSanity(actor), actor.Sanity + sanRegen);
+            actor.Sanity = Math.Min(actor.ActorMaxSanity(), actor.Sanity + sanRegen);
         }
 
         void NextMapTurn(Map map, SimFlags sim)
@@ -3247,7 +3246,7 @@ namespace djack.RogueSurvivor.Engine
                         {
                             // zombify?
                             int chanceZombify = m_Rules.CorpseZombifyChance(c, map.LocalTime);
-                            if (m_Rules.RollChance(chanceZombify))
+                            if (DiceRoller.RollChance(chanceZombify))
                             {
                                 // zombify this one.
                                 tryZombifyCorpses.Add(c);
@@ -3271,7 +3270,7 @@ namespace djack.RogueSurvivor.Engine
                                 if (map.GetActorAt(c.Position) == null)
                                 {
                                     float corpseState = (float)c.HitPoints / (float)c.MaxHitPoints;
-                                    int zombifiedHP = (int)(corpseState * m_Rules.ActorMaxHPs(c.DeadGuy));
+                                    int zombifiedHP = (int)(corpseState * c.DeadGuy.ActorMaxHPs());
                                     zombifiedCorpses.Add(c);
                                     Actor zombified = Zombify(null, c.DeadGuy, false);
 
@@ -3311,7 +3310,7 @@ namespace djack.RogueSurvivor.Engine
                                 int infectionP = m_Rules.ActorInfectionPercent(a);
 
                                 #region
-                                if (m_Rules.Roll(0, 1000) < m_Rules.InfectionEffectTriggerChance1000(infectionP))
+                                if (DiceRoller.Roll(0, 1000) < m_Rules.InfectionEffectTriggerChance1000(infectionP))
                                 {
                                     bool isVisible = IsVisibleToPlayer(a);
                                     bool isPlayer = a.IsPlayer;  // alpha10.1 consistency fix
@@ -3495,9 +3494,9 @@ namespace djack.RogueSurvivor.Engine
                 foreach (Actor actor in map.Actors)
                 {
                     if (!actor.IsSleeping)
-                        actor.ActionPoints += m_Rules.ActorSpeed(actor);
+                        actor.ActionPoints += actor.ActorSpeed();
 
-                    if (actor.StaminaPoints < m_Rules.ActorMaxSTA(actor))
+                    if (actor.StaminaPoints < actor.ActorMaxSTA())
                         RegenActorStaminaPoints(actor, Rules.STAMINA_REGEN_PER_TURN);
                 }
                 // reset actor index.
@@ -3537,10 +3536,10 @@ namespace djack.RogueSurvivor.Engine
                         if (actor.FoodPoints < 0) actor.FoodPoints = 0;
 
                         // May kill starved actors.
-                        if (m_Rules.IsActorStarving(actor))
+                        if (actor.IsActorStarving())
                         {
                             // kill him?
-                            if (m_Rules.RollChance(Rules.FOOD_STARVING_DEATH_CHANCE))
+                            if (DiceRoller.RollChance(Rules.FOOD_STARVING_DEATH_CHANCE))
                             {
                                 if (actor.IsPlayer || s_Options.NPCCanStarveToDeath)
                                 {
@@ -3558,10 +3557,10 @@ namespace djack.RogueSurvivor.Engine
                         if (actor.FoodPoints < 0) actor.FoodPoints = 0;
 
                         // rot effects.
-                        if (m_Rules.IsRottingActorStarving(actor))
+                        if (actor.IsRottingActorStarving())
                         {
                             // loose 1 HP.
-                            if (m_Rules.Roll(0, 1000) < Rules.ROT_STARVING_HP_CHANCE)
+                            if (DiceRoller.Roll(0, 1000) < Rules.ROT_STARVING_HP_CHANCE)
                             {
                                 if (IsVisibleToPlayer(actor))
                                 {
@@ -3575,10 +3574,10 @@ namespace djack.RogueSurvivor.Engine
                                 }
                             }
                         }
-                        else if (m_Rules.IsRottingActorHungry(actor))
+                        else if (actor.IsRottingActorHungry())
                         {
                             // loose a skill.
-                            if (m_Rules.Roll(0, 1000) < Rules.ROT_HUNGRY_SKILL_CHANCE)
+                            if (DiceRoller.Roll(0, 1000) < Rules.ROT_HUNGRY_SKILL_CHANCE)
                                 DoLooseRandomSkill(actor);
                         }
                     }
@@ -3593,7 +3592,7 @@ namespace djack.RogueSurvivor.Engine
                         {
                             // sleeping.
                             // nightmare?
-                            if (m_Rules.IsActorDisturbed(actor) && m_Rules.RollChance(Rules.SANITY_NIGHTMARE_CHANCE))
+                            if (actor.IsActorDisturbed() && DiceRoller.RollChance(Rules.SANITY_NIGHTMARE_CHANCE))
                             {
                                 // wake up, shout, lose sleep and sta.
                                 DoWakeUp(actor);
@@ -3628,27 +3627,27 @@ namespace djack.RogueSurvivor.Engine
                         #region
                         if (actor.IsSleeping)
                         {
-                            bool isOnCouch = m_Rules.IsOnCouch(actor);
+                            bool isOnCouch = actor.IsOnCouch();
                             // activity.
                             actor.Activity = Activity.SLEEPING;
 
                             // regen sleep pts.
-                            int sleepRegen = m_Rules.ActorSleepRegen(actor, isOnCouch);
+                            int sleepRegen = actor.ActorSleepRegen(isOnCouch);
                             actor.SleepPoints += sleepRegen;
-                            actor.SleepPoints = Math.Min(actor.SleepPoints, m_Rules.ActorMaxSleep(actor));
+                            actor.SleepPoints = Math.Min(actor.SleepPoints, actor.ActorMaxSleep());
 
                             // heal?
-                            if (actor.HitPoints < m_Rules.ActorMaxHPs(actor))
+                            if (actor.HitPoints < actor.ActorMaxHPs())
                             {
                                 int healChance = (isOnCouch ? Rules.SLEEP_ON_COUCH_HEAL_CHANCE : 0);
                                 healChance += m_Rules.ActorHealChanceBonus(actor);
-                                if (m_Rules.RollChance(healChance))
+                                if (DiceRoller.RollChance(healChance))
                                     RegenActorHitPoints(actor, Rules.SLEEP_HEAL_HITPOINTS);
                             }
 
                             // wake up?
                             // wake up if hungry or fully slept.
-                            bool wakeUp = m_Rules.IsActorHungry(actor) || actor.SleepPoints >= m_Rules.ActorMaxSleep(actor);
+                            bool wakeUp = actor.IsActorHungry() || actor.SleepPoints >= actor.ActorMaxSleep();
                             if (wakeUp)
                             {
                                 DoWakeUp(actor);
@@ -3670,7 +3669,7 @@ namespace djack.RogueSurvivor.Engine
                                     if (s_Options.SimThread)
                                         Thread.Sleep(10);
                                 }
-                                else if (m_Rules.RollChance(MESSAGE_NPC_SLEEP_SNORE_CHANCE) && IsVisibleToPlayer(actor))
+                                else if (DiceRoller.RollChance(MESSAGE_NPC_SLEEP_SNORE_CHANCE) && IsVisibleToPlayer(actor))
                                 {
                                     AddMessage(MakeMessage(actor, String.Format("{0}.", Conjugate(actor, VERB_SNORE))));
                                     RedrawPlayScreen();
@@ -3681,9 +3680,9 @@ namespace djack.RogueSurvivor.Engine
 
                         //      4.3 Exhausted actors might collapse.
                         #region
-                        if (m_Rules.IsActorExhausted(actor))
+                        if (actor.IsActorExhausted())
                         {
-                            if (m_Rules.RollChance(Rules.SLEEP_EXHAUSTION_COLLAPSE_CHANCE))
+                            if (DiceRoller.RollChance(Rules.SLEEP_EXHAUSTION_COLLAPSE_CHANCE))
                             {
                                 // do it
                                 actor.DoStartSleeping();
@@ -3724,7 +3723,7 @@ namespace djack.RogueSurvivor.Engine
                         // trust.
                         ModifyActorTrustInLeader(actor, m_Rules.ActorTrustIncrease(actor.Leader), false);
                         // bond with leader.
-                        if (m_Rules.HasActorBondWith(actor, actor.Leader) && m_Rules.RollChance(Rules.SANITY_RECOVER_BOND_CHANCE))
+                        if (m_Rules.HasActorBondWith(actor, actor.Leader) && DiceRoller.RollChance(Rules.SANITY_RECOVER_BOND_CHANCE))
                         {
                             RegenActorSanity(actor, Rules.SANITY_RECOVER_BOND);
                             RegenActorSanity(actor.Leader, Rules.SANITY_RECOVER_BOND);
@@ -3756,7 +3755,7 @@ namespace djack.RogueSurvivor.Engine
                         KillActor(null, actor, "starvation");
 
                         // zombify?
-                        if (!actor.Model.Abilities.IsUndead && Rules.HasImmediateZombification(m_Session.GameMode) && m_Rules.RollChance(s_Options.StarvedZombificationChance))
+                        if (!actor.Model.Abilities.IsUndead && Rules.HasImmediateZombification(m_Session.GameMode) && DiceRoller.RollChance(s_Options.StarvedZombificationChance))
                         {
                             // remove morpse!
                             map.TryRemoveCorpseOf(actor);
@@ -3945,12 +3944,12 @@ namespace djack.RogueSurvivor.Engine
                 // FIXME there still the weather bug when simulating = weather used is current world weather, not map weather.
                 #region
                 // Check?
-                if (m_Rules.IsWeatherRain(m_Session.World.Weather) && m_Rules.RollChance(Rules.FIRE_RAIN_TEST_CHANCE))
+                if (m_Rules.IsWeatherRain(m_Session.World.Weather) && DiceRoller.RollChance(Rules.FIRE_RAIN_TEST_CHANCE))
                 {
                     // 7.1.1 Burning objects?
                     foreach (MapObject obj in map.MapObjects)
                     {
-                        if (obj.IsOnFire && m_Rules.RollChance(Rules.FIRE_RAIN_PUT_OUT_CHANCE))
+                        if (obj.IsOnFire && DiceRoller.RollChance(Rules.FIRE_RAIN_PUT_OUT_CHANCE))
                         {
                             // do it.
                             UnapplyOnFire(obj);
@@ -4122,7 +4121,7 @@ namespace djack.RogueSurvivor.Engine
                 foreach (Item it in inv.Items)
                 {
                     if (it is ItemFood)
-                        groundNutrition += m_Rules.FoodItemNutrition(it as ItemFood, map.LocalTime.TurnCounter);
+                        groundNutrition += (it as ItemFood).FoodItemNutrition(map.LocalTime.TurnCounter);
                 }
             }
             // food items carried by actors.
@@ -4135,7 +4134,7 @@ namespace djack.RogueSurvivor.Engine
                 foreach (Item it in inv.Items)
                 {
                     if (it is ItemFood)
-                        carriedNutrition += m_Rules.FoodItemNutrition(it as ItemFood, map.LocalTime.TurnCounter);
+                        carriedNutrition += (it as ItemFood).FoodItemNutrition(map.LocalTime.TurnCounter);
                 }
             }
 
@@ -4201,7 +4200,7 @@ namespace djack.RogueSurvivor.Engine
                 return false;
 
             // randomly.
-            if (!m_Rules.RollChance(SEWERS_INVASION_CHANCE))
+            if (!DiceRoller.RollChance(SEWERS_INVASION_CHANCE))
                 return false;
 
             // if not enough zombies only.
@@ -4310,13 +4309,13 @@ namespace djack.RogueSurvivor.Engine
             for (int i = 0; i < civiliansToSpawn; i++)
             {
                 // map: surface or sewers/subway.
-                if (m_Rules.RollChance(REFUGEE_SURFACE_SPAWN_CHANCE))
+                if (DiceRoller.RollChance(REFUGEE_SURFACE_SPAWN_CHANCE))
                     spawnMap = district.EntryMap;
                 else
                 {
                     // 50% sewers and 50% subway, but some districts have no subway.
                     if (district.HasSubway)
-                        spawnMap = m_Rules.RollChance(50) ? district.SubwayMap : district.SewersMap;
+                        spawnMap = DiceRoller.RollChance(50) ? district.SubwayMap : district.SewersMap;
                     else
                         spawnMap = district.SewersMap;
                 }
@@ -4325,7 +4324,7 @@ namespace djack.RogueSurvivor.Engine
             }
 
             // check for uniques, always in surface.
-            if (m_Rules.RollChance(UNIQUE_REFUGEE_CHECK_CHANCE))
+            if (DiceRoller.RollChance(UNIQUE_REFUGEE_CHECK_CHANCE))
             {
                 lock (m_Session) // thread safe
                 {
@@ -4337,7 +4336,7 @@ namespace djack.RogueSurvivor.Engine
                         });
                     if (mayArrive != null && mayArrive.Length > 0)
                     {
-                        int iArrive = m_Rules.Roll(0, mayArrive.Length);
+                        int iArrive = DiceRoller.Roll(0, mayArrive.Length);
                         FireEvent_UniqueActorArrive(district.EntryMap, mayArrive[iArrive]);
                     }
                 }
@@ -4432,7 +4431,7 @@ namespace djack.RogueSurvivor.Engine
                 return false;
 
             // check chance.
-            if (!m_Rules.RollChance(NATGUARD_INTERVENTION_CHANCE))
+            if (!DiceRoller.RollChance(NATGUARD_INTERVENTION_CHANCE))
                 return false;
 
             // if zombies significantly outnumber livings only (army count as 2 livings).
@@ -4511,7 +4510,7 @@ namespace djack.RogueSurvivor.Engine
                 return false;
 
             // check chance.
-            if (!m_Rules.RollChance(ARMY_SUPPLIES_CHANCE))
+            if (!DiceRoller.RollChance(ARMY_SUPPLIES_CHANCE))
                 return false;
 
             // count food items vs livings.
@@ -4554,7 +4553,7 @@ namespace djack.RogueSurvivor.Engine
                         continue;
 
                     // drop stuff.
-                    Item it = m_Rules.RollChance(80) ? m_TownGenerator.MakeItemArmyRation() : m_TownGenerator.MakeItemMedikit();
+                    Item it = DiceRoller.RollChance(80) ? m_TownGenerator.MakeItemArmyRation() : m_TownGenerator.MakeItemMedikit();
                     map.DropItemAt(it, sx, sy);
                 }
 
@@ -4662,7 +4661,7 @@ namespace djack.RogueSurvivor.Engine
                 return false;
 
             // check chance.
-            if (!m_Rules.RollChance(BIKERS_RAID_CHANCE_PER_TURN))
+            if (!DiceRoller.RollChance(BIKERS_RAID_CHANCE_PER_TURN))
                 return false;
 
             // if no bikers.
@@ -4682,7 +4681,7 @@ namespace djack.RogueSurvivor.Engine
             m_Session.SetLastRaidTime(RaidType.BIKERS, map.District, map.LocalTime.TurnCounter);
 
             // roll a random gang.
-            GameGangs.IDs gangId = GameGangs.BIKERS[m_Rules.Roll(0, GameGangs.BIKERS.Length)];
+            GameGangs.IDs gangId = GameGangs.BIKERS[DiceRoller.Roll(0, GameGangs.BIKERS.Length)];
 
             // do it.
             // spawn raid leader then squadies.
@@ -4744,7 +4743,7 @@ namespace djack.RogueSurvivor.Engine
                 return false;
 
             // check chance.
-            if (!m_Rules.RollChance(GANGSTAS_RAID_CHANCE_PER_TURN))
+            if (!DiceRoller.RollChance(GANGSTAS_RAID_CHANCE_PER_TURN))
                 return false;
 
             // if no gangsta.
@@ -4764,7 +4763,7 @@ namespace djack.RogueSurvivor.Engine
             m_Session.SetLastRaidTime(RaidType.GANGSTA, map.District, map.LocalTime.TurnCounter);
 
             // roll a random gang.
-            GameGangs.IDs gangId = GameGangs.GANGSTAS[m_Rules.Roll(0, GameGangs.GANGSTAS.Length)];
+            GameGangs.IDs gangId = GameGangs.GANGSTAS[DiceRoller.Roll(0, GameGangs.GANGSTAS.Length)];
 
             // do it.
             // spawn raid leader then squadies.
@@ -4824,7 +4823,7 @@ namespace djack.RogueSurvivor.Engine
                 return false;
 
             // check chance.
-            if (!m_Rules.RollChance(BLACKOPS_RAID_CHANCE_PER_TURN))
+            if (!DiceRoller.RollChance(BLACKOPS_RAID_CHANCE_PER_TURN))
                 return false;
 
             // clear.
@@ -4894,7 +4893,7 @@ namespace djack.RogueSurvivor.Engine
                 return false;
 
             // check chance.
-            if (!m_Rules.RollChance(SURVIVORS_BAND_CHANCE_PER_TURN))
+            if (!DiceRoller.RollChance(SURVIVORS_BAND_CHANCE_PER_TURN))
                 return false;
 
             // clear.
@@ -4999,9 +4998,9 @@ namespace djack.RogueSurvivor.Engine
                 ++i;
 
                 // roll a position on the border.
-                int x = (m_Rules.RollChance(50) ? 0 : map.Width - 1);
-                int y = (m_Rules.RollChance(50) ? 0 : map.Height - 1);
-                if (m_Rules.RollChance(50))
+                int x = (DiceRoller.RollChance(50) ? 0 : map.Width - 1);
+                int y = (DiceRoller.RollChance(50) ? 0 : map.Height - 1);
+                if (DiceRoller.RollChance(50))
                     x = m_Rules.RollX(map);
                 else
                     y = m_Rules.RollY(map);
@@ -5042,8 +5041,8 @@ namespace djack.RogueSurvivor.Engine
                 ++i;
 
                 // roll a position.
-                int x = nearPoint.X + m_Rules.Roll(1, maxDistToPoint + 1) - m_Rules.Roll(1, maxDistToPoint + 1);
-                int y = nearPoint.Y + m_Rules.Roll(1, maxDistToPoint + 1) - m_Rules.Roll(1, maxDistToPoint + 1);
+                int x = nearPoint.X + DiceRoller.Roll(1, maxDistToPoint + 1) - DiceRoller.Roll(1, maxDistToPoint + 1);
+                int y = nearPoint.Y + DiceRoller.Roll(1, maxDistToPoint + 1) - DiceRoller.Roll(1, maxDistToPoint + 1);
 
                 // trim to map.
                 pos.X = x;
@@ -5086,11 +5085,11 @@ namespace djack.RogueSurvivor.Engine
                 int levelupChance = Math.Min(75, day * 2); // +2% per day, max 75%.
                 bool doLevelUp = false;
                 GameActors.IDs levelupID = (GameActors.IDs)newUndead.Model.ID;
-                if (m_Rules.RollChance(levelupChance))
+                if (DiceRoller.RollChance(levelupChance))
                 {
                     doLevelUp = true;
                     levelupID = NextUndeadEvolution((GameActors.IDs)newUndead.Model.ID);
-                    if (m_Rules.RollChance(levelupChance))
+                    if (DiceRoller.RollChance(levelupChance))
                         levelupID = NextUndeadEvolution(levelupID);
                 }
 
@@ -5216,7 +5215,7 @@ namespace djack.RogueSurvivor.Engine
             Actor newNatGuard = m_TownGenerator.CreateNewArmyNationalGuard(map.LocalTime.TurnCounter, "Pvt");
 
             // additional items : combat knife or grenades.
-            if (m_Rules.RollChance(50))
+            if (DiceRoller.RollChance(50))
                 newNatGuard.Inventory.AddAll(m_TownGenerator.MakeItemCombatKnife());
             else
                 newNatGuard.Inventory.AddAll(m_TownGenerator.MakeItemGrenade());
@@ -6092,9 +6091,9 @@ namespace djack.RogueSurvivor.Engine
 
         bool TryPlayerInsanity()
         {
-            if (!m_Rules.IsActorInsane(m_Player))
+            if (!m_Player.IsActorInsane())
                 return false;
-            if (!m_Rules.RollChance(Rules.SANITY_INSANE_ACTION_CHANCE))
+            if (!DiceRoller.RollChance(Rules.SANITY_INSANE_ACTION_CHANCE))
                 return false;
 
             ActorAction insaneAction = GenerateInsaneAction(m_Player);
@@ -7275,7 +7274,7 @@ namespace djack.RogueSurvivor.Engine
             bool charismaSuccess = m_Session.Player_TurnCharismaRoll < charismaChance;
 
             // remember if player is trusted leader to notify him.
-            bool isTrustedLeader = (npc.Leader == player) && m_Rules.IsActorTrustingLeader(npc);
+            bool isTrustedLeader = (npc.Leader == player) && npc.IsActorTrustingLeader();
 
             // loop
             bool loop = true;
@@ -7599,7 +7598,7 @@ namespace djack.RogueSurvivor.Engine
         void HandlePlayerRunToggle(Actor player)
         {
             string reason;
-            if (!m_Rules.CanActorRun(player, out reason))
+            if (!player.CanActorRun(out reason))
             {
                 AddMessage(MakeErrorMessage(String.Format("Cannot run now : {0}.", reason)));
                 return;
@@ -7806,7 +7805,7 @@ namespace djack.RogueSurvivor.Engine
                                 if (player.IsEnemiesWith(actorTo))
                                 {
                                     // check melee rule.
-                                    if (m_Rules.CanActorMeleeAttack(player, actorTo, out reason))
+                                    if (player.CanActorMeleeAttack(actorTo, out reason))
                                     {
                                         player.DoMeleeAttack(actorTo);
                                         loop = false;
@@ -7887,8 +7886,8 @@ namespace djack.RogueSurvivor.Engine
                 AddMessage(MakeErrorMessage("need carpentry skill."));
                 return false;
             }
-            int need = m_Rules.ActorBarricadingMaterialNeedForFortification(player, isLarge);
-            if (m_Rules.CountBarricadingMaterial(player) < need)
+            int need = player.ActorBarricadingMaterialNeedForFortification(isLarge);
+            if (player.CountBarricadingMaterial() < need)
             {
                 AddMessage(MakeErrorMessage(string.Format("not enough barricading material, need {0}.", need)));
                 return false;
@@ -7986,7 +7985,7 @@ namespace djack.RogueSurvivor.Engine
             }
 
             // Loop.
-            Attack rangedAttack = m_Rules.ActorRangedAttack(player, player.CurrentRangedAttack, 0, null);
+            Attack rangedAttack = player.ActorRangedAttack(player.CurrentRangedAttack, 0, null);
             int iCurrentTarget = 0;
             List<Point> LoF = new List<Point>(rangedAttack.Range);
             FireMode mode = m_Session.Player_CurrentFireMode;  // alpha10
@@ -8000,9 +7999,9 @@ namespace djack.RogueSurvivor.Engine
 
                 string modeDesc;
                 if (mode == FireMode.RAPID)
-                    modeDesc = string.Format("RAPID fire average hit chances {0}% {1}%", m_Rules.ComputeChancesRangedHit(player, currentTarget, 1), m_Rules.ComputeChancesRangedHit(player, currentTarget, 2));
+                    modeDesc = string.Format("RAPID fire average hit chances {0}% {1}%", player.ComputeChancesRangedHit(currentTarget, 1), player.ComputeChancesRangedHit(currentTarget, 2));
                 else
-                    modeDesc = string.Format("Normal fire average hit chance {0}%", m_Rules.ComputeChancesRangedHit(player, currentTarget, 0));
+                    modeDesc = string.Format("Normal fire average hit chance {0}%", player.ComputeChancesRangedHit(currentTarget, 0));
 
                 ///////////////////
                 // 1. Redraw
@@ -8194,7 +8193,7 @@ namespace djack.RogueSurvivor.Engine
             // Get data.
             Map map = player.Location.Map;
             Point targetThrow = player.Location.Position;
-            int maxThrowDist = m_Rules.ActorMaxThrowRange(player, grenadeModel.MaxThrowDistance);
+            int maxThrowDist = player.ActorMaxThrowRange(grenadeModel.MaxThrowDistance);
 
             // Loop.
             List<Point> LoT = new List<Point>();
@@ -8486,12 +8485,12 @@ namespace djack.RogueSurvivor.Engine
         bool HandlePlayerPush(Actor player)
         {
             // fail immediatly for stupid cases.
-            if (!m_Rules.HasActorPushAbility(player))
+            if (!player.HasActorPushAbility())
             {
                 AddMessage(MakeErrorMessage("Cannot push objects."));
                 return false;
             }
-            if (m_Rules.IsActorTired(player))
+            if (player.IsActorTired())
             {
                 AddMessage(MakeErrorMessage("Too tired to push."));
                 return false;
@@ -8696,12 +8695,12 @@ namespace djack.RogueSurvivor.Engine
         bool HandlePlayerPull(Actor player)
         {
             // fail immediatly for stupid cases.
-            if (!m_Rules.HasActorPushAbility(player))
+            if (!player.HasActorPushAbility())
             {
                 AddMessage(MakeErrorMessage("Cannot pull objects."));
                 return false;
             }
-            if (m_Rules.IsActorTired(player))
+            if (player.IsActorTired())
             {
                 AddMessage(MakeErrorMessage("Too tired to pull."));
                 return false;
@@ -9176,7 +9175,7 @@ namespace djack.RogueSurvivor.Engine
                 return false;
 
             // 3. Hungry or sleepy.
-            if (m_Rules.IsActorHungry(player) || m_Rules.IsActorStarving(player) || m_Rules.IsActorSleepy(player) || m_Rules.IsActorExhausted(player))
+            if (player.IsActorHungry() || player.IsActorStarving() || player.IsActorSleepy() || player.IsActorExhausted())
                 return false;
 
             // 4. Enemy.
@@ -9392,7 +9391,7 @@ namespace djack.RogueSurvivor.Engine
         bool HandlePlayerOrderFollower(Actor player, Actor follower)
         {
             // check trust.
-            if (!m_Rules.IsActorTrustingLeader(follower))
+            if (!follower.IsActorTrustingLeader())
             {
                 // say/phone
                 if (IsVisibleToPlayer(follower))
@@ -10135,7 +10134,7 @@ namespace djack.RogueSurvivor.Engine
             ActorAction desiredAction = aiActor.Controller.GetAction(m_Session.World);
 
             // Insane effect?
-            if (m_Rules.IsActorInsane(aiActor) && m_Rules.RollChance(Rules.SANITY_INSANE_ACTION_CHANCE))
+            if (aiActor.IsActorInsane() && DiceRoller.RollChance(Rules.SANITY_INSANE_ACTION_CHANCE))
             {
                 ActorAction insaneAction = GenerateInsaneAction(aiActor);
                 if (insaneAction != null && insaneAction.IsLegal())
@@ -10458,7 +10457,7 @@ namespace djack.RogueSurvivor.Engine
                     return true;
 
                 case AdvisorHint.MOVE_JUMP:  // can jump.
-                    return !m_Rules.IsActorTired(m_Player) &&
+                    return !m_Player.IsActorTired() &&
                         map.HasAnyAdjacentInMap(pos, (pt) =>
                         {
                             MapObject obj = map.GetMapObjectAt(pt);
@@ -10468,10 +10467,10 @@ namespace djack.RogueSurvivor.Engine
                         });
 
                 case AdvisorHint.MOVE_RUN:   // running.
-                    return map.LocalTime.TurnCounter >= 5 && m_Rules.CanActorRun(m_Player);  // don't spam at turn 0.                 
+                    return map.LocalTime.TurnCounter >= 5 && m_Player.CanActorRun(out _);  // don't spam at turn 0.                 
 
                 case AdvisorHint.MOVE_RESTING: // resting.
-                    return m_Rules.IsActorTired(m_Player);
+                    return m_Player.IsActorTired();
 
                 case AdvisorHint.NIGHT: // night effects, wait a bit.
                     return map.LocalTime.TurnCounter >= 1 * WorldTime.TURNS_PER_HOUR;
@@ -10536,10 +10535,10 @@ namespace djack.RogueSurvivor.Engine
                     return m_Player.Inventory.HasItemOfType(typeof(ItemSprayScent));
 
                 case AdvisorHint.STATE_HUNGRY:
-                    return m_Rules.IsActorHungry(m_Player);
+                    return m_Player.IsActorHungry();
 
                 case AdvisorHint.STATE_SLEEPY:
-                    return m_Rules.IsActorSleepy(m_Player);
+                    return m_Player.IsActorSleepy();
 
                 case AdvisorHint.WEAPON_FIRE: // can fire a weapon.
                     {
@@ -10566,7 +10565,7 @@ namespace djack.RogueSurvivor.Engine
                 // alpha10 new hints
 
                 case AdvisorHint.SANITY:  // sanity
-                    return m_Player.Sanity < 0.80f * m_Rules.ActorMaxSanity(m_Player);
+                    return m_Player.Sanity < 0.80f * m_Player.ActorMaxSanity();
 
                 case AdvisorHint.INFECTION:
                     return m_Player.Infection > 0;
@@ -11321,7 +11320,7 @@ namespace djack.RogueSurvivor.Engine
                     }
                     // gauges.
                     lines.Add(String.Format("Foo : {0} {1}h", actor.FoodPoints, FoodToHoursUntilHungry(actor.FoodPoints)));
-                    lines.Add(String.Format("Slp : {0} {1}h", actor.SleepPoints, m_Rules.SleepToHoursUntilSleepy(actor.SleepPoints, actor.Location.Map.LocalTime.IsNight)));
+                    lines.Add(String.Format("Slp : {0} {1}h", actor.SleepPoints, actor.SleepToHoursUntilSleepy(actor.SleepPoints, actor.Location.Map.LocalTime.IsNight)));
                     lines.Add(String.Format("San : {0} {1}h", actor.Sanity, m_Rules.SanityToHoursUntilUnstable(actor)));
                     lines.Add(String.Format("Inf : {0} {1}%", actor.Infection, m_Rules.ActorInfectionPercent(actor)));
                 }
@@ -11335,7 +11334,7 @@ namespace djack.RogueSurvivor.Engine
                 lines.Add("WANTED FOR MURDER!");
                 lines.Add(String.Format("{0} murder{1}!", actor.MurdersCounter, actor.MurdersCounter > 1 ? "s" : ""));
             }
-            else if (actor.HasLeader && actor.Leader.IsPlayer && m_Rules.IsActorTrustingLeader(actor))
+            else if (actor.HasLeader && actor.Leader.IsPlayer && actor.IsActorTrustingLeader())
             {
                 if (actor.MurdersCounter > 0)
                     lines.Add(String.Format("* Confess {0} murder{1}! *", actor.MurdersCounter, actor.MurdersCounter > 1 ? "s" : ""));
@@ -11363,46 +11362,46 @@ namespace djack.RogueSurvivor.Engine
                 lines.Add(" ");  // blank activity line
             if (actor.Model.Abilities.HasToSleep)
             {
-                if (m_Rules.IsActorExhausted(actor))
+                if (actor.IsActorExhausted())
                     lines.Add("Exhausted!");
-                else if (m_Rules.IsActorSleepy(actor))
+                else if (actor.IsActorSleepy())
                     lines.Add("Sleepy.");
             }
             if (actor.Model.Abilities.HasToEat)
             {
-                if (m_Rules.IsActorStarving(actor))
+                if (actor.IsActorStarving())
                     lines.Add("Starving!");
-                else if (m_Rules.IsActorHungry(actor))
+                else if (actor.IsActorHungry())
                     lines.Add("Hungry.");
             }
             else if (actor.Model.Abilities.IsRotting)
             {
-                if (m_Rules.IsRottingActorStarving(actor))
+                if (actor.IsRottingActorStarving())
                     lines.Add("Starving!");
-                else if (m_Rules.IsRottingActorHungry(actor))
+                else if (actor.IsRottingActorHungry())
                     lines.Add("Hungry.");
             }
             if (actor.Model.Abilities.HasSanity)
             {
-                if (m_Rules.IsActorInsane(actor))
+                if (actor.IsActorInsane())
                     lines.Add("Insane!");
-                else if (m_Rules.IsActorDisturbed(actor))
+                else if (actor.IsActorDisturbed())
                     lines.Add("Disturbed.");
             }
 
             // 3. Speed
-            lines.Add(String.Format("Spd : {0:F2}", (float)m_Rules.ActorSpeed(actor) / (float)Rules.BASE_SPEED));
+            lines.Add(String.Format("Spd : {0:F2}", (float)actor.ActorSpeed() / (float)Rules.BASE_SPEED));
 
             // 4. HP & STA.
             StringBuilder sb = new StringBuilder();
-            int maxHP = m_Rules.ActorMaxHPs(actor);
+            int maxHP = actor.ActorMaxHPs();
             if (actor.HitPoints != maxHP)
                 sb.Append(String.Format("HP  : {0:D2}/{1:D2}", actor.HitPoints, maxHP));
             else
                 sb.Append(String.Format("HP  : {0:D2} MAX", actor.HitPoints));
             if (actor.Model.Abilities.CanTire)
             {
-                int maxSTA = m_Rules.ActorMaxSTA(actor);
+                int maxSTA = actor.ActorMaxSTA();
                 if (actor.StaminaPoints != maxSTA)
                     sb.Append(String.Format("   STA : {0}/{1}", actor.StaminaPoints, maxSTA));
                 else
@@ -11413,7 +11412,7 @@ namespace djack.RogueSurvivor.Engine
             // 5. Attack, Dmg, Defence.
             Attack attack = m_Rules.ActorMeleeAttack(actor, actor.CurrentMeleeAttack, null);
             lines.Add(String.Format("Atk : {0:D2} Dmg : {1:D2}", attack.HitValue, attack.DamageValue));
-            Defence defence = m_Rules.ActorDefence(actor, actor.CurrentDefence);
+            Defence defence = actor.ActorDefence(actor.CurrentDefence);
             lines.Add(String.Format("Def : {0:D2}", defence.Value));
             lines.Add(String.Format("Arm : {0}/{1}", defence.Protection_Hit, defence.Protection_Shot));
             lines.Add(" ");
@@ -11459,7 +11458,7 @@ namespace djack.RogueSurvivor.Engine
                     if (actor.Model.Abilities.CanJumpStumble) lines.Add("- This undead can jump but may stumble.");
                     else lines.Add("- This undead can jump.");
                 }
-                if (m_Rules.HasActorPushAbility(actor)) lines.Add("- This undead can push.");
+                if (actor.HasActorPushAbility()) lines.Add("- This undead can push.");
                 if (actor.Model.Abilities.ZombieAI_Explore) lines.Add("- This undead will explore.");
 
                 // things some of them cannot do
@@ -11476,7 +11475,7 @@ namespace djack.RogueSurvivor.Engine
             // 9. Inventory.
             if (actor.Inventory != null && !actor.Inventory.IsEmpty)
             {
-                lines.Add(String.Format("Items {0}/{1} : ", actor.Inventory.CountItems, m_Rules.ActorMaxInv(actor)));
+                lines.Add(String.Format("Items {0}/{1} : ", actor.Inventory.CountItems, actor.ActorMaxInv()));
                 lines.AddRange(DescribeInventory(actor.Inventory));
             }
 
@@ -11762,9 +11761,9 @@ namespace djack.RogueSurvivor.Engine
             if (it is ItemFood)
             {
                 ItemFood food = it as ItemFood;
-                if (m_Rules.IsFoodSpoiled(food, m_Session.WorldTime.TurnCounter))
+                if (food.IsFoodSpoiled(m_Session.WorldTime.TurnCounter))
                     name += " (spoiled)";
-                else if (m_Rules.IsFoodExpired(food, m_Session.WorldTime.TurnCounter))
+                else if (food.IsFoodExpired(m_Session.WorldTime.TurnCounter))
                     name += " (expired)";
             }
             else if (it is ItemRangedWeapon)
@@ -11938,7 +11937,7 @@ namespace djack.RogueSurvivor.Engine
             StringBuilder sb = new StringBuilder();
             for (int blastRadius = 0; blastRadius <= m.BlastAttack.Radius; blastRadius++)
             {
-                sb.Append(String.Format("{0};", m_Rules.BlastDamage(blastRadius, m.BlastAttack)));
+                sb.Append(String.Format("{0};", m.BlastAttack.BlastDamage(blastRadius, m.BlastAttack)));
             }
             lines.Add(String.Format("Blast damages : {0}", sb.ToString()));
 
@@ -11950,7 +11949,7 @@ namespace djack.RogueSurvivor.Engine
                 lines.Add("> grenade");
 
                 ItemGrenadeModel greModel = grenade.Model as ItemGrenadeModel;
-                int rng = m_Rules.ActorMaxThrowRange(m_Player, greModel.MaxThrowDistance);
+                int rng = m_Player.ActorMaxThrowRange(greModel.MaxThrowDistance);
                 if (rng != greModel.MaxThrowDistance)
                     lines.Add(String.Format("Throwing rng  : {0} ({1})", rng, greModel.MaxThrowDistance));
                 else
@@ -12068,11 +12067,11 @@ namespace djack.RogueSurvivor.Engine
             // 1. Fresh/Expired, Best-Before
             if (f.IsPerishable)
             {
-                if (m_Rules.IsFoodStillFresh(f, m_Session.WorldTime.TurnCounter))
+                if (f.IsFoodStillFresh(m_Session.WorldTime.TurnCounter))
                     lines.Add("Fresh.");
-                else if (m_Rules.IsFoodExpired(f, m_Session.WorldTime.TurnCounter))
+                else if (f.IsFoodExpired(m_Session.WorldTime.TurnCounter))
                     lines.Add("*Expired*");
-                else if (m_Rules.IsFoodSpoiled(f, m_Session.WorldTime.TurnCounter))
+                else if (f.IsFoodSpoiled(m_Session.WorldTime.TurnCounter))
                     lines.Add("**SPOILED**");
                 lines.Add(String.Format("Best-Before : {0}", f.BestBefore.ToString()));
             }
@@ -12081,8 +12080,8 @@ namespace djack.RogueSurvivor.Engine
 
 
             // 2. Nutrition
-            int nutrition = m_Rules.FoodItemNutrition(f, m_Session.WorldTime.TurnCounter);
-            int nutritionForPlayer = (m_Player == null ? nutrition : m_Rules.ActorItemNutritionValue(m_Player, nutrition));
+            int nutrition = f.FoodItemNutrition(m_Session.WorldTime.TurnCounter);
+            int nutritionForPlayer = (m_Player == null ? nutrition : m_Player.ActorItemNutritionValue(nutrition));
             if (nutritionForPlayer == m.Nutrition)
                 lines.Add(String.Format("Nutrition   : +{0}", nutrition));
             else
@@ -12317,7 +12316,7 @@ namespace djack.RogueSurvivor.Engine
             {
                 lines.Add("** Activated! **");
                 // alpha10
-                if (m_Rules.IsSafeFromTrap(tr, m_Player))
+                if (m_Player.IsSafeFromTrap(tr))
                 {
                     lines.Add("You will safely avoid this trap.");
                     if (tr.Owner != null)
@@ -12328,7 +12327,7 @@ namespace djack.RogueSurvivor.Engine
             {
                 // alpha10
                 lines.Add("** Triggered! **");
-                if (m_Rules.IsSafeFromTrap(tr, m_Player))
+                if (m_Player.IsSafeFromTrap(tr))
                 {
                     lines.Add("You will safely avoid this trap.");
                     if (tr.Owner != null)
@@ -12660,7 +12659,7 @@ namespace djack.RogueSurvivor.Engine
                 int chance = m_Rules.ZGrabChance(grabber, actor);
                 if (chance == 0)
                     return;
-                if (m_Rules.RollChance(m_Rules.ZGrabChance(grabber, actor)))
+                if (DiceRoller.RollChance(m_Rules.ZGrabChance(grabber, actor)))
                 {
                     // grabbed!
                     if (visible)
@@ -12892,7 +12891,7 @@ namespace djack.RogueSurvivor.Engine
                     // Try to leave tile.
                     if (TryActorLeaveTile(fo))
                     {
-                        Point spot = adjList[m_Rules.Roll(0, adjList.Count)];
+                        Point spot = adjList[DiceRoller.Roll(0, adjList.Count)];
                         fromMap.RemoveActor(fo);
                         toMap.PlaceActorAt(fo, spot);
                         toMap.MoveActorToFirstPosition(fo);
@@ -12985,7 +12984,7 @@ namespace djack.RogueSurvivor.Engine
             {
                 string doWhat = bump.ConcreteAction is ActionBreak ? ("break " + (bump.ConcreteAction as ActionBreak).MapObject.TheName) : "tear down the barricade";
 
-                if (m_Rules.IsActorTired(player))
+                if (player.IsActorTired())
                 {
                     AddMessage(MakeErrorMessage("Too tired to " + doWhat + "."));
                     RedrawPlayScreen();
@@ -13218,8 +13217,8 @@ namespace djack.RogueSurvivor.Engine
 
             // get attack & defence.
             int targetDistance = DistanceHelpers.GridDistance(attacker.Location.Position, defender.Location.Position);
-            Attack attack = m_Rules.ActorRangedAttack(attacker, attacker.CurrentRangedAttack, targetDistance, defender);
-            Defence defence = m_Rules.ActorDefence(defender, defender.CurrentDefence);
+            Attack attack = attacker.ActorRangedAttack(attacker.CurrentRangedAttack, targetDistance, defender);
+            Defence defence = defender.ActorDefence(defender.CurrentDefence);
 
             // spend STA.
             SpendActorStaminaPoints(attacker, attack.StaminaPenalty);
@@ -13228,7 +13227,7 @@ namespace djack.RogueSurvivor.Engine
             if (attack.Kind == AttackKind.FIREARM)
             {
                 int jamChances = m_Rules.IsWeatherRain(m_Session.World.Weather) ? Rules.FIREARM_JAM_CHANCE_RAIN : Rules.FIREARM_JAM_CHANCE_NO_RAIN;
-                if (m_Rules.RollChance(jamChances))
+                if (DiceRoller.RollChance(jamChances))
                 {
                     if (IsVisibleToPlayer(attacker))
                     {
@@ -13258,8 +13257,8 @@ namespace djack.RogueSurvivor.Engine
 
             // resolve attack.
             int hitValue = (shotCounter == 0 ? attack.HitValue : shotCounter == 1 ? attack.Hit2Value : attack.Hit3Value);
-            int hitRoll = m_Rules.RollSkill(hitValue);
-            int defRoll = m_Rules.RollSkill(defence.Value);
+            int hitRoll = DiceRoller.RollSkill(hitValue);
+            int defRoll = DiceRoller.RollSkill(defence.Value);
 
             // show/hear.
             bool isDefVisible = IsVisibleToPlayer(defender.Location);
@@ -13267,7 +13266,7 @@ namespace djack.RogueSurvivor.Engine
             bool isPlayer = attacker.IsPlayer || defender.IsPlayer;
 
             if (!isDefVisible && !isAttVisible && !isPlayer &&
-                m_Rules.RollChance(PLAYER_HEAR_FIGHT_CHANCE))
+                DiceRoller.RollChance(PLAYER_HEAR_FIGHT_CHANCE))
             {
                 AddMessageIfAudibleForPlayer(attacker.Location, MakePlayerCentricMessage("You hear firing", attacker.Location.Position));
             }
@@ -13412,7 +13411,7 @@ namespace djack.RogueSurvivor.Engine
                 AnimDelay(DELAY_LONG);
                 RedrawPlayScreen();
             }
-            else if (m_Rules.RollChance(PLAYER_HEAR_EXPLOSION_CHANCE))
+            else if (DiceRoller.RollChance(PLAYER_HEAR_EXPLOSION_CHANCE))
             {
                 AddMessageIfAudibleForPlayer(location, MakePlayerCentricMessage("You hear an explosion", location.Position));
             }
@@ -13528,7 +13527,7 @@ namespace djack.RogueSurvivor.Engine
         {
             Map map = location.Map;
 
-            int modifiedDamage = m_Rules.BlastDamage(distanceFromBlast, blast);
+            int modifiedDamage = blast.BlastDamage(distanceFromBlast, blast);
 
             // if no damage, don't bother.
             if (modifiedDamage <= 0)
@@ -13603,7 +13602,7 @@ namespace djack.RogueSurvivor.Engine
                         if ((it as ItemPrimedExplosive).FuseTimeLeft <= 0)
                             continue;
                     }
-                    if (!m_Rules.RollChance(destroyChance))
+                    if (!DiceRoller.RollChance(destroyChance))
                         continue;
                     destroyItems.Add(it);
                 }
@@ -13747,11 +13746,7 @@ namespace djack.RogueSurvivor.Engine
             b.Inventory.AddAll(itA);
         }
 
-        public void DoEmote(Actor actor, string text, bool isDanger = false)
-        {
-            if (IsVisibleToPlayer(actor))
-                AddMessage(new Message(String.Format("{0} : {1}", actor.Name, text), actor.Location.Map.LocalTime.TurnCounter, isDanger ? SAYOREMOTE_DANGER_COLOR : SAYOREMOTE_NORMAL_COLOR));
-        }
+
         #endregion
 
         #region Items
@@ -13910,7 +13905,7 @@ namespace djack.RogueSurvivor.Engine
             //////////////////////////////////////
             // If player, prevent wasteful usage.
             //////////////////////////////////////
-            if (actor == m_Player && actor.FoodPoints >= m_Rules.ActorMaxFood(actor) - 1)
+            if (actor == m_Player && actor.FoodPoints >= actor.ActorMaxFood() - 1)
             {
                 AddMessage(MakeErrorMessage("Don't waste food!"));
                 return;
@@ -13920,8 +13915,8 @@ namespace djack.RogueSurvivor.Engine
             SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
 
             // recover food points.
-            int baseNutrition = m_Rules.FoodItemNutrition(food, actor.Location.Map.LocalTime.TurnCounter);
-            actor.FoodPoints = Math.Min(actor.FoodPoints + m_Rules.ActorItemNutritionValue(actor, baseNutrition), m_Rules.ActorMaxFood(actor));
+            int baseNutrition = food.FoodItemNutrition(actor.Location.Map.LocalTime.TurnCounter);
+            actor.FoodPoints = Math.Min(actor.FoodPoints + actor.ActorItemNutritionValue(baseNutrition), actor.ActorMaxFood());
 
             // consume it.
             actor.Inventory.Consume(food);
@@ -13940,9 +13935,9 @@ namespace djack.RogueSurvivor.Engine
                 AddMessage(MakeMessage(actor, Conjugate(actor, VERB_EAT), food));
 
             // vomit?
-            if (m_Rules.IsFoodSpoiled(food, actor.Location.Map.LocalTime.TurnCounter))
+            if (food.IsFoodSpoiled(actor.Location.Map.LocalTime.TurnCounter))
             {
-                if (m_Rules.RollChance(Rules.FOOD_EXPIRED_VOMIT_CHANCE))
+                if (DiceRoller.RollChance(Rules.FOOD_EXPIRED_VOMIT_CHANCE))
                 {
                     DoVomit(actor);
 
@@ -13975,11 +13970,11 @@ namespace djack.RogueSurvivor.Engine
             //////////////////////////////////////
             if (actor == m_Player)
             {
-                int HPneed = m_Rules.ActorMaxHPs(actor) - actor.HitPoints;
-                int STAneed = m_Rules.ActorMaxSTA(actor) - actor.StaminaPoints;
-                int SLPneed = m_Rules.ActorMaxSleep(actor) - 2 - actor.SleepPoints;
+                int HPneed = actor.ActorMaxHPs() - actor.HitPoints;
+                int STAneed = actor.ActorMaxSTA() - actor.StaminaPoints;
+                int SLPneed = actor.ActorMaxSleep() - 2 - actor.SleepPoints;
                 int CureNeed = actor.Infection;
-                int SanNeed = m_Rules.ActorMaxSanity(actor) - actor.Sanity;
+                int SanNeed = actor.ActorMaxSanity() - actor.Sanity;
 
                 bool HPwaste = HPneed <= 0 || med.Healing <= 0;
                 bool STAwaste = STAneed <= 0 || med.StaminaBoost <= 0;
@@ -13998,11 +13993,11 @@ namespace djack.RogueSurvivor.Engine
             SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
 
             // recover HPs, STA, SLP, INF, SAN.
-            actor.HitPoints = Math.Min(actor.HitPoints + m_Rules.ActorMedicineEffect(actor, med.Healing), m_Rules.ActorMaxHPs(actor));
-            actor.StaminaPoints = Math.Min(actor.StaminaPoints + m_Rules.ActorMedicineEffect(actor, med.StaminaBoost), m_Rules.ActorMaxSTA(actor));
-            actor.SleepPoints = Math.Min(actor.SleepPoints + m_Rules.ActorMedicineEffect(actor, med.SleepBoost), m_Rules.ActorMaxSleep(actor));
+            actor.HitPoints = Math.Min(actor.HitPoints + m_Rules.ActorMedicineEffect(actor, med.Healing), actor.ActorMaxHPs());
+            actor.StaminaPoints = Math.Min(actor.StaminaPoints + m_Rules.ActorMedicineEffect(actor, med.StaminaBoost), actor.ActorMaxSTA());
+            actor.SleepPoints = Math.Min(actor.SleepPoints + m_Rules.ActorMedicineEffect(actor, med.SleepBoost), actor.ActorMaxSleep());
             actor.Infection = Math.Max(0, actor.Infection - m_Rules.ActorMedicineEffect(actor, med.InfectionCure));
-            actor.Sanity = Math.Min(actor.Sanity + m_Rules.ActorMedicineEffect(actor, med.SanityCure), m_Rules.ActorMaxSanity(actor));
+            actor.Sanity = Math.Min(actor.Sanity + m_Rules.ActorMedicineEffect(actor, med.SanityCure), actor.ActorMaxSanity());
 
             // consume it.
             actor.Inventory.Consume(med);
@@ -14107,7 +14102,7 @@ namespace djack.RogueSurvivor.Engine
             }
             else if (boreChance > 0)
             {
-                if (m_Rules.RollChance(boreChance))
+                if (DiceRoller.RollChance(boreChance))
                     bored = true;
             }
             if (bored)
@@ -14152,11 +14147,11 @@ namespace djack.RogueSurvivor.Engine
                 }
 
                 // drop improvised weapons?
-                if (m_Rules.RollChance(Rules.IMPROVED_WEAPONS_FROM_BROKEN_WOOD_CHANCE))
+                if (DiceRoller.RollChance(Rules.IMPROVED_WEAPONS_FROM_BROKEN_WOOD_CHANCE))
                 {
                     // improvised club, improvised spear.
                     ItemMeleeWeapon impWpn;
-                    if (m_Rules.RollChance(50))
+                    if (DiceRoller.RollChance(50))
                         impWpn = new ItemMeleeWeapon(m_GameItems.IMPROVISED_CLUB);
                     else
                         impWpn = new ItemMeleeWeapon(m_GameItems.IMPROVISED_SPEAR);
@@ -14375,7 +14370,7 @@ namespace djack.RogueSurvivor.Engine
                 slave.DoSay(master, "Who are you to give me orders?", Sayflags.IS_FREE_ACTION);
                 return;
             }
-            if (!m_Rules.IsActorTrustingLeader(slave))
+            if (!slave.IsActorTrustingLeader())
             {
                 slave.DoSay(master, "Sorry, I don't trust you enough yet.", Sayflags.IS_FREE_ACTION | Sayflags.IS_IMPORTANT);
                 return;
@@ -14452,7 +14447,7 @@ namespace djack.RogueSurvivor.Engine
 
                     // roll chance of waking up.
                     int wakeupChance = m_Rules.ActorLoudNoiseWakeupChance(actor, noiseDistance);
-                    if (!m_Rules.RollChance(wakeupChance))
+                    if (!DiceRoller.RollChance(wakeupChance))
                         continue;
 
                     // wake up!
@@ -14492,7 +14487,7 @@ namespace djack.RogueSurvivor.Engine
             Item torsoItem = actor.GetEquippedItem(DollPart.TORSO);
             if (torsoItem != null && torsoItem is ItemBodyArmor)
             {
-                if (m_Rules.RollChance(Rules.BODY_ARMOR_BREAK_CHANCE))
+                if (DiceRoller.RollChance(Rules.BODY_ARMOR_BREAK_CHANCE))
                 {
                     // do it.
                     OnUnequipItem(actor, torsoItem);
@@ -14627,7 +14622,7 @@ namespace djack.RogueSurvivor.Engine
                 {
                     Item it = dropThem[i];
                     int chance = (it is ItemAmmo || it is ItemFood) ? Rules.VICTIM_DROP_AMMOFOOD_ITEM_CHANCE : Rules.VICTIM_DROP_GENERIC_ITEM_CHANCE;
-                    if (it.Model.IsUnbreakable || it.IsUnique || m_Rules.RollChance(chance))
+                    if (it.Model.IsUnbreakable || it.IsUnique || DiceRoller.RollChance(chance))
                         DropItem(deadGuy, it);
                 }
             }
@@ -14839,7 +14834,7 @@ namespace djack.RogueSurvivor.Engine
                 });
             Point dropOnTile;
             if (dropTiles.Count > 0)
-                dropOnTile = dropTiles[m_Rules.Roll(0, dropTiles.Count)];
+                dropOnTile = dropTiles[DiceRoller.Roll(0, dropTiles.Count)];
             else
                 dropOnTile = actor.Location.Position;
             actor.Location.Map.DropItemAt(disarmIt, dropOnTile);
@@ -14984,7 +14979,7 @@ namespace djack.RogueSurvivor.Engine
             // splatter adjacent walls.
             foreach (Direction d in Direction.COMPASS)
             {
-                if (!m_Rules.RollChance(BLOOD_WALL_SPLAT_CHANCE))
+                if (!DiceRoller.RollChance(BLOOD_WALL_SPLAT_CHANCE))
                     continue;
                 Point next = position + d;
                 if (!map.IsInBounds(next))
@@ -15015,9 +15010,9 @@ namespace djack.RogueSurvivor.Engine
             deadGuy.Doll.AddDecoration(DollPart.TORSO, GameImages.BLOODIED);
 
             // make and add corpse.
-            int corpseHp = m_Rules.ActorMaxHPs(deadGuy);
-            float rotation = m_Rules.Roll(30, 60);
-            if (m_Rules.RollChance(50)) rotation = -rotation;
+            int corpseHp = deadGuy.ActorMaxHPs();
+            float rotation = DiceRoller.Roll(30, 60);
+            if (DiceRoller.RollChance(50)) rotation = -rotation;
             float scale = 1.0f;
             Corpse corpse = new Corpse(deadGuy, corpseHp, corpseHp, deadGuy.Location.Map.LocalTime.TurnCounter, rotation, scale);
             deadGuy.Location.Map.AddCorpseAt(corpse, deadGuy.Location.Position);
@@ -15071,7 +15066,7 @@ namespace djack.RogueSurvivor.Engine
             // Tip, Message, screenshot & permadeath.
             /////////////////////////////////////////
             #region
-            int iTip = m_Rules.Roll(0, GameTips.TIPS.Length);
+            int iTip = DiceRoller.Roll(0, GameTips.TIPS.Length);
             AddOverlay(new OverlayPopup(new string[] { "TIP OF THE DEAD", "Did you know that...", GameTips.TIPS[iTip] }, Color.White, Color.White, POPUP_FILLCOLOR, new Point(0, 0)));
 
             ClearMessages();
@@ -15843,7 +15838,7 @@ namespace djack.RogueSurvivor.Engine
             for (int i = 0; i < N; i++)
                 if (utilities[i] == bestUtility)
                     bestSkills.Add(chooseFrom[i]);
-            return bestSkills[m_Rules.Roll(0, bestSkills.Count)];
+            return bestSkills[DiceRoller.Roll(0, bestSkills.Count)];
         }
 
         int NPCSkillUtility(Actor actor, Skills.IDs skID)
@@ -16002,7 +15997,7 @@ namespace djack.RogueSurvivor.Engine
             do
             {
                 ++attempt;
-                skID = isUndead ? (int)Skills.RollUndead(Rules.DiceRoller) : (int)Skills.RollLiving(Rules.DiceRoller);
+                skID = isUndead ? (int)Skills.RollUndead() : (int)Skills.RollLiving();
             }
             while (actor.Sheet.SkillTable.GetSkillLevel(skID) >= Skills.MaxSkillLevel(skID) && attempt < maxTries);
 
@@ -16018,7 +16013,7 @@ namespace djack.RogueSurvivor.Engine
             if (skills == null) return;
 
             // pick a skill.
-            int iSkill = m_Rules.Roll(0, skills.Length);
+            int iSkill = DiceRoller.Roll(0, skills.Length);
             Skills.IDs lostSkill = (Skills.IDs)skills[iSkill];
 
             // regress.
@@ -16044,7 +16039,7 @@ namespace djack.RogueSurvivor.Engine
             {
                 case Skills.IDs.HAULER:
                     if (actor.Inventory != null)
-                        actor.Inventory.MaxCapacity = m_Rules.ActorMaxInv(actor);
+                        actor.Inventory.MaxCapacity = actor.ActorMaxInv();
                     break;
 
                 default:
@@ -16068,7 +16063,7 @@ namespace djack.RogueSurvivor.Engine
                     break;
 
                 case Weather.CLOUDY:
-                    if (m_Rules.RollChance(50))
+                    if (DiceRoller.RollChance(50))
                     {
                         newWeather = Weather.CLEAR;
                         desc = "The sky is clear again.";
@@ -16081,7 +16076,7 @@ namespace djack.RogueSurvivor.Engine
                     break;
 
                 case Weather.RAIN:
-                    if (m_Rules.RollChance(50))
+                    if (DiceRoller.RollChance(50))
                     {
                         newWeather = Weather.CLOUDY;
                         desc = "The rain has stopped.";
@@ -16162,7 +16157,7 @@ namespace djack.RogueSurvivor.Engine
                 int nbSkillsToKeep = livingSkills.CountTotalSkillLevels / 2;
                 for (int i = 0; i < nbSkillsToKeep; i++)
                 {
-                    Skills.IDs keepSkill = (Skills.IDs)livingSkills.SkillsList[m_Rules.Roll(0, nbLivingSkills)];
+                    Skills.IDs keepSkill = (Skills.IDs)livingSkills.SkillsList[DiceRoller.Roll(0, nbLivingSkills)];
                     Skills.IDs? zombiefiedSkill = ZombifySkill(keepSkill);
                     if (zombiefiedSkill.HasValue)
                         SkillUpgrade(newZombie, zombiefiedSkill.Value);
@@ -16742,7 +16737,7 @@ namespace djack.RogueSurvivor.Engine
             {
                 if (m_Rules.HasActorBondWith(actor, m_Player))
                     m_UI.UI_DrawImage(GameImages.PLAYER_FOLLOWER_BOND, gx, gy, tint);
-                else if (m_Rules.IsActorTrustingLeader(actor))
+                else if (actor.IsActorTrustingLeader())
                     m_UI.UI_DrawImage(GameImages.PLAYER_FOLLOWER_TRUST, gx, gy, tint);
                 else
                     m_UI.UI_DrawImage(GameImages.PLAYER_FOLLOWER, gx, gy, tint);
@@ -16856,7 +16851,7 @@ namespace djack.RogueSurvivor.Engine
             #endregion
 
             // health bar.
-            int maxHP = m_Rules.ActorMaxHPs(actor);
+            int maxHP = actor.ActorMaxHPs();
             if (actor.HitPoints < maxHP)
             {
                 DrawMapHealthBar(actor.HitPoints, maxHP, gx, gy);
@@ -16866,7 +16861,7 @@ namespace djack.RogueSurvivor.Engine
             #region
             if (actor.IsRunning)
                 m_UI.UI_DrawImage(GameImages.ICON_RUNNING, gx, gy, tint);
-            else if (actor.Model.Abilities.CanRun && !m_Rules.CanActorRun(actor))
+            else if (actor.Model.Abilities.CanRun && !actor.CanActorRun(out _))
                 m_UI.UI_DrawImage(GameImages.ICON_CANT_RUN, gx, gy, tint);
             #endregion
 
@@ -16874,28 +16869,28 @@ namespace djack.RogueSurvivor.Engine
             #region
             if (actor.Model.Abilities.HasToSleep)
             {
-                if (m_Rules.IsActorExhausted(actor))
+                if (actor.IsActorExhausted())
                     m_UI.UI_DrawImage(GameImages.ICON_SLEEP_EXHAUSTED, gx, gy, tint);
-                else if (m_Rules.IsActorSleepy(actor))
+                else if (actor.IsActorSleepy())
                     m_UI.UI_DrawImage(GameImages.ICON_SLEEP_SLEEPY, gx, gy, tint);
-                else if (m_Rules.IsAlmostSleepy(actor))
+                else if (actor.IsAlmostSleepy())
                     m_UI.UI_DrawImage(GameImages.ICON_SLEEP_ALMOST_SLEEPY, gx, gy, tint);
             }
 
             if (actor.Model.Abilities.HasToEat)
             {
-                if (m_Rules.IsActorStarving(actor))
+                if (actor.IsActorStarving())
                     m_UI.UI_DrawImage(GameImages.ICON_FOOD_STARVING, gx, gy, tint);
-                else if (m_Rules.IsActorHungry(actor))
+                else if (actor.IsActorHungry())
                     m_UI.UI_DrawImage(GameImages.ICON_FOOD_HUNGRY, gx, gy, tint);
                 else if (IsAlmostHungry(actor))
                     m_UI.UI_DrawImage(GameImages.ICON_FOOD_ALMOST_HUNGRY, gx, gy, tint);
             }
             else if (actor.Model.Abilities.IsRotting)
             {
-                if (m_Rules.IsRottingActorStarving(actor))
+                if (actor.IsRottingActorStarving())
                     m_UI.UI_DrawImage(GameImages.ICON_ROT_STARVING, gx, gy, tint);
-                else if (m_Rules.IsRottingActorHungry(actor))
+                else if (actor.IsRottingActorHungry())
                     m_UI.UI_DrawImage(GameImages.ICON_ROT_HUNGRY, gx, gy, tint);
                 else if (IsAlmostRotHungry(actor))
                     m_UI.UI_DrawImage(GameImages.ICON_ROT_ALMOST_HUNGRY, gx, gy, tint);
@@ -16903,9 +16898,9 @@ namespace djack.RogueSurvivor.Engine
 
             if (actor.Model.Abilities.HasSanity)
             {
-                if (m_Rules.IsActorInsane(actor))
+                if (actor.IsActorInsane())
                     m_UI.UI_DrawImage(GameImages.ICON_SANITY_INSANE, gx, gy, tint);
-                else if (m_Rules.IsActorDisturbed(actor))
+                else if (actor.IsActorDisturbed())
                     m_UI.UI_DrawImage(GameImages.ICON_SANITY_DISTURBED, gx, gy, tint);
             }
             #endregion
@@ -16925,7 +16920,7 @@ namespace djack.RogueSurvivor.Engine
                 m_UI.UI_DrawImage(GameImages.ICON_ODOR_SUPPRESSED, gx, gy, tint);
 
             // sleep-healing icon.
-            if (actor.IsSleeping && (m_Rules.IsOnCouch(actor) || m_Rules.ActorHealChanceBonus(actor) > 0))
+            if (actor.IsSleeping && (actor.IsOnCouch() || m_Rules.ActorHealChanceBonus(actor) > 0))
                 m_UI.UI_DrawImage(GameImages.ICON_HEALING, gx, gy, tint);
 
             // is a leader icon.
@@ -16942,7 +16937,7 @@ namespace djack.RogueSurvivor.Engine
             {
                 if (actor != m_Player && m_Player != null && actor.IsEnemiesWith(m_Player))
                 {
-                    if (m_Rules.WillActorActAgainBefore(m_Player, actor))
+                    if (m_Player.WillActorActAgainBefore(actor))
                         m_UI.UI_DrawImage(GameImages.ICON_THREAT_SAFE, gx, gy, tint);
                     else if (m_Rules.WillOtherActTwiceBefore(m_Player, actor))
                         m_UI.UI_DrawImage(GameImages.ICON_THREAT_HIGH_DANGER, gx, gy, tint);
@@ -16970,17 +16965,17 @@ namespace djack.RogueSurvivor.Engine
                 return false;
 
             // hungry -> food
-            if (m_Rules.IsActorHungry(m_Player)
+            if (m_Player.IsActorHungry()
                 && actor.Inventory.HasItemOfType(typeof(ItemFood)))
                 return true;
 
             // sleepy -> anti-sleep meds
-            if (m_Rules.IsActorSleepy(m_Player)
+            if (m_Player.IsActorSleepy()
                 && actor.Inventory.HasItemMatching((it) => it is ItemMedicine && (it as ItemMedicine).SleepBoost > 0))
                 return true;
 
             // injured -> healing meds
-            if (m_Player.HitPoints < m_Rules.ActorMaxHPs(m_Player)
+            if (m_Player.HitPoints < m_Player.ActorMaxHPs()
                 && actor.Inventory.HasItemMatching((it) => it is ItemMedicine && (it as ItemMedicine).Healing > 0))
                 return true;
 
@@ -17454,7 +17449,7 @@ namespace djack.RogueSurvivor.Engine
 
             // 2. Bars: Health, Stamina, Food, Sleep, Infection.
             gy += BOLD_LINE_SPACING;
-            int maxHP = m_Rules.ActorMaxHPs(actor);
+            int maxHP = actor.ActorMaxHPs();
             m_UI.UI_DrawStringBold(Color.White, String.Format("HP  {0}", actor.HitPoints), gx, gy);
             DrawBar(actor.HitPoints, actor.PreviousHitPoints, maxHP, 0, 100, BOLD_LINE_SPACING, gx + BOLD_LINE_SPACING * 5, gy, Color.Red, Color.DarkRed, Color.OrangeRed, Color.Gray);
             m_UI.UI_DrawStringBold(Color.White, String.Format("{0}", maxHP), gx + BOLD_LINE_SPACING * 6 + 100, gy);
@@ -17462,28 +17457,28 @@ namespace djack.RogueSurvivor.Engine
             gy += BOLD_LINE_SPACING;
             if (actor.Model.Abilities.CanTire)
             {
-                int maxSTA = m_Rules.ActorMaxSTA(actor);
+                int maxSTA = actor.ActorMaxSTA();
                 m_UI.UI_DrawStringBold(Color.White, String.Format("STA {0}", actor.StaminaPoints), gx, gy);
                 DrawBar(actor.StaminaPoints, actor.PreviousStaminaPoints, maxSTA, Rules.STAMINA_MIN_FOR_ACTIVITY, 100, BOLD_LINE_SPACING, gx + BOLD_LINE_SPACING * 5, gy, Color.Green, Color.DarkGreen, Color.LightGreen, Color.Gray);
                 m_UI.UI_DrawStringBold(Color.White, String.Format("{0}", maxSTA), gx + BOLD_LINE_SPACING * 6 + 100, gy);
                 if (actor.IsRunning)
                     m_UI.UI_DrawStringBold(Color.LightGreen, "RUNNING!", gx + BOLD_LINE_SPACING * 9 + 100, gy);
-                else if (m_Rules.CanActorRun(actor))
+                else if (actor.CanActorRun(out _))
                     m_UI.UI_DrawStringBold(Color.Green, "can run", gx + BOLD_LINE_SPACING * 9 + 100, gy);
-                else if (m_Rules.IsActorTired(actor))
+                else if (actor.IsActorTired())
                     m_UI.UI_DrawStringBold(Color.Gray, "TIRED", gx + BOLD_LINE_SPACING * 9 + 100, gy);
             }
 
             gy += BOLD_LINE_SPACING;
             if (actor.Model.Abilities.HasToEat)
             {
-                int maxFood = m_Rules.ActorMaxFood(actor);
+                int maxFood = actor.ActorMaxFood();
                 m_UI.UI_DrawStringBold(Color.White, String.Format("FOO {0}", actor.FoodPoints), gx, gy);
                 DrawBar(actor.FoodPoints, actor.PreviousFoodPoints, maxFood, Rules.FOOD_HUNGRY_LEVEL, 100, BOLD_LINE_SPACING, gx + BOLD_LINE_SPACING * 5, gy, Color.Chocolate, Color.Brown, Color.Beige, Color.Gray);
                 m_UI.UI_DrawStringBold(Color.White, String.Format("{0}", maxFood), gx + BOLD_LINE_SPACING * 6 + 100, gy);
-                if (m_Rules.IsActorHungry(actor))
+                if (actor.IsActorHungry())
                 {
-                    if (m_Rules.IsActorStarving(actor))
+                    if (actor.IsActorStarving())
                         m_UI.UI_DrawStringBold(Color.Red, "STARVING!", gx + BOLD_LINE_SPACING * 9 + 100, gy);
                     else
                         m_UI.UI_DrawStringBold(Color.Yellow, "Hungry", gx + BOLD_LINE_SPACING * 9 + 100, gy);
@@ -17493,13 +17488,13 @@ namespace djack.RogueSurvivor.Engine
             }
             else if (actor.Model.Abilities.IsRotting)
             {
-                int maxFood = m_Rules.ActorMaxRot(actor);
+                int maxFood = actor.ActorMaxRot();
                 m_UI.UI_DrawStringBold(Color.White, String.Format("ROT {0}", actor.FoodPoints), gx, gy);
                 DrawBar(actor.FoodPoints, actor.PreviousFoodPoints, maxFood, Rules.ROT_HUNGRY_LEVEL, 100, BOLD_LINE_SPACING, gx + BOLD_LINE_SPACING * 5, gy, Color.Chocolate, Color.Brown, Color.Beige, Color.Gray);
                 m_UI.UI_DrawStringBold(Color.White, String.Format("{0}", maxFood), gx + BOLD_LINE_SPACING * 6 + 100, gy);
-                if (m_Rules.IsRottingActorHungry(actor))
+                if (actor.IsRottingActorHungry())
                 {
-                    if (m_Rules.IsRottingActorStarving(actor))
+                    if (actor.IsRottingActorStarving())
                         m_UI.UI_DrawStringBold(Color.Red, "STARVING!", gx + BOLD_LINE_SPACING * 9 + 100, gy);
                     else
                         m_UI.UI_DrawStringBold(Color.Yellow, "Hungry", gx + BOLD_LINE_SPACING * 9 + 100, gy);
@@ -17511,31 +17506,31 @@ namespace djack.RogueSurvivor.Engine
             gy += BOLD_LINE_SPACING;
             if (actor.Model.Abilities.HasToSleep)
             {
-                int maxSleep = m_Rules.ActorMaxSleep(actor);
+                int maxSleep = actor.ActorMaxSleep();
                 m_UI.UI_DrawStringBold(Color.White, String.Format("SLP {0}", actor.SleepPoints), gx, gy);
                 DrawBar(actor.SleepPoints, actor.PreviousSleepPoints, maxSleep, Rules.SLEEP_SLEEPY_LEVEL, 100, BOLD_LINE_SPACING, gx + BOLD_LINE_SPACING * 5, gy, Color.Blue, Color.DarkBlue, Color.LightBlue, Color.Gray);
                 m_UI.UI_DrawStringBold(Color.White, String.Format("{0}", maxSleep), gx + BOLD_LINE_SPACING * 6 + 100, gy);
-                if (m_Rules.IsActorSleepy(actor))
+                if (actor.IsActorSleepy())
                 {
-                    if (m_Rules.IsActorExhausted(actor))
+                    if (actor.IsActorExhausted())
                         m_UI.UI_DrawStringBold(Color.Red, "EXHAUSTED!", gx + BOLD_LINE_SPACING * 9 + 100, gy);
                     else
                         m_UI.UI_DrawStringBold(Color.Yellow, "Sleepy", gx + BOLD_LINE_SPACING * 9 + 100, gy);
                 }
                 else
-                    m_UI.UI_DrawStringBold(Color.White, String.Format("{0}h", m_Rules.SleepToHoursUntilSleepy(actor.SleepPoints, m_Session.WorldTime.IsNight)), gx + BOLD_LINE_SPACING * 9 + 100, gy);
+                    m_UI.UI_DrawStringBold(Color.White, String.Format("{0}h", actor.SleepToHoursUntilSleepy(actor.SleepPoints, m_Session.WorldTime.IsNight)), gx + BOLD_LINE_SPACING * 9 + 100, gy);
             }
 
             gy += BOLD_LINE_SPACING;
             if (actor.Model.Abilities.HasSanity)
             {
-                int maxSan = m_Rules.ActorMaxSanity(actor);
+                int maxSan = actor.ActorMaxSanity();
                 m_UI.UI_DrawStringBold(Color.White, String.Format("SAN {0}", actor.Sanity), gx, gy);
-                DrawBar(actor.Sanity, actor.PreviousSanity, maxSan, m_Rules.ActorDisturbedLevel(actor), 100, BOLD_LINE_SPACING, gx + BOLD_LINE_SPACING * 5, gy, Color.Orange, Color.DarkOrange, Color.OrangeRed, Color.Gray);
+                DrawBar(actor.Sanity, actor.PreviousSanity, maxSan, actor.ActorDisturbedLevel(), 100, BOLD_LINE_SPACING, gx + BOLD_LINE_SPACING * 5, gy, Color.Orange, Color.DarkOrange, Color.OrangeRed, Color.Gray);
                 m_UI.UI_DrawStringBold(Color.White, String.Format("{0}", maxSan), gx + BOLD_LINE_SPACING * 6 + 100, gy);
-                if (m_Rules.IsActorDisturbed(actor))
+                if (actor.IsActorDisturbed())
                 {
-                    if (m_Rules.IsActorInsane(actor))
+                    if (actor.IsActorInsane())
                         m_UI.UI_DrawStringBold(Color.Red, "INSANE!", gx + BOLD_LINE_SPACING * 9 + 100, gy);
                     else
                         m_UI.UI_DrawStringBold(Color.Yellow, "Disturbed", gx + BOLD_LINE_SPACING * 9 + 100, gy);
@@ -17561,7 +17556,7 @@ namespace djack.RogueSurvivor.Engine
             m_UI.UI_DrawStringBold(Color.White, String.Format("Melee  Atk {0:D2}  Dmg {1:D2}/{2:D2}", melee.HitValue, melee.DamageValue, melee.DamageValue + dmgBonusVsUndead), gx, gy);
 
             gy += BOLD_LINE_SPACING;
-            Attack ranged = m_Rules.ActorRangedAttack(actor, actor.CurrentRangedAttack, actor.CurrentRangedAttack.EfficientRange, null);
+            Attack ranged = actor.ActorRangedAttack(actor.CurrentRangedAttack, actor.CurrentRangedAttack.EfficientRange, null);
             ItemRangedWeapon rangedWeapon = actor.GetEquippedWeapon() as ItemRangedWeapon;
             int ammo, maxAmmo;
             ammo = maxAmmo = 0;
@@ -17575,13 +17570,13 @@ namespace djack.RogueSurvivor.Engine
 
             // 4. (living)Def, Pro, Spd, FoV & Nb of followers / (undead)Def, Spd, Fov, Sml, Kills
             gy += BOLD_LINE_SPACING;
-            Defence defence = m_Rules.ActorDefence(actor, actor.CurrentDefence);
+            Defence defence = actor.ActorDefence(actor.CurrentDefence);
 
             if (actor.Model.Abilities.IsUndead)
             {
                 m_UI.UI_DrawStringBold(Color.White, String.Format("Def {0:D2} Spd {1:F2} FoV {2} Sml {3:F2} Kills {4}",
                     defence.Value,
-                    (float)m_Rules.ActorSpeed(actor) / (float)Rules.BASE_SPEED,
+                    (float)actor.ActorSpeed() / (float)Rules.BASE_SPEED,
                     actor.ActorFOV(m_Session.WorldTime, m_Session.World.Weather),
                     actor.ActorSmell(),
                     actor.KillsCount),
@@ -17591,7 +17586,7 @@ namespace djack.RogueSurvivor.Engine
             {
                 m_UI.UI_DrawStringBold(Color.White, String.Format("Def {0:D2} Arm {1:D1}/{2:D1} Spd {3:F2} FoV {4}/{5} Fol {6}/{7}",
                     defence.Value, defence.Protection_Hit, defence.Protection_Shot,
-                    (float)m_Rules.ActorSpeed(actor) / (float)Rules.BASE_SPEED,
+                    (float)actor.ActorSpeed() / (float)Rules.BASE_SPEED,
                     actor.ActorFOV(m_Session.WorldTime, m_Session.World.Weather),
                     actor.Sheet.BaseViewRange,
                     actor.CountFollowers, m_Rules.ActorMaxFollowers(actor)),
@@ -17672,9 +17667,9 @@ namespace djack.RogueSurvivor.Engine
                 else if (it is ItemFood)
                 {
                     ItemFood food = it as ItemFood;
-                    if (m_Rules.IsFoodExpired(food, m_Session.WorldTime.TurnCounter))
+                    if (food.IsFoodExpired(m_Session.WorldTime.TurnCounter))
                         m_UI.UI_DrawImage(GameImages.ICON_EXPIRED_FOOD, x, y);
-                    else if (m_Rules.IsFoodSpoiled(food, m_Session.WorldTime.TurnCounter))
+                    else if (food.IsFoodSpoiled(m_Session.WorldTime.TurnCounter))
                         m_UI.UI_DrawImage(GameImages.ICON_SPOILED_FOOD, x, y);
                 }
                 else if (it is ItemTrap)
@@ -17746,7 +17741,7 @@ namespace djack.RogueSurvivor.Engine
                 // alpha10
                 if (trap.Owner == m_Player)
                     m_UI.UI_DrawImage(GameImages.ICON_TRAP_TRIGGERED_SAFE_PLAYER, gx, gy);
-                else if (m_Rules.IsSafeFromTrap(trap, m_Player))
+                else if (m_Player.IsSafeFromTrap(trap))
                     m_UI.UI_DrawImage(GameImages.ICON_TRAP_TRIGGERED_SAFE_GROUP, gx, gy);
                 else
                     m_UI.UI_DrawImage(GameImages.ICON_TRAP_TRIGGERED, gx, gy);
@@ -17756,7 +17751,7 @@ namespace djack.RogueSurvivor.Engine
                 // alpha10
                 if (trap.Owner == m_Player)
                     m_UI.UI_DrawImage(GameImages.ICON_TRAP_ACTIVATED_SAFE_PLAYER, gx, gy);
-                else if (m_Rules.IsSafeFromTrap(trap, m_Player))
+                else if (m_Player.IsSafeFromTrap(trap))
                     m_UI.UI_DrawImage(GameImages.ICON_TRAP_ACTIVATED_SAFE_GROUP, gx, gy);
                 else
                     m_UI.UI_DrawImage(GameImages.ICON_TRAP_ACTIVATED, gx, gy);
@@ -18062,7 +18057,7 @@ namespace djack.RogueSurvivor.Engine
             if (!loaded)
                 return false;
             m_Session = Session.Get;
-            m_Rules = new Rules(new DiceRoller(m_Session.Seed));
+            m_Rules = new Rules();
 
             RefreshPlayer();
 
@@ -18410,8 +18405,8 @@ namespace djack.RogueSurvivor.Engine
             ////////////////////////
             // Roll initial weather
             ////////////////////////
-            world.Weather = (Weather)m_Rules.Roll((int)Weather._FIRST, (int)Weather._COUNT);
-            world.NextWeatherCheckTurn = m_Rules.Roll(WEATHER_MIN_DURATION, WEATHER_MAX_DURATION);  // alpha10
+            world.Weather = (Weather)DiceRoller.Roll((int)Weather._FIRST, (int)Weather._COUNT);
+            world.NextWeatherCheckTurn = DiceRoller.Roll(WEATHER_MIN_DURATION, WEATHER_MAX_DURATION);  // alpha10
 
             //////////////////////////////////////////////
             // Roll locations of special buildings.
@@ -18422,10 +18417,10 @@ namespace djack.RogueSurvivor.Engine
                 for (int y = 0; y < world.Size; y++)
                     noSpecialDistricts.Add(new Point(x, y));
 
-            Point policeStationDistrictPos = noSpecialDistricts[m_Rules.Roll(0, noSpecialDistricts.Count)];
+            Point policeStationDistrictPos = noSpecialDistricts[DiceRoller.Roll(0, noSpecialDistricts.Count)];
             noSpecialDistricts.Remove(policeStationDistrictPos);
 
-            Point hospitalDistrictPos = noSpecialDistricts[m_Rules.Roll(0, noSpecialDistricts.Count)];
+            Point hospitalDistrictPos = noSpecialDistricts[DiceRoller.Roll(0, noSpecialDistricts.Count)];
             noSpecialDistricts.Remove(hospitalDistrictPos);
 
             /////////////////////////
@@ -18535,7 +18530,7 @@ namespace djack.RogueSurvivor.Engine
                             if (toX >= toMap.Width)
                                 continue;
                             // link?
-                            if (m_Rules.RollChance(DISTRICT_EXIT_CHANCE_PER_TILE))
+                            if (DiceRoller.RollChance(DISTRICT_EXIT_CHANCE_PER_TILE))
                             {
                                 Point ptMapFrom = new Point(fromX, -1);
                                 Point ptMapTo = new Point(fromX, toMap.Height - 1);
@@ -18560,7 +18555,7 @@ namespace djack.RogueSurvivor.Engine
                             if (toY >= toMap.Height)
                                 continue;
                             // link?
-                            if (m_Rules.RollChance(DISTRICT_EXIT_CHANCE_PER_TILE))
+                            if (DiceRoller.RollChance(DISTRICT_EXIT_CHANCE_PER_TILE))
                             {
                                 Point ptMapFrom = new Point(-1, fromY);
                                 Point ptMapTo = new Point(toMap.Width - 1, fromY);
@@ -18759,15 +18754,14 @@ namespace djack.RogueSurvivor.Engine
             ///////////////////////////////////////////////////////
 
             // 1. Pick a random sewers map.
-            Map map = world[m_Rules.Roll(0, world.Size), m_Rules.Roll(0, world.Size)].SewersMap;
+            Map map = world[DiceRoller.Roll(0, world.Size), DiceRoller.Roll(0, world.Size)].SewersMap;
 
             // 2. Create Sewers Thing.
             ActorModel model = GameActors.SewersThing;
             Actor actor = model.CreateNamed(GameFactions.TheUndeads, "The Sewers Thing", false, 0);
 
             // 3. Spawn in sewers map.
-            DiceRoller roller = new DiceRoller(map.Seed);
-            bool spawned = m_TownGenerator.ActorPlace(roller, 10000, map, actor);
+            bool spawned = m_TownGenerator.ActorPlace(10000, map, actor);
             if (!spawned)
                 throw new InvalidOperationException("could not spawn unique The Sewers Thing");
 
@@ -18777,7 +18771,6 @@ namespace djack.RogueSurvivor.Engine
             {
                 m_TownGenerator.MapObjectPlaceInGoodPosition(map, maintenanceZone.Bounds,
                     (pt) => map.IsWalkable(pt.X, pt.Y) && map.GetActorAt(pt) == null && map.GetItemsAt(pt) == null,
-                    roller,
                     (pt) => m_TownGenerator.MakeObjBoard(GameImages.OBJ_BOARD,
                         new string[] { "TO SEWER WORKERS :",
                                        "- It lives here.",
@@ -19108,11 +19101,11 @@ namespace djack.RogueSurvivor.Engine
                         allSubways.Add(world[x, y].SubwayMap);
             if (allSubways.Count == 0)
                 return new UniqueItem() { TheItem = it, IsSpawned = false };
-            Map subway = allSubways[m_Rules.Roll(0, allSubways.Count)];
+            Map subway = allSubways[DiceRoller.Roll(0, allSubways.Count)];
 
             // 2. Pick a position in the rails.
             Rectangle railsRect = subway.GetZoneByPartialName(NAME_SUBWAY_RAILS).Bounds;
-            Point dropPt = new Point(m_Rules.Roll(railsRect.Left, railsRect.Right), m_Rules.Roll(railsRect.Top, railsRect.Bottom));
+            Point dropPt = new Point(DiceRoller.Roll(railsRect.Left, railsRect.Right), DiceRoller.Roll(railsRect.Top, railsRect.Bottom));
 
             // 3. Drop it.
             subway.DropItemAt(it, dropPt);
@@ -19161,7 +19154,7 @@ namespace djack.RogueSurvivor.Engine
             {
                 throw new InvalidOperationException("world has no business districts with offices");
             }
-            District chosenDistrict = goodDistricts[m_Rules.Roll(0, goodDistricts.Count)];
+            District chosenDistrict = goodDistricts[DiceRoller.Roll(0, goodDistricts.Count)];
 
             // 3. Generate underground map there.
             List<Zone> offices = new List<Zone>();
@@ -19172,7 +19165,7 @@ namespace djack.RogueSurvivor.Engine
                     offices.Add(z);
                 }
             }
-            Zone chosenOffice = offices[m_Rules.Roll(0, offices.Count)];
+            Zone chosenOffice = offices[DiceRoller.Roll(0, offices.Count)];
             Point baseEntryPos;  // alpha10
             Map map = m_TownGenerator.GenerateUniqueMap_CHARUnderground(chosenDistrict.EntryMap, chosenOffice, out baseEntryPos);
             map.District = chosenDistrict;
@@ -19191,7 +19184,7 @@ namespace djack.RogueSurvivor.Engine
             if (gridX == 0 && gridY == 0)
                 return DistrictKind.BUSINESS;
             else
-                return (DistrictKind)m_Rules.Roll((int)DistrictKind._FIRST, (int)DistrictKind._COUNT);
+                return (DistrictKind)DiceRoller.Roll((int)DistrictKind._FIRST, (int)DistrictKind._COUNT);
         }
 
         Map GenerateDistrictEntryMap(World world, District district, Point policeStationDistrictPos, Point hospitalDistrictPos)
@@ -19298,8 +19291,6 @@ namespace djack.RogueSurvivor.Engine
 
         void GeneratePlayerOnMap(Map map, BaseTownGenerator townGen)
         {
-            DiceRoller roller = new DiceRoller(map.Seed);
-
             /////////////////////////////////////////////////////
             // Create player actor : living/undead x male/female
             /////////////////////////////////////////////////////
@@ -19332,8 +19323,8 @@ namespace djack.RogueSurvivor.Engine
                             // First create as living.
                             playerModel = m_CharGen.IsMale ? m_GameActors.MaleCivilian : m_GameActors.FemaleCivilian;
                             player = playerModel.CreateAnonymous(m_GameFactions.TheCivilians, 0);
-                            townGen.DressCivilian(roller, player);
-                            townGen.GiveNameToActor(roller, player);
+                            townGen.DressCivilian(player);
+                            townGen.GiveNameToActor(player);
                             // Then zombify.
                             player = Zombify(null, player, true);
                             break;
@@ -19357,17 +19348,17 @@ namespace djack.RogueSurvivor.Engine
                 // Create living.
                 playerModel = m_CharGen.IsMale ? m_GameActors.MaleCivilian : m_GameActors.FemaleCivilian;
                 player = playerModel.CreateAnonymous(m_GameFactions.TheCivilians, 0);
-                townGen.DressCivilian(roller, player);
-                townGen.GiveNameToActor(roller, player);
+                townGen.DressCivilian(player);
+                townGen.GiveNameToActor(player);
                 player.Sheet.SkillTable.AddOrIncreaseSkill((int)m_CharGen.StartingSkill);
 
                 townGen.RecomputeActorStartingStats(player);
                 OnSkillUpgrade(player, m_CharGen.StartingSkill);
                 // slightly randomize Food and Sleep - 0..25%.
                 int foodDeviation = (int)(0.25f * player.FoodPoints);
-                player.FoodPoints = player.FoodPoints - m_Rules.Roll(0, foodDeviation);
+                player.FoodPoints = player.FoodPoints - DiceRoller.Roll(0, foodDeviation);
                 int sleepDeviation = (int)(0.25f * player.SleepPoints);
-                player.SleepPoints = player.SleepPoints - m_Rules.Roll(0, sleepDeviation);
+                player.SleepPoints = player.SleepPoints - DiceRoller.Roll(0, sleepDeviation);
             }
 
             player.Controller = new PlayerController();
@@ -19380,7 +19371,7 @@ namespace djack.RogueSurvivor.Engine
             // living: try to spawn inside on a couch, then if failed spawn anywhere inside.
             // undead: spawn outside.
             // NEVER spawn in CHAR Office!!
-            bool preferedSpawnOk = townGen.ActorPlace(roller, 10 * map.Width * map.Height, map, player,
+            bool preferedSpawnOk = townGen.ActorPlace(10 * map.Width * map.Height, map, player,
                 (pt) =>
                 {
                     bool isInside = map.GetTileAt(pt.X, pt.Y).IsInside;
@@ -19400,13 +19391,13 @@ namespace djack.RogueSurvivor.Engine
             if (!preferedSpawnOk)
             {
                 // no couch, try inside but never in char office.
-                bool spawnedInside = townGen.ActorPlace(roller, map.Width * map.Height, map, player,
+                bool spawnedInside = townGen.ActorPlace(map.Width * map.Height, map, player,
                     (pt) => map.GetTileAt(pt.X, pt.Y).IsInside && !IsInCHAROffice(new Location(map, pt)));
 
                 if (!spawnedInside)
                 {
                     // could not spawn inside, do it outside...
-                    while (!townGen.ActorPlace(roller, int.MaxValue, map, player, (pt) => !IsInCHAROffice(new Location(map, pt))))
+                    while (!townGen.ActorPlace(int.MaxValue, map, player, (pt) => !IsInCHAROffice(new Location(map, pt))))
                         ;
                 }
             }
@@ -20559,7 +20550,7 @@ namespace djack.RogueSurvivor.Engine
                             return null;
 
                         // random one.
-                        return suitableFollowers[m_Rules.Roll(0, suitableFollowers.Count)];
+                        return suitableFollowers[DiceRoller.Roll(0, suitableFollowers.Count)];
                     }
                 #endregion
 
@@ -20586,7 +20577,7 @@ namespace djack.RogueSurvivor.Engine
                     #region
                     {
                         // get a list of all suitable actors in the world.
-                        bool asLiving = (reincMode == GameOptions.ReincMode.RANDOM_LIVING || (reincMode == GameOptions.ReincMode.RANDOM_ACTOR && m_Rules.RollChance(50)));
+                        bool asLiving = (reincMode == GameOptions.ReincMode.RANDOM_LIVING || (reincMode == GameOptions.ReincMode.RANDOM_ACTOR && DiceRoller.RollChance(50)));
                         List<Actor> allSuitables = new List<Actor>();
                         for (int dx = 0; dx < m_Session.World.Size; dx++)
                             for (int dy = 0; dy < m_Session.World.Size; dy++)
@@ -20603,7 +20594,7 @@ namespace djack.RogueSurvivor.Engine
                         if (allSuitables.Count == 0)
                             return null;
                         else
-                            return allSuitables[m_Rules.Roll(0, allSuitables.Count)];
+                            return allSuitables[DiceRoller.Roll(0, allSuitables.Count)];
                     }
                 #endregion
 
@@ -20634,18 +20625,18 @@ namespace djack.RogueSurvivor.Engine
         ActorAction GenerateInsaneAction(Actor actor)
         {
             // Let's the insanity flow...
-            int roll = m_Rules.Roll(0, 5);
+            int roll = DiceRoller.Roll(0, 5);
             switch (roll)
             {
                 // shout
                 case 0: return new ActionShout(actor, "AAAAAAAAAAA!!!");
 
                 // random bump
-                case 1: return new ActionBump(actor, m_Rules.RollDirection());
+                case 1: return new ActionBump(actor, DirectionHelpers.RollDirection());
 
                 // random bash.
                 case 2:
-                    Direction d = m_Rules.RollDirection();
+                    Direction d = DirectionHelpers.RollDirection();
                     MapObject mobj = actor.Location.Map.GetMapObjectAt(actor.Location.Position + d);
                     if (mobj == null) return null;
                     return new ActionBreak(actor, mobj);
@@ -20654,7 +20645,7 @@ namespace djack.RogueSurvivor.Engine
                 case 3:
                     Inventory inv = actor.Inventory;
                     if (inv == null || inv.CountItems == 0) return null;
-                    Item it = inv[m_Rules.Roll(0, inv.CountItems)];
+                    Item it = inv[DiceRoller.Roll(0, inv.CountItems)];
                     ActionUseItem useIt = new ActionUseItem(actor, it);
                     if (useIt.IsLegal())
                         return useIt;
@@ -20670,7 +20661,7 @@ namespace djack.RogueSurvivor.Engine
                         if (a == actor) continue;
                         if (actor.IsEnemiesWith(a)) continue;
                         if (!LOS.CanTraceViewLine(actor.Location, a.Location.Position, fov)) continue;
-                        if (m_Rules.RollChance(50))
+                        if (DiceRoller.RollChance(50))
                         {
                             // force leaving of leader.
                             if (actor.HasLeader)

@@ -37,7 +37,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             return list;
         }
 
-        protected override ActorAction SelectAction(RogueGame game, List<Percept> percepts)
+        protected override ActorAction SelectAction(World world, List<Percept> percepts)
         {
             HashSet<Point> fov = m_LOSSensor.FOV;
             List<Percept> mapPercepts = FilterSameMap(percepts);
@@ -67,7 +67,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         float distance = DistanceHelpers.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
                         if (distance < closest)
                         {
-                            ActorAction bumpAction = BehaviorStupidBumpToward(game, enemyP.Location.Position, false, false);
+                            ActorAction bumpAction = BehaviorStupidBumpToward(enemyP.Location.Position, false, false);
                             if (bumpAction != null)
                             {
                                 closest = distance;
@@ -98,7 +98,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         float distance = DistanceHelpers.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
                         if (distance < closest)
                         {
-                            ActorAction bumpAction = BehaviorStupidBumpToward(game, enemyP.Location.Position, false, false);
+                            ActorAction bumpAction = BehaviorStupidBumpToward(enemyP.Location.Position, false, false);
                             if (bumpAction != null)
                             {
                                 closest = distance;
@@ -122,7 +122,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             List<Percept> corpses = FilterCorpses(mapPercepts);
             if (corpses != null)
             {
-                ActorAction eatCorpses = BehaviorGoEatCorpse(game, corpses);
+                ActorAction eatCorpses = BehaviorGoEatCorpse(corpses);
                 if (eatCorpses != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -131,19 +131,16 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 3 move to highest living scent
-            #region
-            ActorAction trackLivingAction = BehaviorTrackScent(game, m_LivingSmellSensor.Scents);
+            ActorAction trackLivingAction = BehaviorTrackScent(m_LivingSmellSensor.Scents);
             if (trackLivingAction != null)
             {
                 m_Actor.Activity = Activity.TRACKING;
                 return trackLivingAction;
             }
 
-            #endregion
-
             // 4 wander
             m_Actor.Activity = Activity.IDLE;
-            return BehaviorWander(game, null);
+            return BehaviorWander(null);
         }
         #endregion
     }

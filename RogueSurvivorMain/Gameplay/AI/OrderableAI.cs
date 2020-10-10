@@ -43,7 +43,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             m_ReportStage = 0;
         }
 
-        protected ActorAction ExecuteOrder(RogueGame game, ActorOrder order, List<Percept> percepts, ExplorationData exploration)
+        protected ActorAction ExecuteOrder(World world, ActorOrder order, List<Percept> percepts, ExplorationData exploration)
         {
             // cancel if leader is dead!
             if (m_Actor.Leader == null || m_Actor.Leader.IsDead)
@@ -53,27 +53,27 @@ namespace djack.RogueSurvivor.Gameplay.AI
             switch (order.Task)
             {
                 case ActorTasks.BARRICADE_ONE:
-                    return ExecuteBarricading(game, order.Location, false);
+                    return ExecuteBarricading(order.Location, false);
                 case ActorTasks.BARRICADE_MAX:
-                    return ExecuteBarricading(game, order.Location, true);
+                    return ExecuteBarricading(order.Location, true);
                 case ActorTasks.BUILD_SMALL_FORTIFICATION:
-                    return ExecuteBuildFortification(game, order.Location, false);
+                    return ExecuteBuildFortification(order.Location, false);
                 case ActorTasks.BUILD_LARGE_FORTIFICATION:
-                    return ExecuteBuildFortification(game, order.Location, true);
+                    return ExecuteBuildFortification(order.Location, true);
                 case ActorTasks.DROP_ALL_ITEMS:
-                    return ExecuteDropAllItems(game);
+                    return ExecuteDropAllItems();
                 case ActorTasks.GUARD:
-                    return ExecuteGuard(game, order.Location, percepts);
+                    return ExecuteGuard(order.Location, percepts);
                 case ActorTasks.PATROL:
-                    return ExecutePatrol(game, order.Location, percepts, exploration);
+                    return ExecutePatrol(order.Location, percepts, exploration);
                 case ActorTasks.REPORT_EVENTS:
-                    return ExecuteReport(game, percepts);
+                    return ExecuteReport(world, percepts);
                 case ActorTasks.SLEEP_NOW:
-                    return ExecuteSleepNow(game, percepts);
+                    return ExecuteSleepNow(percepts);
                 case ActorTasks.FOLLOW_TOGGLE:
-                    return ExecuteToggleFollow(game);
+                    return ExecuteToggleFollow();
                 case ActorTasks.WHERE_ARE_YOU:
-                    return ExecuteReportPosition(game);
+                    return ExecuteReportPosition();
 
                 default:
                     throw new NotImplementedException("order task not handled");
@@ -81,7 +81,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         }
 
         #region Barricading
-        ActorAction ExecuteBarricading(RogueGame game, Location location, bool toTheMax)
+        ActorAction ExecuteBarricading(Location location, bool toTheMax)
         {
             /////////////////////
             // 1. Check validity.
@@ -118,10 +118,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 2.2 Move closer.
-            ActorAction moveAction = BehaviorIntelligentBumpToward(game, location.Position, false, false);
+            ActorAction moveAction = BehaviorIntelligentBumpToward(location.Position, false, false);
             if (moveAction != null)
             {
-                RunIfPossible(game.Rules);
+                RunIfPossible();
                 return moveAction;
             }
             else
@@ -130,7 +130,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         #endregion
 
         #region Building fortification
-        ActorAction ExecuteBuildFortification(RogueGame game, Location location, bool isLarge)
+        ActorAction ExecuteBuildFortification(Location location, bool isLarge)
         {
             /////////////////////
             // 1. Check validity.
@@ -161,10 +161,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 2.2 Move closer.
-            ActorAction moveAction = BehaviorIntelligentBumpToward(game, location.Position, false, false);
+            ActorAction moveAction = BehaviorIntelligentBumpToward(location.Position, false, false);
             if (moveAction != null)
             {
-                RunIfPossible(game.Rules);
+                RunIfPossible();
                 return moveAction;
             }
             else
@@ -173,7 +173,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         #endregion
 
         #region Guarding
-        ActorAction ExecuteGuard(RogueGame game, Location location, List<Percept> percepts)
+        ActorAction ExecuteGuard(Location location, List<Percept> percepts)
         {
             ////////////////////////////////
             // Interrupt guard:
@@ -218,7 +218,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 2. Move to guard position.
             if (m_Actor.Location.Position != location.Position)
             {
-                ActorAction bumpAction = BehaviorIntelligentBumpToward(game, location.Position, false, false);
+                ActorAction bumpAction = BehaviorIntelligentBumpToward(location.Position, false, false);
                 if (bumpAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -229,7 +229,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 3. Eat if hungry.
             if (m_Actor.IsActorHungry())
             {
-                ActorAction eatAction = BehaviorEat(game);
+                ActorAction eatAction = BehaviorEat();
                 if (eatAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -238,7 +238,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 4. Heal if need to.
-            ActorAction useMedAction = BehaviorUseMedecine(game, 2, 1, 2, 4, 2);
+            ActorAction useMedAction = BehaviorUseMedecine(2, 1, 2, 4, 2);
             if (useMedAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
@@ -252,7 +252,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         #endregion
 
         #region Patrolling
-        ActorAction ExecutePatrol(RogueGame game, Location location, List<Percept> percepts, ExplorationData exploration)
+        ActorAction ExecutePatrol(Location location, List<Percept> percepts, ExplorationData exploration)
         {
             ////////////////////////////////
             // Interrupt patrol
@@ -304,7 +304,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 2. Move to patrol position.
             if (!m_ReachedPatrolPoint)
             {
-                ActorAction bumpAction = BehaviorIntelligentBumpToward(game, location.Position, false, false);
+                ActorAction bumpAction = BehaviorIntelligentBumpToward(location.Position, false, false);
                 if (bumpAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -315,7 +315,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 3. Eat if hungry.
             if (m_Actor.IsActorHungry())
             {
-                ActorAction eatAction = BehaviorEat(game);
+                ActorAction eatAction = BehaviorEat();
                 if (eatAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -324,7 +324,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 4. Heal if need to.
-            ActorAction useMedAction = BehaviorUseMedecine(game, 2, 1, 2, 4, 2);
+            ActorAction useMedAction = BehaviorUseMedecine(2, 1, 2, 4, 2);
             if (useMedAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
@@ -333,7 +333,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 5. Wander in patrol zones.
             List<Zone> patrolZones = location.Map.GetZonesAt(Order.Location.Position.X, Order.Location.Position.Y);
-            return BehaviorWander(game, (loc) =>
+            return BehaviorWander((loc) =>
             {
                 List<Zone> zonesHere = loc.Map.GetZonesAt(loc.Position.X, loc.Position.Y);
                 if (zonesHere == null)
@@ -349,7 +349,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         #endregion
 
         #region Dropping all items
-        ActorAction ExecuteDropAllItems(RogueGame game)
+        ActorAction ExecuteDropAllItems()
         {
             // if no more items, done.
             if (m_Actor.Inventory.IsEmpty)
@@ -380,7 +380,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         #endregion
 
         #region Reporting
-        ActorAction ExecuteReport(RogueGame game, List<Percept> percepts)
+        ActorAction ExecuteReport(World world, List<Percept> percepts)
         {
             ////////////////////////////////
             // Interrupt report
@@ -409,7 +409,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             {
                 case 0: // events.
                     if (m_LastRaidHeard != null)
-                        reportAction = BehaviorTellFriendAboutPercept(game, m_LastRaidHeard);
+                        reportAction = BehaviorTellFriendAboutPercept(world, m_LastRaidHeard);
                     else
                         reportAction = new ActionSay(m_Actor, m_Actor.Leader, "No raids heard.", Sayflags.NONE);
 
@@ -418,7 +418,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
                 case 1: // enemies.
                     if (m_LastEnemySaw != null)
-                        reportAction = BehaviorTellFriendAboutPercept(game, m_LastEnemySaw);
+                        reportAction = BehaviorTellFriendAboutPercept(world, m_LastEnemySaw);
                     else
                         reportAction = new ActionSay(m_Actor, m_Actor.Leader, "No enemies sighted.", Sayflags.NONE);
 
@@ -427,7 +427,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
                 case 2: // items.
                     if (m_LastItemsSaw != null)
-                        reportAction = BehaviorTellFriendAboutPercept(game, m_LastItemsSaw);
+                        reportAction = BehaviorTellFriendAboutPercept(world, m_LastItemsSaw);
                     else
                         reportAction = new ActionSay(m_Actor, m_Actor.Leader, "No items sighted.", Sayflags.NONE);
 
@@ -436,7 +436,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
                 case 3: // soldiers.
                     if (m_LastSoldierSaw != null)
-                        reportAction = BehaviorTellFriendAboutPercept(game, m_LastSoldierSaw);
+                        reportAction = BehaviorTellFriendAboutPercept(world, m_LastSoldierSaw);
                     else
                         reportAction = new ActionSay(m_Actor, m_Actor.Leader, "No soldiers sighted.", Sayflags.NONE);
 
@@ -460,7 +460,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         #endregion
 
         #region Sleeping now
-        ActorAction ExecuteSleepNow(RogueGame game, List<Percept> percepts)
+        ActorAction ExecuteSleepNow(List<Percept> percepts)
         {
             // interrupt if seeing an enemy.
             List<Percept> enemies = FilterEnemies(percepts);
@@ -487,14 +487,14 @@ namespace djack.RogueSurvivor.Gameplay.AI
             else
             {
                 SetOrder(null);
-                game.DoEmote(m_Actor, String.Format("I can't sleep now : {0}.", reason));
+                m_Actor.DoEmote(String.Format("I can't sleep now : {0}.", reason));
                 return new ActionWait(m_Actor);
             }
         }
         #endregion
 
         #region Toggle following
-        ActorAction ExecuteToggleFollow(RogueGame game)
+        ActorAction ExecuteToggleFollow()
         {
             // consider it done.
             SetOrder(null);
@@ -503,13 +503,13 @@ namespace djack.RogueSurvivor.Gameplay.AI
             DontFollowLeader = !DontFollowLeader;
 
             // emote.
-            game.DoEmote(m_Actor, DontFollowLeader ? "OK I'll do my stuff, see you soon!" : "I'm ready!");
+            m_Actor.DoEmote(DontFollowLeader ? "OK I'll do my stuff, see you soon!" : "I'm ready!");
             return new ActionWait(m_Actor);
         }
         #endregion
 
         #region Where are you?
-        ActorAction ExecuteReportPosition(RogueGame game)
+        ActorAction ExecuteReportPosition()
         {
             // consider it done. 
             SetOrder(null);

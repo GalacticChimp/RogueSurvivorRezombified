@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;   // Point
-
+using djack.RogueSurvivor.Common;
 using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Data.Enums;
 using djack.RogueSurvivor.Data.Helpers;
@@ -257,7 +257,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             bool checkOurLeader = m_Actor.HasLeader && !DontFollowLeader;
             bool seeLeader = checkOurLeader && m_LOSSensor.FOV.Contains(m_Actor.Leader.Location.Position);
             bool isLeaderFighting = checkOurLeader && IsAdjacentToEnemy(m_Actor.Leader);
-            bool isCourageous = checkOurLeader && seeLeader && isLeaderFighting && !game.Rules.IsActorTired(m_Actor);
+            bool isCourageous = checkOurLeader && seeLeader && isLeaderFighting && !m_Actor.IsActorTired();
 
             // safety counter.
             if (hasEnemies)
@@ -282,11 +282,11 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // last enemy saw.
             if (hasEnemies)
-                m_LastEnemySaw = enemies[game.Rules.Roll(0, enemies.Count)];            
+                m_LastEnemySaw = enemies[DiceRoller.Roll(0, enemies.Count)];            
 
             // 0 run away from primed explosives.
             #region
-            ActorAction runFromExplosives = BehaviorFleeFromExplosives(game, FilterStacks(mapPercepts));
+            ActorAction runFromExplosives = BehaviorFleeFromExplosives(FilterStacks(mapPercepts));
             if (runFromExplosives != null)
             {
                 m_Actor.Activity = Activity.FLEEING_FROM_EXPLOSIVE;
@@ -355,10 +355,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         HasSpeedAdvantage(game, m_Actor,target))
                     {
                         // flee!
-                        ActorAction fleeAction = BehaviorWalkAwayFrom(game, nearestTarget);
+                        ActorAction fleeAction = BehaviorWalkAwayFrom(nearestTarget);
                         if (fleeAction != null)
                         {
-                            RunIfPossible(game.Rules);
+                            RunIfPossible();
                             m_Actor.Activity = Activity.FLEEING;
                             return fleeAction;
                         }
@@ -382,7 +382,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             if (hasEnemies)
             {
                 // shout?
-                if (game.Rules.RollChance(50))
+                if (DiceRoller.RollChance(50))
                 {
                     List<Percept> friends = FilterNonEnemies(mapPercepts);
                     if (friends != null)
@@ -407,7 +407,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 5 use medicine
             #region
-            ActorAction useMedAction = BehaviorUseMedecine(game, 2, 1, 2, 4, 2);
+            ActorAction useMedAction = BehaviorUseMedecine(2, 1, 2, 4, 2);
             if (useMedAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
@@ -445,13 +445,13 @@ namespace djack.RogueSurvivor.Gameplay.AI
             #region
             if (m_Actor.IsActorHungry())
             {
-                ActorAction eatAction = BehaviorEat(game);
+                ActorAction eatAction = BehaviorEat();
                 if (eatAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
                     return eatAction;
                 }
-                if (m_Actor.IsActorStarving() || game.Rules.IsActorInsane(m_Actor))
+                if (m_Actor.IsActorStarving() || m_Actor.IsActorInsane())
                 {
                     eatAction = BehaviorGoEatCorpse(game, FilterCorpses(mapPercepts));
                     if (eatAction != null)
@@ -466,10 +466,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 9 sleep when almost sleepy and safe.
             #region
             if (m_SafeTurns >= MIN_TURNS_SAFE_TO_SLEEP && this.Directives.CanSleep && 
-                WouldLikeToSleep(game, m_Actor) && IsInside(m_Actor) && m_Actor.CanActorSleep(out string reason))
+                WouldLikeToSleep(m_Actor) && IsInside(m_Actor) && m_Actor.CanActorSleep(out string reason))
             {               
                 // secure sleep.
-                ActorAction secureSleepAction = BehaviorSecurePerimeter(game, m_LOSSensor.FOV);
+                ActorAction secureSleepAction = BehaviorSecurePerimeter(m_LOSSensor.FOV);
                 if (secureSleepAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -477,7 +477,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 }
 
                 // sleep.
-                ActorAction sleepAction = BehaviorSleep(game, m_LOSSensor.FOV);
+                ActorAction sleepAction = BehaviorSleep(m_LOSSensor.FOV);
                 if (sleepAction != null)
                 {
                     if (sleepAction is ActionSleep)
@@ -610,7 +610,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         }
                         else
                         {
-                            ActorAction bump = BehaviorIntelligentBumpToward(game, tradeTarget.Location.Position, false, false);
+                            ActorAction bump = BehaviorIntelligentBumpToward(tradeTarget.Location.Position, false, false);
                             if (bump != null)
                             {
                                 // alpha10 announce it to make it clear to the player whats happening but dont spend AP (free action)
@@ -657,7 +657,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                     if (chargeAction != null)
                     {
                         // randomly emote.
-                        if (game.Rules.RollChance(HUNGRY_CHARGE_EMOTE_CHANCE))
+                        if (DiceRoller.RollChance(HUNGRY_CHARGE_EMOTE_CHANCE))
                             m_Actor.DoSay(targetForFood.Percepted as Actor, "HEY! YOU! SHARE SOME FOOD!", Sayflags.IS_FREE_ACTION | Sayflags.IS_DANGER);
 
                         // chaaarge!
@@ -671,7 +671,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 15 use stench killer.
             #region
-            if (game.Rules.RollChance(USE_STENCH_KILLER_CHANCE))
+            if (DiceRoller.RollChance(USE_STENCH_KILLER_CHANCE))
             {
                 ActorAction sprayAction = BehaviorUseStenchKiller();
                 if (sprayAction != null)
@@ -696,7 +696,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             #region
             if (m_Actor.Model.Abilities.HasSanity)
             {
-                if (m_Actor.Sanity < 0.75f * game.Rules.ActorMaxSanity(m_Actor))
+                if (m_Actor.Sanity < 0.75f * m_Actor.ActorMaxSanity())
                 {
                     ActorAction entAction = BehaviorUseEntertainment();
                     if (entAction != null)
@@ -718,7 +718,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 18 build trap or fortification.
             // alpha10.1 moved trap/fortification rule before following leader rule so they will do it much more often
             #region
-            if (game.Rules.RollChance(BUILD_TRAP_CHANCE))
+            if (DiceRoller.RollChance(BUILD_TRAP_CHANCE))
             {
                 ActorAction trapAction = BehaviorBuildTrap(game);
                 if (trapAction != null)
@@ -728,7 +728,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 }
             }
             // large fortification.
-            if (game.Rules.RollChance(BUILD_LARGE_FORT_CHANCE))
+            if (DiceRoller.RollChance(BUILD_LARGE_FORT_CHANCE))
             {
                 ActorAction buildAction = BehaviorBuildLargeFortification(game, START_FORT_LINE_CHANCE);
                 if (buildAction != null)
@@ -738,7 +738,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 }
             }
             // small fortification.
-            if (game.Rules.RollChance(BUILD_SMALL_FORT_CHANCE))
+            if (DiceRoller.RollChance(BUILD_SMALL_FORT_CHANCE))
             {
                 ActorAction buildAction = BehaviorBuildSmallFortification(game);
                 if (buildAction != null)
@@ -801,13 +801,13 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 if (attackBarricadeAction != null)
                 {
                     // emote.
-                    game.DoEmote(m_Actor, "Open damn it! I know there is food there!", true);
+                    m_Actor.DoEmote("Open damn it! I know there is food there!", true);
 
                     // go!
                     m_Actor.Activity = Activity.IDLE;
                     return attackBarricadeAction;
                 }
-                if (game.Rules.RollChance(HUNGRY_PUSH_OBJECTS_CHANCE))
+                if (DiceRoller.RollChance(HUNGRY_PUSH_OBJECTS_CHANCE))
                 {
                     // alpha10.1 do that only inside where food is more likely to be hidden, pushing cars outside is stupid -_-
                     if (m_Actor.Location.Map.GetTileAt(m_Actor.Location.Position).IsInside)
@@ -816,7 +816,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         if (pushAction != null)
                         {
                             // emote.
-                            game.DoEmote(m_Actor, "Where is all the damn food?!", true);
+                            m_Actor.DoEmote("Where is all the damn food?!", true);
 
                             // go!
                             m_Actor.Activity = Activity.IDLE;
@@ -837,9 +837,9 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 23 use exit.
             #region
-            if (game.Rules.RollChance(USE_EXIT_CHANCE))
+            if (DiceRoller.RollChance(USE_EXIT_CHANCE))
             {
-                ActorAction useExit = BehaviorUseExit(game, UseExitFlags.DONT_BACKTRACK);
+                ActorAction useExit = BehaviorUseExit(UseExitFlags.DONT_BACKTRACK);
                 if (useExit != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -851,9 +851,9 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 24 tell friend about latest raid.
             #region
             // tell?
-            if (m_LastRaidHeard != null && game.Rules.RollChance(TELL_FRIEND_ABOUT_RAID_CHANCE))
+            if (m_LastRaidHeard != null && DiceRoller.RollChance(TELL_FRIEND_ABOUT_RAID_CHANCE))
             {
-                ActorAction tellAction = BehaviorTellFriendAboutPercept(game, m_LastRaidHeard);
+                ActorAction tellAction = BehaviorTellFriendAboutPercept(game.Session.World, m_LastRaidHeard);
                 if (tellAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -876,9 +876,9 @@ namespace djack.RogueSurvivor.Gameplay.AI
             if (seeingSoldier != null)
                 m_LastSoldierSaw = seeingSoldier;
             // tell?
-            if (game.Rules.RollChance(TELL_FRIEND_ABOUT_SOLDIER_CHANCE) && m_LastSoldierSaw != null)
+            if (DiceRoller.RollChance(TELL_FRIEND_ABOUT_SOLDIER_CHANCE) && m_LastSoldierSaw != null)
             {
-                ActorAction tellAction = BehaviorTellFriendAboutPercept(game, m_LastSoldierSaw);
+                ActorAction tellAction = BehaviorTellFriendAboutPercept(game.Session.World, m_LastSoldierSaw);
                 if (tellAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -889,9 +889,9 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 26 tell friend about latest enemy.
             #region
-            if (game.Rules.RollChance(TELL_FRIEND_ABOUT_ENEMY_CHANCE) && m_LastEnemySaw != null)
+            if (DiceRoller.RollChance(TELL_FRIEND_ABOUT_ENEMY_CHANCE) && m_LastEnemySaw != null)
             {
-                ActorAction tellAction = BehaviorTellFriendAboutPercept(game, m_LastEnemySaw);
+                ActorAction tellAction = BehaviorTellFriendAboutPercept(game.Session.World, m_LastEnemySaw);
                 if (tellAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -902,9 +902,9 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 27 tell friend about latest items.
             #region
-            if (game.Rules.RollChance(TELL_FRIEND_ABOUT_ITEMS_CHANCE) && m_LastItemsSaw != null)
+            if (DiceRoller.RollChance(TELL_FRIEND_ABOUT_ITEMS_CHANCE) && m_LastItemsSaw != null)
             {
-                ActorAction tellAction = BehaviorTellFriendAboutPercept(game, m_LastItemsSaw);
+                ActorAction tellAction = BehaviorTellFriendAboutPercept(game.Session.World, m_LastItemsSaw);
                 if (tellAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -915,7 +915,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 28 (law enforcer) watch for murderers.
             #region
-            if (m_Actor.Model.Abilities.IsLawEnforcer && mapPercepts != null && game.Rules.RollChance(LAW_ENFORCE_CHANCE))
+            if (m_Actor.Model.Abilities.IsLawEnforcer && mapPercepts != null && DiceRoller.RollChance(LAW_ENFORCE_CHANCE))
             {
                 Actor target;
                 ActorAction lawAction = BehaviorEnforceLaw(game, mapPercepts, out target);
@@ -936,16 +936,16 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 if (stickTogether != null)
                 {
                     // emote?
-                    if (game.Rules.RollChance(DONT_LEAVE_BEHIND_EMOTE_CHANCE))
+                    if (DiceRoller.RollChance(DONT_LEAVE_BEHIND_EMOTE_CHANCE))
                     {
                         if (target.IsSleeping)
-                            game.DoEmote(m_Actor, String.Format("patiently waits for {0} to wake up.", target.Name));
+                            m_Actor.DoEmote(String.Format("patiently waits for {0} to wake up.", target.Name));
                         else
                         {
                             if (m_LOSSensor.FOV.Contains(target.Location.Position))
-                                game.DoEmote(m_Actor, String.Format("Come on {0}! Hurry up!", target.Name));
+                                m_Actor.DoEmote(String.Format("Come on {0}! Hurry up!", target.Name));
                             else
-                                game.DoEmote(m_Actor, String.Format("Where the hell is {0}?", target.Name));
+                                m_Actor.DoEmote(String.Format("Where the hell is {0}?", target.Name));
                         }
                     }
 
@@ -991,7 +991,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // END VERBOSE BOT
 
             m_Actor.Activity = Activity.IDLE;
-            return BehaviorWander(game, m_Exploration);
+            return BehaviorWander(m_Exploration);
             #endregion
 
             #endregion

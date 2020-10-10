@@ -9,6 +9,7 @@ using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Gameplay;
 using djack.RogueSurvivor.Gameplay.AI;
 using djack.RogueSurvivor.UI;
+using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Gameplay.Generators
 {
@@ -33,19 +34,19 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             for (int i = 0; i < RogueGame.Options.MaxCivilians; i++)
             {
                 // policeman, civilian?
-                if (m_DiceRoller.RollChance(this.Params.PolicemanChance))
+                if (DiceRoller.RollChance(this.Params.PolicemanChance))
                 {
                     // create policeman.
                     Actor cop = CreateNewPoliceman(0);
                     // policeman on patrol starts outside.
-                    base.ActorPlace(m_DiceRoller, maxTries, map, cop, (pt) => !map.GetTileAt(pt.X, pt.Y).IsInside);
+                    base.ActorPlace(maxTries, map, cop, (pt) => !map.GetTileAt(pt.X, pt.Y).IsInside);
                 }
                 else
                 {
                     // create civilian with 1 skill.
                     Actor civilian = CreateNewCivilian(0, 0, 1);
                     // civilian starts inside.
-                    base.ActorPlace(m_DiceRoller, maxTries, map, civilian, (pt) => map.GetTileAt(pt.X, pt.Y).IsInside);
+                    base.ActorPlace(maxTries, map, civilian, (pt) => map.GetTileAt(pt.X, pt.Y).IsInside);
                 }
             }
             // dogs
@@ -64,7 +65,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             for (int i = 0; i < nbUndeads; i++)
             {
                 Actor undead = CreateNewUndead(0);
-                base.ActorPlace(m_DiceRoller, maxTries, map, undead, (pt) => !map.GetTileAt(pt.X, pt.Y).IsInside);
+                base.ActorPlace(maxTries, map, undead, (pt) => !map.GetTileAt(pt.X, pt.Y).IsInside);
             }
 #endif
 
@@ -87,7 +88,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 for (int i = 0; i < nbUndeads; i++)
                 {
                     Actor undead = CreateNewSewersUndead(0);
-                    base.ActorPlace(m_DiceRoller, maxTries, sewers, undead);
+                    base.ActorPlace(maxTries, sewers, undead);
                 }
             }
 

@@ -9,6 +9,7 @@ using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
 using djack.RogueSurvivor.Gameplay.AI.Sensors;
 using djack.RogueSurvivor.Data.Helpers;
+using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Gameplay.AI
 {
@@ -101,7 +102,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             return list;
         }
 
-        protected override ActorAction SelectAction(RogueGame game, List<Percept> percepts)
+        protected override ActorAction SelectAction(World world, List<Percept> percepts)
         {
             HashSet<Point> fov = m_LOSSensor.FOV;
             List<Percept> mapPercepts = FilterSameMap(percepts);
@@ -153,7 +154,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                             float distance = DistanceHelpers.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
                             if (distance < closest)
                             {
-                                ActorAction bumpAction = BehaviorStupidBumpToward(game, enemyP.Location.Position, true, true);
+                                ActorAction bumpAction = BehaviorStupidBumpToward(enemyP.Location.Position, true, true);
                                 if (bumpAction != null)
                                 {
                                     closest = distance;
@@ -184,7 +185,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                             float distance = DistanceHelpers.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
                             if (distance < closest)
                             {
-                                ActorAction bumpAction = BehaviorStupidBumpToward(game, enemyP.Location.Position, true, true);
+                                ActorAction bumpAction = BehaviorStupidBumpToward(enemyP.Location.Position, true, true);
                                 if (bumpAction != null)
                                 {
                                     closest = distance;
@@ -207,18 +208,18 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 3 (chance) shout insanities.
             #region
-            if (game.Rules.RollChance(SHOUT_CHANCE))
+            if (DiceRoller.RollChance(SHOUT_CHANCE))
             {
-                string insanity = INSANITIES[game.Rules.Roll(0, INSANITIES.Length)];
+                string insanity = INSANITIES[DiceRoller.Roll(0, INSANITIES.Length)];
                 m_Actor.Activity = Activity.IDLE;
-                game.DoEmote(m_Actor, insanity, true);
+                m_Actor.DoEmote(insanity, true);
             }
             #endregion
 
             // 4 (chance) use exit.
-            if (game.Rules.RollChance(USE_EXIT_CHANCE))
+            if (DiceRoller.RollChance(USE_EXIT_CHANCE))
             {
-                ActorAction useExit = BehaviorUseExit(game, UseExitFlags.ATTACK_BLOCKING_ENEMIES | UseExitFlags.BREAK_BLOCKING_OBJECTS);
+                ActorAction useExit = BehaviorUseExit(UseExitFlags.ATTACK_BLOCKING_ENEMIES | UseExitFlags.BREAK_BLOCKING_OBJECTS);
                 if (useExit != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -228,7 +229,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 5 wander
             m_Actor.Activity = Activity.IDLE;
-            return BehaviorWander(game, null);
+            return BehaviorWander(null);
         }
         #endregion
     }
