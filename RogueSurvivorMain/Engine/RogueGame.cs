@@ -9,7 +9,9 @@ using System.IO;
 using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Data.Enums;
+using djack.RogueSurvivor.Data.Tasks;
 using djack.RogueSurvivor.Data.Helpers;
+using djack.RogueSurvivor.DataImport;
 using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.Items;
 using djack.RogueSurvivor.Gameplay;
@@ -17,7 +19,6 @@ using djack.RogueSurvivor.Gameplay.AI;
 using djack.RogueSurvivor.Gameplay.Generators;
 
 using Message = djack.RogueSurvivor.Data.Message;
-using djack.RogueSurvivor.Engine.Tasks;
 using ItemRating = djack.RogueSurvivor.Gameplay.AI.BaseAI.ItemRating;
 using TradeRating = djack.RogueSurvivor.Gameplay.AI.BaseAI.TradeRating;
 using djack.RogueSurvivor.Common;
@@ -350,10 +351,6 @@ namespace djack.RogueSurvivor.Engine
         const int PLAYER_HEAR_EXPLOSION_CHANCE = 100;
         #endregion
 
-        #region Blood splatting
-        const int BLOOD_WALL_SPLAT_CHANCE = 20;
-        #endregion
-
         #region NPC player sleeping snoring message chance
         public const int MESSAGE_NPC_SLEEP_SNORE_CHANCE = 10;
         #endregion
@@ -671,12 +668,13 @@ namespace djack.RogueSurvivor.Engine
         #region Fields
         readonly IRogueUI m_UI;
         Session m_Session;
+        // HACK, temp workaround, so that everything won't get borked at once and so I can refactor IsVisibleToPlayer safely
+        private Actor m_Player { get { return Session?.Player; }set { Session.UpdatePlayer(value); } }
         HiScoreTable m_HiScoreTable;
         MessageManager m_MessageManager;
         bool m_IsGameRunning = true;
         bool m_HasLoadedGame = false;
         List<Overlay> m_Overlays = new List<Overlay>();
-        Actor m_Player;
         HashSet<Point> m_PlayerFOV = new HashSet<Point>();
         Rectangle m_MapViewRect;
 
@@ -760,10 +758,7 @@ namespace djack.RogueSurvivor.Engine
             get { return m_GameTiles; }
         }
 
-        public Actor Player
-        {
-            get { return m_Player; }
-        }
+
         #endregion
 
         // alpha10
@@ -852,6 +847,8 @@ namespace djack.RogueSurvivor.Engine
             if (msg == null)
                 throw new ArgumentNullException("msg");
 
+            var m_Player = Session.Player;
+
             // 1. Audible to player?
             if (m_Player != null)
             {
@@ -888,7 +885,7 @@ namespace djack.RogueSurvivor.Engine
         /// <returns></returns>
         Message MakePlayerCentricMessage(string eventText, Point position)
         {
-            Point vDir = new Point(position.X - m_Player.Location.Position.X, position.Y - m_Player.Location.Position.Y);
+            Point vDir = new Point(position.X - Session.Player.Location.Position.X, position.Y - Session.Player.Location.Position.Y);
             string text = String.Format("{0} {1} tiles to the {2}.", eventText, (int)DistanceHelpers.StdDistance(vDir), Direction.ApproximateFromVector(vDir));
             return new Message(text, m_Session.WorldTime.TurnCounter);
         }
@@ -910,7 +907,7 @@ namespace djack.RogueSurvivor.Engine
         /// <returns>"someone" if not visible to the player; TheName if visible.</returns>
         string ActorVisibleIdentity(Actor actor)
         {
-            return actor.IsVisibleToPlayer(m_Player) ? actor.TheName : "someone";
+            return actor.IsVisibleToPlayer() ? actor.TheName : "someone";
         }
 
         /// <summary>
@@ -920,7 +917,7 @@ namespace djack.RogueSurvivor.Engine
         /// <returns>"someone" if not visible to the player; TheName if visible.</returns>
         string ObjectVisibleIdentity(MapObject mapObj)
         {
-            return mapObj.IsVisibleToPlayer(m_Player) ? mapObj.TheName : "something";
+            return mapObj.IsVisibleToPlayer() ? mapObj.TheName : "something";
         }
 
         Message MakeMessage(Actor actor, string doWhat)
@@ -1462,7 +1459,7 @@ namespace djack.RogueSurvivor.Engine
             }
             else
             {
-                // udead.
+                // undead.
             }
 
             // done
@@ -3215,7 +3212,7 @@ namespace djack.RogueSurvivor.Engine
                                     zombifiedCorpses.Add(c);
                                     Actor zombified = Zombify(null, c.DeadGuy, false);
 
-                                    if (IsVisibleToPlayer(map, c.Position))
+                                    if (map.IsVisibleToPlayer(c.Position))
                                     {
                                         AddMessage(new Message(String.Format("The corpse of {0} rise again!!", c.DeadGuy.Name), map.LocalTime.TurnCounter, Color.Red));
                                         // FIXME -- 
@@ -3233,7 +3230,7 @@ namespace djack.RogueSurvivor.Engine
                             foreach (Corpse c in rottenCorpses)
                             {
                                 DestroyCorpse(c, map);
-                                if (IsVisibleToPlayer(map, c.Position))
+                                if (map.IsVisibleToPlayer(c.Position))
                                     AddMessage(new Message(String.Format("The corpse of {0} turns into dust.", c.DeadGuy.Name), map.LocalTime.TurnCounter, Color.Purple));
                             }
                         }
@@ -3253,13 +3250,13 @@ namespace djack.RogueSurvivor.Engine
                                 #region
                                 if (DiceRoller.Roll(0, 1000) < Rules.InfectionEffectTriggerChance1000(infectionP))
                                 {
-                                    bool isVisible = IsVisibleToPlayer(a);
+                                    bool isVisible = a.IsVisibleToPlayer();
                                     bool isPlayer = a.IsPlayer;  // alpha10.1 consistency fix
                                     bool isBot = a.IsBotPlayer;  // alpha10.1 handle bot
 
                                     // if sleeping, wake up.
                                     if (a.IsSleeping)
-                                        DoWakeUp(a);
+                                        a.DoWakeUp();
 
                                     // apply effect.
                                     bool killHim = false;
@@ -3345,9 +3342,9 @@ namespace djack.RogueSurvivor.Engine
                         {
                             foreach (Actor a in infectedToKill)
                             {
-                                if (IsVisibleToPlayer(a))
+                                if (a.IsVisibleToPlayer())
                                     AddMessage(MakeMessage(a, String.Format("{0} of infection!", Conjugate(a, VERB_DIE))));
-                                KillActor(null, a, "infection");
+                                a.KillActor(null, a, "infection");
                                 // if player, force zombify NOW.
                                 if (a.IsPlayer)
                                 {
@@ -3503,7 +3500,7 @@ namespace djack.RogueSurvivor.Engine
                             // loose 1 HP.
                             if (DiceRoller.Roll(0, 1000) < Rules.ROT_STARVING_HP_CHANCE)
                             {
-                                if (IsVisibleToPlayer(actor))
+                                if (actor.IsVisibleToPlayer())
                                 {
                                     AddMessage(MakeMessage(actor, "is rotting away."));
                                 }
@@ -3536,14 +3533,14 @@ namespace djack.RogueSurvivor.Engine
                             if (actor.IsActorDisturbed() && DiceRoller.RollChance(Rules.SANITY_NIGHTMARE_CHANCE))
                             {
                                 // wake up, shout, lose sleep and sta.
-                                DoWakeUp(actor);
+                                actor.DoWakeUp();
                                 actor.DoShout("NO! LEAVE ME ALONE!");
                                 actor.SleepPoints -= Rules.SANITY_NIGHTMARE_SLP_LOSS;
                                 if (actor.SleepPoints < 0) actor.SleepPoints = 0;
                                 actor.SpendActorSanity(Rules.SANITY_NIGHTMARE_SAN_LOSS);
                                 actor.SpendActorStaminaPoints(Rules.SANITY_NIGHTMARE_STA_LOSS);
                                 // msg.
-                                if (IsVisibleToPlayer(actor))
+                                if (actor.IsVisibleToPlayer())
                                     AddMessage(MakeMessage(actor, String.Format("{0} from a horrible nightmare!", Conjugate(actor, VERB_WAKE_UP))));
                                 // if player, sfx.
                                 if (actor.IsPlayer)
@@ -3583,7 +3580,7 @@ namespace djack.RogueSurvivor.Engine
                                 int healChance = (isOnCouch ? Rules.SLEEP_ON_COUCH_HEAL_CHANCE : 0);
                                 healChance += Rules.ActorHealChanceBonus(actor);
                                 if (DiceRoller.RollChance(healChance))
-                                    RegenActorHitPoints(actor, Rules.SLEEP_HEAL_HITPOINTS);
+                                    actor.RegenActorHitPoints(Rules.SLEEP_HEAL_HITPOINTS);
                             }
 
                             // wake up?
@@ -3591,7 +3588,7 @@ namespace djack.RogueSurvivor.Engine
                             bool wakeUp = actor.IsActorHungry() || actor.SleepPoints >= actor.ActorMaxSleep();
                             if (wakeUp)
                             {
-                                DoWakeUp(actor);
+                                actor.DoWakeUp();
                             }
                             else
                             {
@@ -3610,7 +3607,7 @@ namespace djack.RogueSurvivor.Engine
                                     if (s_Options.SimThread)
                                         Thread.Sleep(10);
                                 }
-                                else if (DiceRoller.RollChance(MESSAGE_NPC_SLEEP_SNORE_CHANCE) && IsVisibleToPlayer(actor))
+                                else if (DiceRoller.RollChance(MESSAGE_NPC_SLEEP_SNORE_CHANCE) && actor.IsVisibleToPlayer())
                                 {
                                     AddMessage(MakeMessage(actor, String.Format("{0}.", Conjugate(actor, VERB_SNORE))));
                                     RedrawPlayScreen();
@@ -3629,7 +3626,7 @@ namespace djack.RogueSurvivor.Engine
                                 actor.DoStartSleeping();
 
                                 // message.
-                                if (IsVisibleToPlayer(actor))
+                                if (actor.IsVisibleToPlayer())
                                 {
                                     AddMessage(MakeMessage(actor, String.Format("{0} from exhaustion !!", Conjugate(actor, VERB_COLLAPSE))));
                                     RedrawPlayScreen();
@@ -3662,16 +3659,16 @@ namespace djack.RogueSurvivor.Engine
                     if (actor.HasLeader)
                     {
                         // trust.
-                        ModifyActorTrustInLeader(actor, Rules.ActorTrustIncrease(actor.Leader), false);
+                        actor.ModifyActorTrustInLeader(Rules.ActorTrustIncrease(actor.Leader), false);
                         // bond with leader.
-                        if (Rules.HasActorBondWith(actor, actor.Leader) && DiceRoller.RollChance(Rules.SANITY_RECOVER_BOND_CHANCE))
+                        if (actor.HasActorBondWith(actor.Leader) && DiceRoller.RollChance(Rules.SANITY_RECOVER_BOND_CHANCE))
                         {
                             actor.RegenActorSanity(Rules.SANITY_RECOVER_BOND);
                             actor.Leader.RegenActorSanity( Rules.SANITY_RECOVER_BOND);
-                            if (IsVisibleToPlayer(actor))
+                            if (actor.IsVisibleToPlayer())
                                 AddMessage(MakeMessage(actor, String.Format("{0} reassured knowing {1} is with {2}.",
                                             Conjugate(actor, VERB_FEEL), actor.Leader.Name, HimOrHer(actor))));
-                            if (IsVisibleToPlayer(actor.Leader))
+                            if (actor.Leader.IsVisibleToPlayer())
                                 AddMessage(MakeMessage(actor.Leader, String.Format("{0} reassured knowing {1} is with {2}.",
                                             Conjugate(actor.Leader, VERB_FEEL), actor.Name, HimOrHer(actor.Leader))));
                         }
@@ -3686,14 +3683,14 @@ namespace djack.RogueSurvivor.Engine
                     foreach (Actor actor in actorsStarvedToDeath)
                     {
                         // message.
-                        if (IsVisibleToPlayer(actor))
+                        if (actor.IsVisibleToPlayer())
                         {
                             AddMessage(MakeMessage(actor, String.Format("{0} !!", Conjugate(actor, VERB_DIE_FROM_STARVATION))));
                             RedrawPlayScreen();
                         }
 
                         // kill.
-                        KillActor(null, actor, "starvation");
+                        actor.KillActor(null, actor, "starvation");
 
                         // zombify?
                         if (!actor.Model.Abilities.IsUndead && Rules.HasImmediateZombification(m_Session.GameMode) && DiceRoller.RollChance(s_Options.StarvedZombificationChance))
@@ -3703,7 +3700,7 @@ namespace djack.RogueSurvivor.Engine
                             // zombify!
                             Zombify(null, actor, false);
                             // show.
-                            if (IsVisibleToPlayer(actor))
+                            if (actor.IsVisibleToPlayer())
                             {
                                 AddMessage(MakeMessage(actor, String.Format("{0} into a Zombie!", Conjugate(actor, "turn"))));
                                 RedrawPlayScreen();
@@ -3731,7 +3728,7 @@ namespace djack.RogueSurvivor.Engine
                             --light.Batteries;
                             if (light.Batteries <= 0)
                             {
-                                if (IsVisibleToPlayer(actor))
+                                if (actor.IsVisibleToPlayer())
                                 {
                                     AddMessage(MakeMessage(actor, String.Format(": {0} light goes off.", light.TheName)));
                                 }
@@ -3749,7 +3746,7 @@ namespace djack.RogueSurvivor.Engine
                             --tracker.Batteries;
                             if (tracker.Batteries <= 0)
                             {
-                                if (IsVisibleToPlayer(actor))
+                                if (actor.IsVisibleToPlayer())
                                 {
                                     AddMessage(MakeMessage(actor, String.Format(": {0} goes off.", tracker.TheName)));
                                 }
@@ -3895,7 +3892,7 @@ namespace djack.RogueSurvivor.Engine
                             // do it.
                             UnapplyOnFire(obj);
                             // tell.
-                            if (IsVisibleToPlayer(obj))
+                            if (obj.IsVisibleToPlayer())
                             {
                                 AddMessage(new Message("The rain has put out a fire.", map.LocalTime.TurnCounter));
                             }
@@ -3949,19 +3946,7 @@ namespace djack.RogueSurvivor.Engine
         }
 
 
-        void ModifyActorTrustInLeader(Actor a, int mod, bool addMessage)
-        {
-            // do it.
-            a.TrustInLeader += mod;
-            if (a.TrustInLeader > Rules.TRUST_MAX)
-                a.TrustInLeader = Rules.TRUST_MAX;
-            else if (a.TrustInLeader < Rules.TRUST_MIN)
-                a.TrustInLeader = Rules.TRUST_MIN;
 
-            // if leader is player, message.
-            if (addMessage && a.Leader.IsPlayer)
-                AddMessage(new Message(String.Format("({0} trust with {1})", mod, a.TheName), m_Session.WorldTime.TurnCounter, Color.White));
-        }
         #endregion
 
         #region Stats
@@ -5362,7 +5347,7 @@ namespace djack.RogueSurvivor.Engine
         {
             // Upkeep.
             UpdatePlayerFOV(player);    // make sure LOS is up to date.
-            m_Player = player;      // remember player.
+            Session.UpdatePlayer(player);      // remember player.
             ComputeViewRect(player.Location.Position);
 
             // Update survival scoring.
@@ -5538,7 +5523,7 @@ namespace djack.RogueSurvivor.Engine
                                 {
                                     StopSimThread(true); // alpha10 abort allowed when quitting
                                     loop = false;
-                                    KillActor(null, m_Player, "suicide");
+                                    m_Player.KillActor(null, m_Player, "suicide");
                                 }
                                 break;
 
@@ -6544,7 +6529,7 @@ namespace djack.RogueSurvivor.Engine
 
             // Do look.
             ClearOverlays();
-            if (IsVisibleToPlayer(m_Session.CurrentMap, mouseMap))
+            if (m_Session.CurrentMap.IsVisibleToPlayer(mouseMap))
             {
                 Point tileScreenPos = MapToScreen(mouseMap);
                 string[] description = DescribeStuffAt(m_Session.CurrentMap, mouseMap);
@@ -6896,7 +6881,7 @@ namespace djack.RogueSurvivor.Engine
 
         public void DoButcherCorpse(Actor a, Corpse c)
         {
-            bool isVisible = IsVisibleToPlayer(a);
+            bool isVisible = a.IsVisibleToPlayer();
 
             // spend ap.
             a.SpendActorActionPoints(Rules.BASE_ACTION_COST);
@@ -9304,7 +9289,7 @@ namespace djack.RogueSurvivor.Engine
             if (!follower.IsActorTrustingLeader())
             {
                 // say/phone
-                if (IsVisibleToPlayer(follower))
+                if (follower.IsVisibleToPlayer())
                     follower.DoSay(player, "Sorry, I don't trust you enough yet.", Sayflags.IS_FREE_ACTION | Sayflags.IS_IMPORTANT);
                 else if (AreLinkedByPhone(follower, player))
                 {
@@ -9531,7 +9516,7 @@ namespace djack.RogueSurvivor.Engine
                     if (map.IsInBounds(mapPos) && IsInViewRect(mapPos))
                     {
                         // must be in player & follower FoV.
-                        if (IsVisibleToPlayer(map, mapPos) && followerFOV.Contains(mapPos))
+                        if (map.IsVisibleToPlayer(mapPos) && followerFOV.Contains(mapPos))
                         {
                             // Check if can build here.
                             string reason;
@@ -9622,7 +9607,7 @@ namespace djack.RogueSurvivor.Engine
                     if (map.IsInBounds(mapPos) && IsInViewRect(mapPos))
                     {
                         // must be in player & follower FoV.
-                        if (IsVisibleToPlayer(map, mapPos) && followerFOV.Contains(mapPos))
+                        if (map.IsVisibleToPlayer(mapPos) && followerFOV.Contains(mapPos))
                         {
 
                             // Check if something to barricade here.
@@ -9724,7 +9709,7 @@ namespace djack.RogueSurvivor.Engine
                     if (map.IsInBounds(mapPos) && IsInViewRect(mapPos))
                     {
                         // must be in player & follower FoV.
-                        if (IsVisibleToPlayer(map, mapPos) && followerFOV.Contains(mapPos))
+                        if (map.IsVisibleToPlayer(mapPos) && followerFOV.Contains(mapPos))
                         {
                             // Check if walkable here or same spot.
                             string reason;
@@ -9828,7 +9813,7 @@ namespace djack.RogueSurvivor.Engine
                     if (map.IsInBounds(mapPos) && IsInViewRect(mapPos))
                     {
                         // must be in player & follower FoV.
-                        if (IsVisibleToPlayer(map, mapPos) && followerFOV.Contains(mapPos))
+                        if (map.IsVisibleToPlayer(mapPos) && followerFOV.Contains(mapPos))
                         {
                             bool validPatrol = true;
                             string reason = "";
@@ -9899,7 +9884,7 @@ namespace djack.RogueSurvivor.Engine
             follower.DoSay(player, "Well ok...", Sayflags.IS_FREE_ACTION);
 
             // update trust. 1 give item penalty per items to drop.
-            ModifyActorTrustInLeader(follower, follower.Inventory.CountItems * Rules.TRUST_GIVE_ITEM_ORDER_PENALTY, true);
+            follower.ModifyActorTrustInLeader(follower.Inventory.CountItems * Rules.TRUST_GIVE_ITEM_ORDER_PENALTY, true);
 
             // done.
             return true;
@@ -12602,7 +12587,7 @@ namespace djack.RogueSurvivor.Engine
             follower.TrustInLeader = Rules.TRUST_NEUTRAL;
 
             // message.
-            if (IsVisibleToPlayer(actor) || IsVisibleToPlayer(follower))
+            if (actor.IsVisibleToPlayer() || follower.IsVisibleToPlayer())
             {
                 if (actor == m_Player)
                     ClearMessages();
@@ -12830,7 +12815,7 @@ namespace djack.RogueSurvivor.Engine
                 int jamChances = Rules.IsWeatherRain(m_Session.World.Weather) ? Rules.FIREARM_JAM_CHANCE_RAIN : Rules.FIREARM_JAM_CHANCE_NO_RAIN;
                 if (DiceRoller.RollChance(jamChances))
                 {
-                    if (IsVisibleToPlayer(attacker))
+                    if (attacker.IsVisibleToPlayer())
                     {
                         AddMessage(MakeMessage(attacker, " : weapon jam!"));
                         return;
@@ -12862,8 +12847,8 @@ namespace djack.RogueSurvivor.Engine
             int defRoll = DiceRoller.RollSkill(defence.Value);
 
             // show/hear.
-            bool isDefVisible = IsVisibleToPlayer(defender.Location);
-            bool isAttVisible = IsVisibleToPlayer(attacker.Location);
+            bool isDefVisible = defender.Location.IsVisibleToPlayer();
+            bool isAttVisible = attacker.Location.IsVisibleToPlayer();
             bool isPlayer = attacker.IsPlayer || defender.IsPlayer;
 
             if (!isDefVisible && !isAttVisible && !isPlayer &&
@@ -12888,7 +12873,7 @@ namespace djack.RogueSurvivor.Engine
                 if (dmgRoll > 0)
                 {
                     // inflict dmg.
-                    InflictDamage(defender, dmgRoll);
+                    defender.InflictDamage(dmgRoll);
 
                     // Killed?
                     if (defender.HitPoints <= 0) // def killed!
@@ -12903,7 +12888,7 @@ namespace djack.RogueSurvivor.Engine
                         }
 
                         // kill.
-                        KillActor(attacker, defender, "shot");
+                        attacker.KillActor(attacker, defender, "shot");
                     }
                     else
                     {
@@ -12961,8 +12946,8 @@ namespace djack.RogueSurvivor.Engine
                     !mapObj.IsWalkable)                                 // not if not blocking.
                 {
                     // message.
-                    bool isAttVisible = IsVisibleToPlayer(attacker);
-                    bool isObjVisible = IsVisibleToPlayer(mapObj);
+                    bool isAttVisible = attacker.IsVisibleToPlayer();
+                    bool isObjVisible = mapObj.IsVisibleToPlayer();
                     if (isAttVisible || isObjVisible)
                     {
                         if (isAttVisible)
@@ -13001,10 +12986,10 @@ namespace djack.RogueSurvivor.Engine
         void DoBlast(Location location, BlastAttack blastAttack)
         {
             // noise.
-            OnLoudNoise(location.Map, location.Position, "A loud EXPLOSION");
+            location.Map.OnLoudNoise(location.Position, "A loud EXPLOSION");
 
             // blast icon vs audio.
-            bool isVisible = IsVisibleToPlayer(location);
+            bool isVisible = location.IsVisibleToPlayer();
             if (isVisible)
             {
                 ShowBlastImage(MapToScreen(location.Position), blastAttack, blastAttack.Damage[0]);
@@ -13112,7 +13097,7 @@ namespace djack.RogueSurvivor.Engine
                 int damage = ApplyExplosionDamage(new Location(blastCenter.Map, pt), waveDistance, blast);
 
                 // show if visible.
-                if (IsVisibleToPlayer(blastCenter.Map, pt))
+                if (blastCenter.Map.IsVisibleToPlayer(pt))
                 {
                     ShowBlastImage(MapToScreen(pt), blast, damage);
                     return true;
@@ -13151,10 +13136,10 @@ namespace djack.RogueSurvivor.Engine
                 if (dmgToVictim > 0)
                 {
                     // inflict.
-                    InflictDamage(victim, dmgToVictim);
+                    victim.InflictDamage(dmgToVictim);
 
                     // message.
-                    if (IsVisibleToPlayer(victim))
+                    if (victim.IsVisibleToPlayer())
                     {
                         AddMessage(new Message(String.Format("{0} is hit for {1} damage!", victim.Name, dmgToVictim), map.LocalTime.TurnCounter, Color.Crimson));
                     }
@@ -13163,10 +13148,10 @@ namespace djack.RogueSurvivor.Engine
                     if (victim.HitPoints <= 0 && !victim.IsDead)
                     {
                         // kill him.
-                        KillActor(null, victim, String.Format("explosion {0} damage", dmgToVictim));
+                        victim.KillActor(null, victim, String.Format("explosion {0} damage", dmgToVictim));
 
                         // message?
-                        if (IsVisibleToPlayer(victim))
+                        if (victim.IsVisibleToPlayer())
                         {
                             AddMessage(new Message(String.Format("{0} dies in the explosion!", victim.Name), map.LocalTime.TurnCounter, Color.Crimson));
                         }
@@ -13373,7 +13358,7 @@ namespace djack.RogueSurvivor.Engine
                     target.DoSay(actor, "Thanks I guess...", Sayflags.IS_FREE_ACTION);
 
                 // update trust.
-                ModifyActorTrustInLeader(target, isInterestingItem ? Rules.TRUST_GOOD_GIFT_INCREASE : Rules.TRUST_MISC_GIFT_INCREASE, true);
+                target.ModifyActorTrustInLeader(isInterestingItem ? Rules.TRUST_GOOD_GIFT_INCREASE : Rules.TRUST_MISC_GIFT_INCREASE, true);
             }
             // if follower give to leader, decrease trust.
             else if (actor.Leader == target)
@@ -13382,15 +13367,15 @@ namespace djack.RogueSurvivor.Engine
                 target.DoSay(actor, "Well, here it is...", Sayflags.IS_FREE_ACTION);
 
                 // update trust.
-                ModifyActorTrustInLeader(actor, Rules.TRUST_GIVE_ITEM_ORDER_PENALTY, true);
+                actor.ModifyActorTrustInLeader(Rules.TRUST_GIVE_ITEM_ORDER_PENALTY, true);
             }
 
             // transfer item : drop then take (solves problem of partial quantities transfer).
-            DropItem(actor, gift);
+            actor.DropItem(gift);
             target.DoTakeItem(actor.Location.Position, gift);
 
             // message.
-            if (IsVisibleToPlayer(actor) || IsVisibleToPlayer(target))
+            if (actor.IsVisibleToPlayer() || target.IsVisibleToPlayer())
             {
                 AddMessage(MakeMessage(actor, String.Format("{0} {1} to", Conjugate(actor, VERB_GIVE), gift.TheName), target));
             }
@@ -13465,26 +13450,7 @@ namespace djack.RogueSurvivor.Engine
         }
 
 
-        void DiscardItem(Actor actor, Item it)
-        {
-            // remove from inventory.
-            actor.Inventory.RemoveAllQuantity(it);
 
-            // make sure it is unequipped.
-            it.EquippedPart = DollPart.NONE;
-        }
-
-        void DropItem(Actor actor, Item it)
-        {
-            // remove from inventory.
-            actor.Inventory.RemoveAllQuantity(it);
-
-            // add to ground.
-            actor.Location.Map.DropItemAt(it, actor.Location.Position);
-
-            // make sure it is unequipped.
-            it.EquippedPart = DollPart.NONE;
-        }
 
         void DropCloneItem(Actor actor, Item it, Item clone)
         {
@@ -13531,7 +13497,7 @@ namespace djack.RogueSurvivor.Engine
             }
 
             // message.
-            bool isVisible = IsVisibleToPlayer(actor);
+            bool isVisible = actor.IsVisibleToPlayer();
             if (isVisible)
                 AddMessage(MakeMessage(actor, Conjugate(actor, VERB_EAT), food));
 
@@ -13604,7 +13570,7 @@ namespace djack.RogueSurvivor.Engine
             actor.Inventory.Consume(med);
 
             // message.
-            if (IsVisibleToPlayer(actor))
+            if (actor.IsVisibleToPlayer())
                 AddMessage(MakeMessage(actor, Conjugate(actor, VERB_HEAL_WITH), med));
         }
 
@@ -13631,7 +13597,7 @@ namespace djack.RogueSurvivor.Engine
                 actor.Inventory.RemoveAllQuantity(ammoItem);
 
             // message.
-            if (IsVisibleToPlayer(actor))
+            if (actor.IsVisibleToPlayer())
             {
                 AddMessage(MakeMessage(actor, Conjugate(actor, VERB_RELOAD), ranged));
             }
@@ -13650,13 +13616,13 @@ namespace djack.RogueSurvivor.Engine
                 trap.Activate(actor);
 
             // message.
-            if (IsVisibleToPlayer(actor))
+            if (actor.IsVisibleToPlayer())
                 AddMessage(MakeMessage(actor, Conjugate(actor, (trap.IsActivated ? VERB_ACTIVATE : VERB_DESACTIVATE)), trap));
         }
 
         void DoUseEntertainmentItem(Actor actor, ItemEntertainment ent)
         {
-            bool visible = IsVisibleToPlayer(actor);
+            bool visible = actor.IsVisibleToPlayer();
 
             // spend APs.
             actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
@@ -13748,7 +13714,7 @@ namespace djack.RogueSurvivor.Engine
                 mapObj.Location.Map.RemoveMapObjectAt(mapObj.Location.Position.X, mapObj.Location.Position.Y);
 
             // loud noise.
-            OnLoudNoise(mapObj.Location.Map, mapObj.Location.Position, "A loud *CRASH*");
+            mapObj.Location.Map.OnLoudNoise(mapObj.Location.Position, "A loud *CRASH*");
         }
 
         #endregion
@@ -13757,7 +13723,7 @@ namespace djack.RogueSurvivor.Engine
         // alpha10
         void DoPushPullFollowersHelp(Actor actor, MapObject mapObj, bool isPulling, ref int staCost)
         {
-            bool isVisibleMobj = IsVisibleToPlayer(mapObj);
+            bool isVisibleMobj = mapObj.IsVisibleToPlayer();
 
             Location objLoc = new Location(actor.Location.Map, mapObj.Location.Position);
             List<Actor> helpers = null;
@@ -13780,7 +13746,7 @@ namespace djack.RogueSurvivor.Engine
                     h.SpendActorActionPoints( Rules.BASE_ACTION_COST);
                     h.SpendActorStaminaPoints( staCost);
                     // message.
-                    if (isVisibleMobj || IsVisibleToPlayer(h))
+                    if (isVisibleMobj || h.IsVisibleToPlayer())
                         AddMessage(MakeMessage(h, String.Format("{0} {1} {2} {3}.", Conjugate(h, VERB_HELP), actor.Name, (isPulling ? "pulling" : "pushing"), mapObj.TheName)));
                 }
             }
@@ -13821,8 +13787,8 @@ namespace djack.RogueSurvivor.Engine
                 }
             }
 
-            // message.
-            bool isVisible = IsVisibleToPlayer(actor) || IsVisibleToPlayer(target) || IsVisibleToPlayer(map, toPos);
+            // message
+            bool isVisible = actor.IsVisibleToPlayer() || target.IsVisibleToPlayer() || map.IsVisibleToPlayer(toPos);
             if (isVisible)
             {
                 AddMessage(MakeMessage(actor, Conjugate(actor, VERB_SHOVE), target));
@@ -13831,7 +13797,7 @@ namespace djack.RogueSurvivor.Engine
 
             // if target is sleeping, wakes him up!
             if (target.IsSleeping)
-                DoWakeUp(target);
+                target.DoWakeUp();
 
             // Trigger stuff.
             target.OnActorEnterTile();
@@ -13841,7 +13807,7 @@ namespace djack.RogueSurvivor.Engine
         // alpha10
         public void DoPullActor(Actor actor, Actor target, Point moveActorToPos)
         {
-            bool isVisible = IsVisibleToPlayer(actor) || IsVisibleToPlayer(target);
+            bool isVisible = actor.IsVisibleToPlayer() || target.IsVisibleToPlayer();
 
             // try leaving tile, both actors and target
             if (!actor.TryActorLeaveTile())
@@ -13876,7 +13842,7 @@ namespace djack.RogueSurvivor.Engine
 
             // if target is sleeping, wakes him up!
             if (target.IsSleeping)
-                DoWakeUp(target);
+                target.DoWakeUp();
 
             // message
             if (isVisible)
@@ -13905,7 +13871,7 @@ namespace djack.RogueSurvivor.Engine
             map.GetTileAt(pos.X, pos.Y).AddDecoration((spray.Model as ItemSprayPaintModel).TagImageID);
 
             // message.
-            if (IsVisibleToPlayer(actor))
+            if (actor.IsVisibleToPlayer())
             {
                 AddMessage(MakeMessage(actor, String.Format("{0} a tag.", Conjugate(actor, VERB_SPRAY))));
             }
@@ -13942,7 +13908,7 @@ namespace djack.RogueSurvivor.Engine
             ai.SetOrder(order);
 
             // message.
-            if (IsVisibleToPlayer(master) || IsVisibleToPlayer(slave))
+            if (master.IsVisibleToPlayer() || slave.IsVisibleToPlayer())
             {
                 AddMessage(MakeMessage(master, Conjugate(master, VERB_ORDER), slave, String.Format(" to {0}.", order.ToString())));
             }
@@ -13962,7 +13928,7 @@ namespace djack.RogueSurvivor.Engine
             ai.SetOrder(null);
 
             // message.
-            if (IsVisibleToPlayer(master) || IsVisibleToPlayer(slave))
+            if (master.IsVisibleToPlayer() || slave.IsVisibleToPlayer())
             {
                 AddMessage(MakeMessage(master, Conjugate(master, VERB_ORDER), slave, " to forget its orders."));
             }
@@ -13971,62 +13937,6 @@ namespace djack.RogueSurvivor.Engine
 
         #endregion
 
-        #region Loud noises
-        void OnLoudNoise(Map map, Point noisePosition, string noiseName)
-        {
-            ////////////////////////////////////////////
-            // Check if nearby sleeping actors wake up.
-            // Check long wait interruption.
-            ////////////////////////////////////////////
-            int xmin = noisePosition.X - Rules.LOUD_NOISE_RADIUS;
-            int xmax = noisePosition.X + Rules.LOUD_NOISE_RADIUS;
-            int ymin = noisePosition.Y - Rules.LOUD_NOISE_RADIUS;
-            int ymax = noisePosition.Y + Rules.LOUD_NOISE_RADIUS;
-            map.TrimToBounds(ref xmin, ref ymin);
-            map.TrimToBounds(ref xmax, ref ymax);
-
-            ///////////////////////////
-            // Waking up nearby actors.
-            ///////////////////////////
-            for (int x = xmin; x <= xmax; x++)
-            {
-                for (int y = ymin; y <= ymax; y++)
-                {
-                    // sleeping actor?
-                    Actor actor = map.GetActorAt(x, y);
-                    if (actor == null || !actor.IsSleeping)
-                        continue;
-
-                    // ignore if too far.
-                    int noiseDistance = DistanceHelpers.GridDistance(noisePosition, x, y);
-                    if (noiseDistance > Rules.LOUD_NOISE_RADIUS)
-                        continue;
-
-                    // roll chance of waking up.
-                    int wakeupChance = Rules.ActorLoudNoiseWakeupChance(actor, noiseDistance);
-                    if (!DiceRoller.RollChance(wakeupChance))
-                        continue;
-
-                    // wake up!
-                    DoWakeUp(actor);
-                    if (IsVisibleToPlayer(actor))
-                    {
-                        AddMessage(new Message(String.Format("{0} wakes {1} up!", noiseName, actor.TheName), map.LocalTime.TurnCounter, actor == m_Player ? Color.Red : Color.White));
-                        RedrawPlayScreen();
-                    }
-                }
-            }
-
-            ///////////////////////////
-            // Interrupting long wait.
-            ///////////////////////////
-            if (m_IsPlayerLongWait && map == m_Player.Location.Map && IsVisibleToPlayer(map, noisePosition))
-            {
-                // interrupt!
-                m_IsPlayerLongWaitForcedStop = true;
-            }
-        }
-        #endregion
 
         #region Damaging, Killing & Disarming actors
 
@@ -14200,59 +14110,6 @@ namespace djack.RogueSurvivor.Engine
         }
         #endregion
 
-        #region Blood & Remains
-        public void SplatterBlood(Map map, Point position)
-        {
-            // splatter floor there.
-            Tile tile = map.GetTileAt(position.X, position.Y);
-            if (map.IsWalkable(position.X, position.Y) && !tile.HasDecoration(GameImages.DECO_BLOODIED_FLOOR))
-            {
-                tile.AddDecoration(GameImages.DECO_BLOODIED_FLOOR);
-                map.AddTimer(new TaskRemoveDecoration(WorldTime.TURNS_PER_DAY, position.X, position.Y, GameImages.DECO_BLOODIED_FLOOR));
-            }
-
-            // splatter adjacent walls.
-            foreach (Direction d in Direction.COMPASS)
-            {
-                if (!DiceRoller.RollChance(BLOOD_WALL_SPLAT_CHANCE))
-                    continue;
-                Point next = position + d;
-                if (!map.IsInBounds(next))
-                    continue;
-                Tile tileNext = map.GetTileAt(next.X, next.Y);
-                if (tileNext.Model.IsWalkable)
-                    continue;
-                if (tileNext.HasDecoration(GameImages.DECO_BLOODIED_WALL))
-                    continue;
-                tileNext.AddDecoration(GameImages.DECO_BLOODIED_WALL);
-                map.AddTimer(new TaskRemoveDecoration(WorldTime.TURNS_PER_DAY, next.X, next.Y, GameImages.DECO_BLOODIED_WALL));
-            }
-        }
-
-        public void UndeadRemains(Map map, Point position)
-        {
-            // add deco there.
-            Tile tile = map.GetTileAt(position.X, position.Y);
-            if (map.IsWalkable(position.X, position.Y) && !tile.HasDecoration(GameImages.DECO_ZOMBIE_REMAINS))
-                tile.AddDecoration(GameImages.DECO_ZOMBIE_REMAINS);
-        }
-        #endregion
-
-        #region Corpses
-        public void DropCorpse(Actor deadGuy)
-        {
-            // add blood to deadguy.
-            deadGuy.Doll.AddDecoration(DollPart.TORSO, GameImages.BLOODIED);
-
-            // make and add corpse.
-            int corpseHp = deadGuy.ActorMaxHPs();
-            float rotation = DiceRoller.Roll(30, 60);
-            if (DiceRoller.RollChance(50)) rotation = -rotation;
-            float scale = 1.0f;
-            Corpse corpse = new Corpse(deadGuy, corpseHp, corpseHp, deadGuy.Location.Map.LocalTime.TurnCounter, rotation, scale);
-            deadGuy.Location.Map.AddCorpseAt(corpse, deadGuy.Location.Position);
-        }
-        #endregion
 
         #region Player death & Post mortem
         void PlayerDied(Actor killer, string reason)
@@ -15255,7 +15112,7 @@ namespace djack.RogueSurvivor.Engine
             actor.Sheet.SkillTable.DecOrRemoveSkill((int)lostSkill);
 
             // message.
-            if (IsVisibleToPlayer(actor))
+            if (actor.IsVisibleToPlayer())
                 AddMessage(MakeMessage(actor, String.Format("regressed in {0}!", Skills.Name(lostSkill))));
         }
 
@@ -15716,7 +15573,7 @@ namespace djack.RogueSurvivor.Engine
                 {
                     position.Y = y;
                     Point toScreen = MapToScreen(x, y);
-                    bool isVisible = IsVisibleToPlayer(map, position);
+                    bool isVisible = map.IsVisibleToPlayer(position);
                     bool drawWater = false;
                     Tile tile = map.IsInBounds(x, y) ? map.GetTileAt(x, y) : null;
 
@@ -15932,7 +15789,7 @@ namespace djack.RogueSurvivor.Engine
                 screen.Y -= yDrift;
             }
 
-            if (IsVisibleToPlayer(mapObj))
+            if (mapObj.IsVisibleToPlayer())
             {
                 DrawMapObject(mapObj, screen, mapObj.ImageID, (imageID, gx, gy) => m_UI.UI_DrawImage(imageID, gx, gy, tint));
 
@@ -15970,7 +15827,7 @@ namespace djack.RogueSurvivor.Engine
             // player follower?
             if (actor.Leader != null && actor.Leader == m_Player)
             {
-                if (Rules.HasActorBondWith(actor, m_Player))
+                if (actor.HasActorBondWith(m_Player))
                     m_UI.UI_DrawImage(GameImages.PLAYER_FOLLOWER_BOND, gx, gy, tint);
                 else if (actor.IsActorTrustingLeader())
                     m_UI.UI_DrawImage(GameImages.PLAYER_FOLLOWER_TRUST, gx, gy, tint);
@@ -16353,14 +16210,14 @@ namespace djack.RogueSurvivor.Engine
             Point offset = new Point(TILE_SIZE / 2, TILE_SIZE / 2);
 
             // target of this actor
-            if (actor.TargetActor != null && !actor.TargetActor.IsDead && IsVisibleToPlayer(actor.TargetActor))
+            if (actor.TargetActor != null && !actor.TargetActor.IsDead && actor.TargetActor.IsVisibleToPlayer())
                 AddOverlay(new OverlayImage(MapToScreen(actor.TargetActor.Location.Position), GameImages.ICON_IS_TARGET));
 
             // actors targeting this actor or in same group
             bool isTargettedHighlighted = false;
             foreach (Actor other in actor.Location.Map.Actors)
             {
-                if (other == actor || other.IsDead || !IsVisibleToPlayer(other))
+                if (other == actor || other.IsDead || !other.IsVisibleToPlayer())
                     continue;
 
                 // targetting this actor
@@ -16388,14 +16245,14 @@ namespace djack.RogueSurvivor.Engine
         {
             Point offset = new Point(TILE_SIZE / 2, TILE_SIZE / 2);
 
-            if (player.TargetActor != null && !player.TargetActor.IsDead && IsVisibleToPlayer(player.TargetActor))
+            if (player.TargetActor != null && !player.TargetActor.IsDead && player.TargetActor.IsVisibleToPlayer())
             {
                 Point gpos = MapToScreen(player.TargetActor.Location.Position);
                 m_UI.UI_DrawImage(GameImages.ICON_IS_TARGET, gpos.X, gpos.Y);
             }
             foreach (Actor a in player.Location.Map.Actors)
             {
-                if (a == player || a.IsDead || !IsVisibleToPlayer(a))
+                if (a == player || a.IsDead || !a.IsVisibleToPlayer())
                     continue;
                 if (a.TargetActor == player && (a.Activity == Activity.CHASING || a.Activity == Activity.FIGHTING))
                 {
@@ -16574,7 +16431,7 @@ namespace djack.RogueSurvivor.Engine
                                     m_UI.UI_DrawImage(GameImages.MINI_FOLLOWER_POSITION, foMiniPos.X - MINI_TRACKER_OFFSET, foMiniPos.Y - MINI_TRACKER_OFFSET);
 
                                     // if out of FoV but in view,, draw on map.
-                                    if (IsInViewRect(fo.Location.Position) && !IsVisibleToPlayer(fo))
+                                    if (IsInViewRect(fo.Location.Position) && !fo.IsVisibleToPlayer())
                                     {
                                         Point screenPos = MapToScreen(fo.Location.Position);
                                         m_UI.UI_DrawImage(GameImages.TRACK_FOLLOWER_POSITION, screenPos.X, screenPos.Y);
@@ -16605,7 +16462,7 @@ namespace djack.RogueSurvivor.Engine
                                 m_UI.UI_DrawImage(GameImages.MINI_UNDEAD_POSITION, undeadPos.X - MINI_TRACKER_OFFSET, undeadPos.Y - MINI_TRACKER_OFFSET);
 
                                 // if out of FoV but in view,, draw on map.
-                                if (IsInViewRect(other.Location.Position) && !IsVisibleToPlayer(other))
+                                if (IsInViewRect(other.Location.Position) && !other.IsVisibleToPlayer())
                                 {
                                     Point screenPos = MapToScreen(other.Location.Position);
                                     m_UI.UI_DrawImage(GameImages.TRACK_UNDEAD_POSITION, screenPos.X, screenPos.Y);
@@ -16633,7 +16490,7 @@ namespace djack.RogueSurvivor.Engine
                                 m_UI.UI_DrawImage(GameImages.MINI_BLACKOPS_POSITION, boPos.X - MINI_TRACKER_OFFSET, boPos.Y - MINI_TRACKER_OFFSET);
 
                                 // if out of FoV but in view,, draw on map.
-                                if (IsInViewRect(other.Location.Position) && !IsVisibleToPlayer(other))
+                                if (IsInViewRect(other.Location.Position) && !other.IsVisibleToPlayer())
                                 {
                                     Point screenPos = MapToScreen(other.Location.Position);
                                     m_UI.UI_DrawImage(GameImages.TRACK_BLACKOPS_POSITION, screenPos.X, screenPos.Y);
@@ -16660,7 +16517,7 @@ namespace djack.RogueSurvivor.Engine
                                 m_UI.UI_DrawImage(GameImages.MINI_POLICE_POSITION, boPos.X - MINI_TRACKER_OFFSET, boPos.Y - MINI_TRACKER_OFFSET);
 
                                 // if out of FoV but in view,, draw on map.
-                                if (IsInViewRect(other.Location.Position) && !IsVisibleToPlayer(other))
+                                if (IsInViewRect(other.Location.Position) && !other.IsVisibleToPlayer())
                                 {
                                     Point screenPos = MapToScreen(other.Location.Position);
                                     m_UI.UI_DrawImage(GameImages.TRACK_POLICE_POSITION, screenPos.X, screenPos.Y);
@@ -17270,7 +17127,6 @@ namespace djack.RogueSurvivor.Engine
             if (!loaded)
                 return false;
             m_Session = Session.Get;
-            Rules = new Rules();
 
             RefreshPlayer();
 
@@ -19196,7 +19052,7 @@ namespace djack.RogueSurvivor.Engine
                     player.Location.Map == m_Session.UniqueActors.TheSewersThing.TheActor.Location.Map &&
                     !m_Session.UniqueActors.TheSewersThing.TheActor.IsDead)
                 {
-                    if (IsVisibleToPlayer(m_Session.UniqueActors.TheSewersThing.TheActor))
+                    if (m_Session.UniqueActors.TheSewersThing.TheActor.IsVisibleToPlayer())
                     {
                         lock (m_Session) // thread safe
                         {
@@ -19233,7 +19089,7 @@ namespace djack.RogueSurvivor.Engine
                         if (DistanceHelpers.GridDistance(player.Location.Position, prisoner.Location.Position) <= 2 &&
                             //map.HasAnyAdjacentInMap(player.Location.Position, (pt) => map.GetMapObjectAt(pt) is PowerGenerator) &&
                             !prisoner.IsSleeping &&
-                            IsVisibleToPlayer(prisoner))  // alpha10 fix: and visible!
+                            prisoner.IsVisibleToPlayer())  // alpha10 fix: and visible!
                         {
                             lock (m_Session) // thread safe
                             {
@@ -19301,7 +19157,7 @@ namespace djack.RogueSurvivor.Engine
 
                                 // transformation.
                                 // - zombify.
-                                KillActor(null, prisoner, "transformation", false);  // alpha10 don't drop corpse!
+                                prisoner.KillActor(null, prisoner, "transformation", false);  // alpha10 don't drop corpse!
                                 Actor monster = Zombify(null, prisoner, false);
                                 // - turn into a ZP.
                                 monster.Model = m_GameActors.ZombiePrince;
@@ -19336,7 +19192,7 @@ namespace djack.RogueSurvivor.Engine
             {
                 if (!m_Session.UniqueActors.JasonMyers.TheActor.IsDead)
                 {
-                    if (IsVisibleToPlayer(m_Session.UniqueActors.JasonMyers.TheActor))
+                    if (m_Session.UniqueActors.JasonMyers.TheActor.IsVisibleToPlayer())
                     {
                         lock (m_Session) // thread safe
                         {
@@ -19913,14 +19769,14 @@ namespace djack.RogueSurvivor.Engine
                 {
                     if (a.IsPlayer)
                         AddMessage(new Message("That was a very disturbing thing to do...", loc.Map.LocalTime.TurnCounter, Color.Orange));
-                    else if (IsVisibleToPlayer(a))
+                    else if (a.IsVisibleToPlayer())
                         AddMessage(MakeMessage(a, String.Format("{0} done something very disturbing...", Conjugate(a, VERB_HAVE))));
                 }
                 else
                 {
                     if (a.IsPlayer)
                         AddMessage(new Message(String.Format("Seeing {0} is very disturbing...", what), loc.Map.LocalTime.TurnCounter, Color.Orange));
-                    else if (IsVisibleToPlayer(a))
+                    else if (a.IsVisibleToPlayer())
                         AddMessage(MakeMessage(a, String.Format("{0} something very disturbing...", Conjugate(a, VERB_SEE))));
                 }
             }
@@ -20150,8 +20006,8 @@ namespace djack.RogueSurvivor.Engine
             if (crushedActor.IsInvincible)
                 return false;
 
-            InflictDamage(crushedActor, crushingDamage);
-            if (IsVisibleToPlayer(crushedActor))
+            crushedActor.InflictDamage(crushingDamage);
+            if (crushedActor.IsVisibleToPlayer())
             {
                 AddMessage(MakeMessage(crushedActor, String.Format("is crushed for {0} damage!", crushingDamage)));
                 AddOverlay(new OverlayImage(MapToScreen(crushedActor.Location.Position), GameImages.ICON_MELEE_DAMAGE));
@@ -20164,7 +20020,7 @@ namespace djack.RogueSurvivor.Engine
 
             if (crushedActor.HitPoints <= 0)
             {
-                KillActor(null, crushedActor, "crushed");
+                crushedActor.KillActor(null, crushedActor, "crushed");
                 return true;
             }
             else
@@ -20292,7 +20148,7 @@ namespace djack.RogueSurvivor.Engine
                 if (obj.ImageID == GameImages.OBJ_GATE_OPEN)
                 {
                     // alpha10.1
-                    if (CheckForGateClosingCrush(obj, Rules.CRUSHING_GATES_DAMAGE))
+                    if (CheckForGateClosingCrush(obj, ItemTrap.CRUSHING_GATES_DAMAGE))
                     {
                         obj.IsWalkable = false;
                         obj.ImageID = GameImages.OBJ_GATE_CLOSED;

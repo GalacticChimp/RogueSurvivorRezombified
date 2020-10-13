@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Drawing;
 using System.IO;
 
-using djack.RogueSurvivor;
 using djack.RogueSurvivor.Data;
-using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Common;
 
-namespace djack.RogueSurvivor.Gameplay
+namespace djack.RogueSurvivor.DataImport
 {
-    static class Skills
+    public static class Skills
     {
         [Serializable]
         public enum IDs
@@ -195,7 +192,6 @@ namespace djack.RogueSurvivor.Gameplay
             return (IDs)DiceRoller.Roll((int)IDs._FIRST_UNDEAD, (int)IDs._LAST_UNDEAD + 1);
         }
 
-        #region Data
         struct SkillData
         {
             public const int COUNT_FIELDS = 6;
@@ -430,8 +426,6 @@ namespace djack.RogueSurvivor.Gameplay
 
             return true;
         }
-        #endregion
-
         #endregion
     }
 }

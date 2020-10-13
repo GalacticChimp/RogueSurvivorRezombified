@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 using System.Drawing;
 
 namespace djack.RogueSurvivor.Engine
@@ -10,7 +6,7 @@ namespace djack.RogueSurvivor.Engine
     /// <summary>
     /// Provides UI functionalities to a Rogue game.
     /// </summary>
-    interface IRogueUI
+    public interface IRogueUI
     {
         #region Input
         KeyEventArgs UI_WaitKey();
@@ -24,11 +20,8 @@ namespace djack.RogueSurvivor.Engine
         void UI_SetCursor(Cursor cursor);
         #endregion
 
-        #region Delay
         void UI_Wait(int msecs);
-        #endregion
 
-        #region Canvas Painting
         void UI_Repaint();
         void UI_Clear(Color clearColor);
         void UI_DrawImage(string imageID, int gx, int gy);
@@ -47,20 +40,13 @@ namespace djack.RogueSurvivor.Engine
         void UI_DrawPopupTitle(string title, Color titleColor, string[] lines, Color textColor, Color boxBorderColor, Color boxFillColor, int gx, int gy);
         void UI_DrawPopupTitleColors(string title, Color titleColor, string[] lines, Color[] colors, Color boxBorderColor, Color boxFillColor, int gx, int gy);
 
-        #region Minimap painting
         void UI_ClearMinimap(Color color);
         void UI_SetMinimapColor(int x, int y, Color color);
         void UI_DrawMinimap(int gx, int gy);
-        #endregion
 
-        #endregion
-
-        #region Canvas scaling - to convert mouse coordinates to canvas coordinates.
         float UI_GetCanvasScaleX();
         float UI_GetCanvasScaleY();
-        #endregion
 
-        #region Screenshots
         /// <summary>
         /// 
         /// </summary>
@@ -73,10 +59,7 @@ namespace djack.RogueSurvivor.Engine
         /// </summary>
         /// <returns></returns>
         string UI_ScreenshotExtension();
-        #endregion
 
-        #region Exiting
         void UI_DoQuit();
-        #endregion
     }
 }

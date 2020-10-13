@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-using djack.RogueSurvivor.Data;
-using djack.RogueSurvivor.Gameplay;
-
-namespace djack.RogueSurvivor.Engine
+namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    class Achievement
+    public class Achievement
     {
         #region IDs
         [Serializable]
@@ -58,14 +55,14 @@ namespace djack.RogueSurvivor.Engine
     }
 
     [Serializable]
-    enum DifficultySide
+    public enum DifficultySide
     {
         FOR_SURVIVOR,
         FOR_UNDEAD
     }
 
     [Serializable]
-    class Scoring
+    public class Scoring
     {
         #region Types
         [Serializable]
@@ -423,7 +420,6 @@ namespace djack.RogueSurvivor.Engine
         }
         #endregion
 
-        #region Computing difficulty rating
         /// <summary>
         /// 
         /// </summary>
@@ -616,9 +612,7 @@ namespace djack.RogueSurvivor.Engine
             // done.
             return Math.Max(rating, 0);
         }
-        #endregion
 
-        #region Kills & Sightings
         /// <summary>
         /// Add kill to record and increase kill points.
         /// Distinguish killing as living vs killing as undead.
@@ -663,9 +657,8 @@ namespace djack.RogueSurvivor.Engine
         {
             return m_Sightings.Contains(actorModelID);
         }
-        #endregion
 
-        #region Map & zones visits
+
         public bool HasVisited(Map map)
         {
             return m_VisitedMaps.Contains(map);
@@ -678,9 +671,7 @@ namespace djack.RogueSurvivor.Engine
                 m_VisitedMaps.Add(map);
             }
         }
-        #endregion
 
-        #region Dying : stuff to remember at death.
         /// <summary>
         /// 
         /// </summary>
@@ -709,9 +700,8 @@ namespace djack.RogueSurvivor.Engine
                 m_FollowersWhenDied = new List<Actor>();
             m_FollowersWhenDied.Add(fo);
         }
-        #endregion
 
-        #region Misc events
+
         public void AddEvent(int turn, string text)
         {
             lock (m_Events) // thread safe.
@@ -719,6 +709,5 @@ namespace djack.RogueSurvivor.Engine
                 m_Events.Add(new GameEventData(turn, text));
             }
         }
-        #endregion
     }
 }

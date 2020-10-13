@@ -12,25 +12,7 @@ namespace djack.RogueSurvivor.Engine
 {
     abstract class MapGenerator
     {
-        #region Fields
-        protected readonly Rules Rules;
-        #endregion
-
-        #region Init
-        public MapGenerator(Rules rules)
-        {
-            if (rules == null)
-                throw new ArgumentNullException("rules");
-
-            Rules = rules;
-        }
-        #endregion
-
-        #region Generating a new map
         public abstract Map Generate(int seed);
-        #endregion
-
-        #region Generation helpers
 
         #region Tile filling
         public void TileFill(Map map, TileModel model)
@@ -502,6 +484,5 @@ namespace djack.RogueSurvivor.Engine
         }
         #endregion
 
-        #endregion
     }
 }

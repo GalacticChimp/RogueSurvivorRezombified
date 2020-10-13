@@ -5,6 +5,8 @@ using System.Text;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using djack.RogueSurvivor.Data.Enums;
+using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Engine
 {

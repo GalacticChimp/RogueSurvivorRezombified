@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
 using System.IO;
 
+using djack.RogueSurvivor.Common;
 using djack.RogueSurvivor.Data;
-using djack.RogueSurvivor.Engine;
-using djack.RogueSurvivor.Gameplay.AI;
 
-namespace djack.RogueSurvivor.Gameplay
+namespace djack.RogueSurvivor.DataImport
 {
-    class GameActors : ActorModelDB
+    public class GameActors : ActorModelDB
     {
-        #region IDs
         public enum IDs
         {
             _FIRST,
@@ -60,22 +56,16 @@ namespace djack.RogueSurvivor.Gameplay
 
             _COUNT
         }
-        #endregion
 
-        #region Constants
         const int NO_INVENTORY = 0;
         const int NO_FOOD = 0;
         const int NO_SLEEP = 0;
         const int NO_SANITY = 0;
         const int NO_SMELL = 0;
         const int NO_AUDIO = 0;
-        #endregion
 
-        #region Fields
         ActorModel[] m_Models = new ActorModel[(int)IDs._COUNT];
-        #endregion
 
-        #region Properties
         public override ActorModel this[int id]
         {
             get { return m_Models[id]; }
@@ -125,9 +115,7 @@ namespace djack.RogueSurvivor.Gameplay
         public ActorModel BlackOps { get { return this[IDs.BLACKOPS_MAN]; } }
 
         public ActorModel JasonMyers { get { return this[IDs.JASON_MYERS]; } }
-        #endregion
 
-        #region Data stats
         public struct ActorData
         {
             public const int COUNT_FIELDS = 16;
@@ -171,7 +159,6 @@ namespace djack.RogueSurvivor.Gameplay
             }
         }
 
-        #region Undeads
         public int UNDEAD_FOOD = Rules.ROT_BASE_POINTS;
 
         ActorData DATA_SKELETON;
@@ -194,13 +181,9 @@ namespace djack.RogueSurvivor.Gameplay
         ActorData DATA_ZL;
 
         ActorData DATA_RAT_ZOMBIE;
-        #endregion
 
-        #region Unique Undeads
         ActorData DATA_SEWERS_THING;
-        #endregion
 
-        #region Livings
         public int HUMAN_HUN = Rules.FOOD_BASE_POINTS;
         public int HUMAN_SLP = Rules.SLEEP_BASE_POINTS;
         public int HUMAN_SAN = Rules.SANITY_BASE_POINTS;
@@ -226,15 +209,9 @@ namespace djack.RogueSurvivor.Gameplay
         ActorData DATA_GANGSTA_MAN;
 
         ActorData DATA_BLACKOPS_MAN;
-        #endregion
 
-        #region Unique Livings
         ActorData DATA_JASON_MYERS;
-        #endregion
 
-        #endregion
-
-        #region Init
         public GameActors()
         {
             // bind
@@ -654,7 +631,6 @@ namespace djack.RogueSurvivor.Gameplay
             };
             #endregion
 
-            #region Livings
             #region Civilians
             this[IDs.MALE_CIVILIAN] = new ActorModel(null,
                     DATA_MALE_CIVILIAN.NAME, DATA_MALE_CIVILIAN.PLURAL,
@@ -918,7 +894,6 @@ namespace djack.RogueSurvivor.Gameplay
             };
             #endregion
 
-            #region Animals
             ActorData data = DATA_FERAL_DOG;
             this[IDs.FERAL_DOG] = new ActorModel(null,
                      data.NAME, data.PLURAL,
@@ -943,10 +918,7 @@ namespace djack.RogueSurvivor.Gameplay
             {
                 FlavorDescription = data.FLAVOR
             };
-            #endregion
-            #endregion
 
-            #region Jason Myers
             this[IDs.JASON_MYERS] = new ActorModel(null,  // skinned.
                       DATA_JASON_MYERS.NAME, DATA_JASON_MYERS.PLURAL,
                       DATA_JASON_MYERS.SCORE,
@@ -975,11 +947,8 @@ namespace djack.RogueSurvivor.Gameplay
             {
                 FlavorDescription = DATA_JASON_MYERS.FLAVOR
             };
-            #endregion
         }
-        #endregion
 
-        #region Data loading
         public bool LoadFromCSV(IRogueUI ui, string path)
         {
             //////////////////////////
@@ -1013,7 +982,6 @@ namespace djack.RogueSurvivor.Gameplay
             /////////////
             Notify(ui, "reading data...");
 
-            #region Undeads
             DATA_SKELETON = GetDataFromCSVTable(ui, table, IDs.UNDEAD_SKELETON);
             DATA_RED_EYED_SKELETON = GetDataFromCSVTable(ui, table, IDs.UNDEAD_RED_EYED_SKELETON);
             DATA_RED_SKELETON = GetDataFromCSVTable(ui, table, IDs.UNDEAD_RED_SKELETON);
@@ -1036,9 +1004,7 @@ namespace djack.RogueSurvivor.Gameplay
             DATA_RAT_ZOMBIE = GetDataFromCSVTable(ui, table, IDs.UNDEAD_RAT_ZOMBIE);
 
             DATA_SEWERS_THING = GetDataFromCSVTable(ui, table, IDs.SEWERS_THING);
-            #endregion
 
-            #region Livings
             DATA_MALE_CIVILIAN = GetDataFromCSVTable(ui, table, IDs.MALE_CIVILIAN);
             DATA_FEMALE_CIVILIAN = GetDataFromCSVTable(ui, table, IDs.FEMALE_CIVILIAN);
             DATA_FERAL_DOG = GetDataFromCSVTable(ui, table, IDs.FERAL_DOG);
@@ -1055,7 +1021,6 @@ namespace djack.RogueSurvivor.Gameplay
             DATA_BLACKOPS_MAN = GetDataFromCSVTable(ui, table, IDs.BLACKOPS_MAN);
 
             DATA_JASON_MYERS = GetDataFromCSVTable(ui, table, IDs.JASON_MYERS);
-            #endregion
 
             /////////////////
             // Create models
@@ -1111,9 +1076,7 @@ namespace djack.RogueSurvivor.Gameplay
             ui.UI_DrawStringBold(Color.White, "Loading actors data : " + stage, 0, 0);
             ui.UI_Repaint();
         }
-        #endregion
 
-        #region Branches
         /* FIXME: branch = property of model */
 
         public bool IsZombifiedBranch(ActorModel m)
@@ -1142,6 +1105,5 @@ namespace djack.RogueSurvivor.Gameplay
         {
             return m == RatZombie;
         }
-        #endregion
     }
 }

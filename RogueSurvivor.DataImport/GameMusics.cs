@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace djack.RogueSurvivor.Gameplay
+﻿namespace djack.RogueSurvivor.DataImport
 {
-    static class GameMusics
+    public static class GameMusics
     {
         static readonly string PATH = @"Resources\Music\";
 

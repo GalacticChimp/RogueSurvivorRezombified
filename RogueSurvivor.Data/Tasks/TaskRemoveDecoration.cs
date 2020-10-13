@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-using djack.RogueSurvivor.Data;
-
-namespace djack.RogueSurvivor.Engine.Tasks
+namespace djack.RogueSurvivor.Data.Tasks
 {
     [Serializable]
-    class TaskRemoveDecoration : TimedTask
+    public class TaskRemoveDecoration : TimedTask
     {
         private int m_X, m_Y;
         private string m_imageID;

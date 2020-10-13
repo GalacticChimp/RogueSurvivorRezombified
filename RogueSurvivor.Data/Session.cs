@@ -10,20 +10,13 @@ using System.Drawing;
 using System.Xml;
 using System.Xml.Serialization;
 
-using djack.RogueSurvivor.Data;
+using djack.RogueSurvivor.Data.Enums;
+using djack.RogueSurvivor.Common;
 
-namespace djack.RogueSurvivor.Engine
+namespace djack.RogueSurvivor.Data
 {
     [Serializable]
-    enum GameMode
-    {
-        GM_STANDARD,
-        GM_CORPSES_INFECTION,
-        GM_VINTAGE
-    }
-
-    [Serializable]
-    enum ScriptStage
+    public enum ScriptStage
     {
         STAGE_0,
         STAGE_1,
@@ -34,7 +27,7 @@ namespace djack.RogueSurvivor.Engine
     }
 
     [Serializable]
-    enum RaidType
+    public enum RaidType
     {
         _FIRST = 0,
 
@@ -57,7 +50,7 @@ namespace djack.RogueSurvivor.Engine
     }
 
     [Serializable]
-    enum AdvisorHint
+    public enum AdvisorHint
     {
         _FIRST = 0,
 
@@ -303,7 +296,7 @@ namespace djack.RogueSurvivor.Engine
     }
 
     [Serializable]
-    class UniqueActor
+    public class UniqueActor
     {
         public bool IsSpawned { get; set; }
         public Actor TheActor { get; set; }
@@ -313,7 +306,7 @@ namespace djack.RogueSurvivor.Engine
     }
 
     [Serializable]
-    class UniqueActors
+    public class UniqueActors
     {
         public UniqueActor BigBear { get; set; }
         public UniqueActor Duckman { get; set; }
@@ -341,26 +334,26 @@ namespace djack.RogueSurvivor.Engine
     }
 
     [Serializable]
-    class UniqueItem
+    public class UniqueItem
     {
         public bool IsSpawned { get; set; }
         public Item TheItem { get; set; }
     }
 
     [Serializable]
-    class UniqueItems
+    public class UniqueItems
     {
         public UniqueItem TheSubwayWorkerBadge { get; set; }
     }
 
     [Serializable]
-    class UniqueMap
+    public class UniqueMap
     {
         public Map TheMap { get; set; }
     }
 
     [Serializable]
-    class UniqueMaps
+    public class UniqueMaps
     {
         public UniqueMap CHARUndergroundFacility { get; set; }
         public UniqueMap PoliceStation_OfficesLevel { get; set; }
@@ -376,7 +369,7 @@ namespace djack.RogueSurvivor.Engine
     /// All the data that is needed to represent the game state, or in other words everything that need to be saved and loaded.
     /// </summary>
     [Serializable]
-    class Session
+    public class Session
     {
         public enum SaveFormat
         {
@@ -385,43 +378,24 @@ namespace djack.RogueSurvivor.Engine
             FORMAT_XML
         }
 
-        #region Fields
-
-        #region Game Mode
         GameMode m_GameMode;
-        #endregion
 
-        #region World map
         WorldTime m_WorldTime;
         World m_World;
         Map m_CurrentMap;
-        #endregion
-
-        #region Scoring
         Scoring m_Scoring;
-        #endregion
 
-        #region Events
         /// <summary>
         /// [RaidType, District.WorldPosition.X, District.WorldPosition.Y] -> turnCounter
         /// </summary>
         int[, ,] m_Event_Raids;
-        #endregion
-
-        #region Advisor
-
-        #endregion
 
         // alpha10.1
-        #region AutoSave
         int m_NextAutoSaveTime;
-        #endregion
 
         [NonSerialized]
         static Session s_TheSession;
-        #endregion
 
-        #region Properties
         /// <summary>
         /// Gets the curent Session (singleton).
         /// </summary>
@@ -462,6 +436,16 @@ namespace djack.RogueSurvivor.Engine
             get { return m_Scoring; }
         }
 
+        public Actor Player
+        {
+            get; private set;
+        }
+
+        public void UpdatePlayer(Actor newPlayer)
+        {
+            Player = newPlayer;
+        }
+
         // alpha10.01
         public int NextAutoSaveTime
         {
@@ -469,15 +453,10 @@ namespace djack.RogueSurvivor.Engine
             set { m_NextAutoSaveTime = value; }
         }
 
-        #region Uniques
-
         public UniqueActors UniqueActors { get; set; }
         public UniqueItems UniqueItems { get; set; }
         public UniqueMaps UniqueMaps {get; set; }
-  
-        #endregion
 
-        #region Special flags
         public bool PlayerKnows_CHARUndergroundFacilityLocation
         {
             get;
@@ -502,15 +481,10 @@ namespace djack.RogueSurvivor.Engine
             set;
         }
 
-        // alpha10
         public FireMode Player_CurrentFireMode { get; set; }
 
         public int Player_TurnCharismaRoll { get; set; }
-        #endregion
 
-        #endregion
-
-        #region Init
         Session()
         {
             Reset();
@@ -551,9 +525,7 @@ namespace djack.RogueSurvivor.Engine
             // alpha10.1
             m_NextAutoSaveTime = 0;
         }
-        #endregion
 
-        #region Events
         public bool HasRaidHappened(RaidType raid, District district)
         {
             if (district == null)
@@ -580,9 +552,7 @@ namespace djack.RogueSurvivor.Engine
                 m_Event_Raids[(int)raid, district.WorldPosition.X, district.WorldPosition.Y] = turnCounter;
             }
         }
-        #endregion
 
-        #region Saving & Loading
         public static void Save(Session session, string filepath, SaveFormat format)
         {
             // optimize.
@@ -834,9 +804,7 @@ namespace djack.RogueSurvivor.Engine
                         map.ReconstructAuxiliaryFields();
                 }
         }
-        #endregion
 
-        #region Helpers
         public static string DescGameMode(GameMode mode)
         {
             switch (mode)
@@ -871,7 +839,6 @@ namespace djack.RogueSurvivor.Engine
             }
             throw new ArgumentException("actor is flaged as unique but did not find it!");
         }
-        #endregion
 
 #if DEBUG_STATS
         [Serializable]

@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 
-
-namespace djack.RogueSurvivor
+namespace djack.RogueSurvivor.Common
 {
-    static class Logger
+    public static class Logger
     {
         public enum Stage
         {

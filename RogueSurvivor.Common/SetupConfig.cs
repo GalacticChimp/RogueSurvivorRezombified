@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 
-namespace djack.RogueSurvivor
+namespace djack.RogueSurvivor.Common
 {
     public static class SetupConfig
     {

@@ -1,24 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 
-namespace djack.RogueSurvivor.Engine
+namespace djack.RogueSurvivor.Common
 {
     public class CSVField
     {
-        #region Fields
         string m_RawString;
-        #endregion
 
-        #region Init
         public CSVField(string rawString)
         {
             m_RawString = rawString;
         }
-        #endregion
 
-        #region Parsing
         public int ParseInt()
         {
             return int.Parse(m_RawString);
@@ -38,53 +32,39 @@ namespace djack.RogueSurvivor.Engine
         {
             return ParseInt() > 0;
         }
-        #endregion
     }
 
     public class CSVLine
     {
-        #region Fields
         CSVField[] m_Fields;
-        #endregion
 
-        #region Operators
         public CSVField this[int field]
         {
             get { return m_Fields[field]; }
             set { m_Fields[field] = value; }
         }
-        #endregion
 
-        #region Properties
         public int FieldsCount
         {
             get { return m_Fields.Length; }
         }
-        #endregion
 
-        #region Init
         public CSVLine(int nbFields)
         {
             m_Fields = new CSVField[nbFields];
         }
-        #endregion
     }
 
     public class CSVTable
     {
-        #region Fields
         int m_nbFields;
         List<CSVLine> m_Lines;
-        #endregion
 
-        #region Operators
         public CSVField this[int field, int line]
         {
             get { return m_Lines[line][field]; }
         }
-        #endregion
 
-        #region Properties
         public IEnumerable<CSVLine> Lines
         {
             get { return m_Lines; }
@@ -94,9 +74,7 @@ namespace djack.RogueSurvivor.Engine
         {
             get { return m_Lines.Count; }
         }
-        #endregion
 
-        #region Init
         public CSVTable(int nbFields)
         {
             m_nbFields = nbFields;
@@ -111,31 +89,23 @@ namespace djack.RogueSurvivor.Engine
             m_Lines.Add(line);
 
         }
-        #endregion
     }
 
     public class CSVParser
     {
-        #region Fields
         char m_Delimiter;
-        #endregion
 
-        #region Properties
         public char Delimiter
         {
             get { return m_Delimiter; }
             set { m_Delimiter = value; }
         }
-        #endregion
 
-        #region Init
         public CSVParser()
         {
             m_Delimiter = ',';
         }
-        #endregion
 
-        #region Parsing
         public string[] Parse(string line)
         {
             if (line == null)
@@ -220,9 +190,7 @@ namespace djack.RogueSurvivor.Engine
 
             return table;
         }
-        #endregion
 
-        #region Formatting
         public string Format(string[] fields)
         {
             if (fields == null)
@@ -236,6 +204,5 @@ namespace djack.RogueSurvivor.Engine
             }
             return sb.ToString();
         }
-        #endregion
     }
 }

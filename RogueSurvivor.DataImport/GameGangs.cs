@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace djack.RogueSurvivor.Gameplay
+namespace djack.RogueSurvivor.DataImport
 {
-    static class GameGangs
+    public static class GameGangs
     {
         [Serializable]
         public enum IDs

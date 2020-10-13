@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RogueSurvivor.Common\RogueSurvivor.Common.csproj" />
+    <ProjectReference Include="..\RogueSurvivor.DataImport\RogueSurvivor.DataImport.csproj" />
     <ProjectReference Include="..\RogueSurvivor.Data\RogueSurvivor.Data.csproj" />
   </ItemGroup>
 

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -6,6 +6,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RogueSurvivor.Common\RogueSurvivor.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Tasks\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SoapFormatter" Version="1.0.11" />
   </ItemGroup>
 
 </Project>

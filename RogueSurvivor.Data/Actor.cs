@@ -5,7 +5,6 @@ using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Data.Enums;
 using djack.RogueSurvivor.Data.Helpers;
 using djack.RogueSurvivor.Common;
-using djack.RogueSurvivor.Engine;
 
 namespace djack.RogueSurvivor.Data
 {
@@ -33,7 +32,7 @@ namespace djack.RogueSurvivor.Data
         public static float SKILL_ZTRACKER_SMELL_BONUS = 0.10f;
         public const int FOOD_BASE_POINTS = WorldTime.TURNS_PER_HOUR * 48;
         public const int FOOD_HUNGRY_LEVEL = FOOD_BASE_POINTS / 2;
-        public const int TRUST_BOND_THRESHOLD = TRUST_MAX;
+        public const int TRUST_BOND_THRESHOLD = Rules.TRUST_MAX;
         /// <summary>
         /// Stamina cost for moving with a dragged corpse.
         /// </summary>
@@ -2803,7 +2802,7 @@ namespace djack.RogueSurvivor.Data
             }
 
             // Check adjacent Z-Grabs
-            bool visible = IsVisibleToPlayer(this);
+            bool visible = IsVisibleToPlayer();
             map.ForEachAdjacentInMap(pos, (adj) =>
             {
                 Actor grabber = map.GetActorAt(adj);
@@ -5633,11 +5632,9 @@ namespace djack.RogueSurvivor.Data
             }
         }
 
-
-
-        public bool IsVisibleToPlayer(Actor m_Player)
+        public bool IsVisibleToPlayer()
         {
-            return this == m_Player ||  Location.IsVisibleToPlayer(m_Player);
+            return this == Session.Get.Player ||  Location.IsVisibleToPlayer();
         }
 
         public void InflictDamage(int dmg)
@@ -5703,15 +5700,15 @@ namespace djack.RogueSurvivor.Data
             // death of bonded leader/follower hits sanity.
             if (deadGuy.HasLeader)
             {
-                if (Rules.HasActorBondWith(deadGuy.Leader, deadGuy))
+                if (deadGuy.Leader.HasActorBondWith(deadGuy))
                 {
                     deadGuy.Leader.SpendActorSanity(Rules.SANITY_HIT_BOND_DEATH);
-                    if (IsVisibleToPlayer(deadGuy.Leader))
+                    if (deadGuy.Leader.IsVisibleToPlayer())
                     {
-                        if (deadGuy.Leader.IsPlayer && !deadGuy.Leader.IsBotPlayer) ClearMessages();
-                        AddMessage(MakeMessage(deadGuy.Leader, String.Format("{0} deeply disturbed by {1} sudden death!",
-                            Conjugate(deadGuy.Leader, VERB_BE), deadGuy.Name)));
-                        if (deadGuy.Leader.IsPlayer && !deadGuy.Leader.IsBotPlayer) AddMessagePressEnter();
+                        //if (deadGuy.Leader.IsPlayer && !deadGuy.Leader.IsBotPlayer) ClearMessages();
+                        //AddMessage(MakeMessage(deadGuy.Leader, String.Format("{0} deeply disturbed by {1} sudden death!",
+                        //    Conjugate(deadGuy.Leader, VERB_BE), deadGuy.Name)));
+                        //if (deadGuy.Leader.IsPlayer && !deadGuy.Leader.IsBotPlayer) AddMessagePressEnter();
                     }
                 }
             }
@@ -5719,15 +5716,15 @@ namespace djack.RogueSurvivor.Data
             {
                 foreach (Actor fo in deadGuy.Followers)
                 {
-                    if (Rules.HasActorBondWith(fo, deadGuy))
+                    if (fo.HasActorBondWith(deadGuy))
                     {
                         fo.SpendActorSanity(Rules.SANITY_HIT_BOND_DEATH);
-                        if (IsVisibleToPlayer(fo))
+                        if (fo.IsVisibleToPlayer())
                         {
-                            if (fo.IsPlayer && !fo.IsBotPlayer) ClearMessages();
-                            AddMessage(MakeMessage(fo, String.Format("{0} deeply disturbed by {1} sudden death!",
-                                Conjugate(fo, VERB_BE), deadGuy.Name)));
-                            if (fo.IsPlayer && !fo.IsBotPlayer) AddMessagePressEnter();
+                            //if (fo.IsPlayer && !fo.IsBotPlayer) ClearMessages();
+                            //AddMessage(MakeMessage(fo, String.Format("{0} deeply disturbed by {1} sudden death!",
+                            //    Conjugate(fo, VERB_BE), deadGuy.Name)));
+                            //if (fo.IsPlayer && !fo.IsBotPlayer) AddMessagePressEnter();
                         }
                     }
                 }
@@ -5736,16 +5733,17 @@ namespace djack.RogueSurvivor.Data
             // Unique actor?
             if (deadGuy.IsUnique)
             {
-                if (killer != null)
-                    m_Session.Scoring.AddEvent(deadGuy.Location.Map.LocalTime.TurnCounter,
-                        String.Format("* {0} was killed by {1} {2}! *", deadGuy.TheName, killer.Model.Name, killer.TheName));
-                else
-                    m_Session.Scoring.AddEvent(deadGuy.Location.Map.LocalTime.TurnCounter,
-                        String.Format("* {0} died by {1}! *", deadGuy.TheName, reason));
+                //if (killer != null)
+                //    m_Session.Scoring.AddEvent(deadGuy.Location.Map.LocalTime.TurnCounter,
+                //        String.Format("* {0} was killed by {1} {2}! *", deadGuy.TheName, killer.Model.Name, killer.TheName));
+                //else
+                //    m_Session.Scoring.AddEvent(deadGuy.Location.Map.LocalTime.TurnCounter,
+                //        String.Format("* {0} died by {1}! *", deadGuy.TheName, reason));
             }
 
             // Player dead?
             // BEFORE removing followers & dropping items.
+            var m_Player = Session.Get.Player; 
             if (deadGuy == m_Player)
                 PlayerDied(killer, reason);
 
@@ -5764,7 +5762,7 @@ namespace djack.RogueSurvivor.Data
                         deathEvent = String.Format("Follower {0} was killed by {1} {2}!", deadGuy.TheName, killer.Model.Name, killer.TheName);
                     else
                         deathEvent = String.Format("Follower {0} died by {1}!", deadGuy.TheName, reason);
-                    m_Session.Scoring.AddEvent(deadGuy.Location.Map.LocalTime.TurnCounter, deathEvent);
+                    //m_Session.Scoring.AddEvent(deadGuy.Location.Map.LocalTime.TurnCounter, deathEvent);
                 }
 
                 deadGuy.Leader.RemoveFollower(deadGuy);
@@ -5791,14 +5789,14 @@ namespace djack.RogueSurvivor.Data
                     Item it = dropThem[i];
                     int chance = (it is ItemAmmo || it is ItemFood) ? Rules.VICTIM_DROP_AMMOFOOD_ITEM_CHANCE : Rules.VICTIM_DROP_GENERIC_ITEM_CHANCE;
                     if (it.Model.IsUnbreakable || it.IsUnique || DiceRoller.RollChance(chance))
-                        DropItem(deadGuy, it);
+                        deadGuy.DropItem(it);
                 }
             }
             #endregion
 
             // Blood splat/Remains
             if (!deadGuy.Model.Abilities.IsUndead)
-                SplatterBlood(deadGuy.Location.Map, deadGuy.Location.Position);
+                deadGuy.Location.Map.SplatterBlood(deadGuy.Location.Position);
 #if false
             disabled: avoid unecessary large saved games
             if (deadGuy.Model.Abilities.IsUndead)
@@ -5808,7 +5806,7 @@ namespace djack.RogueSurvivor.Data
 #endif
 
             // Corpse?
-            if (Rules.HasCorpses(m_Session.GameMode))
+            if (Rules.HasCorpses(Session.Get.GameMode))
             {
                 if (!deadGuy.Model.Abilities.IsUndead && canDropCorpse)
                 {
@@ -5858,13 +5856,13 @@ namespace djack.RogueSurvivor.Data
                         }
 
                         // Message.
-                        if (IsVisibleToPlayer(killer))
+                        if (killer.IsVisibleToPlayer())
                         {
-                            AddOverlay(new OverlayRect(Color.Yellow, new Rectangle(MapToScreen(killer.Location.Position), new Size(TILE_SIZE, TILE_SIZE))));
-                            AddMessage(MakeMessage(killer, String.Format("{0} a {1} horror!", Conjugate(killer, VERB_TRANSFORM_INTO), levelUpModel.Name)));
-                            RedrawPlayScreen();
-                            AnimDelay(DELAY_LONG);
-                            ClearOverlays();
+                            //AddOverlay(new OverlayRect(Color.Yellow, new Rectangle(MapToScreen(killer.Location.Position), new Size(TILE_SIZE, TILE_SIZE))));
+                            //AddMessage(MakeMessage(killer, String.Format("{0} a {1} horror!", Conjugate(killer, VERB_TRANSFORM_INTO), levelUpModel.Name)));
+                            //RedrawPlayScreen();
+                            //AnimDelay(DELAY_LONG);
+                            //ClearOverlays();
                         }
                     }
                 }
@@ -5882,7 +5880,7 @@ namespace djack.RogueSurvivor.Data
                     if (gainTrust)
                     {
                         fo.DoSay(killer, "That was close! Thanks for the help!!", Sayflags.IS_FREE_ACTION);
-                        ModifyActorTrustInLeader(fo, Rules.TRUST_LEADER_KILL_ENEMY, true);
+                        fo.ModifyActorTrustInLeader(Rules.TRUST_LEADER_KILL_ENEMY, true);
                     }
                 }
             }
@@ -5892,12 +5890,12 @@ namespace djack.RogueSurvivor.Data
                 // one more murder.
                 ++killer.MurdersCounter;
 
-                // if player, log.
-                if (killer.IsPlayer)
-                    m_Session.Scoring.AddEvent(m_Session.WorldTime.TurnCounter, String.Format("Murdered {0} a {1}!", deadGuy.TheName, deadGuy.Model.Name));
-                // message.
-                if (IsVisibleToPlayer(killer))
-                    AddMessage(MakeMessage(killer, String.Format("murdered {0}!!", deadGuy.Name)));
+                //// if player, log.
+                //if (killer.IsPlayer)
+                //    m_Session.Scoring.AddEvent(m_Session.WorldTime.TurnCounter, String.Format("Murdered {0} a {1}!", deadGuy.TheName, deadGuy.Model.Name));
+                //// message.
+                //if (IsVisibleToPlayer(killer))
+                //    AddMessage(MakeMessage(killer, String.Format("murdered {0}!!", deadGuy.Name)));
 
                 // check for npcs law enforcers witnessing the murder.
                 Map map = killer.Location.Map;
@@ -5981,6 +5979,55 @@ namespace djack.RogueSurvivor.Data
                 return target.TrustInLeader >= TRUST_BOND_THRESHOLD;
             else
                 return false;
+        }
+
+        public void DiscardItem(Item it)
+        {
+            // remove from inventory.
+            Inventory.RemoveAllQuantity(it);
+
+            // make sure it is unequipped.
+            it.EquippedPart = DollPart.NONE;
+        }
+
+        public void DropItem(Item it)
+        {
+            // remove from inventory.
+            Inventory.RemoveAllQuantity(it);
+
+            // add to ground.
+            Location.Map.DropItemAt(it, Location.Position);
+
+            // make sure it is unequipped.
+            it.EquippedPart = DollPart.NONE;
+        }
+
+        public void ModifyActorTrustInLeader(int mod, bool addMessage)
+        {
+            // do it.
+            TrustInLeader += mod;
+            if (TrustInLeader > Rules.TRUST_MAX)
+                TrustInLeader = Rules.TRUST_MAX;
+            else if (TrustInLeader < Rules.TRUST_MIN)
+                TrustInLeader = Rules.TRUST_MIN;
+
+            // if leader is player, message.
+            if (addMessage && Leader.IsPlayer) ;
+                //AddMessage(new Message(String.Format("({0} trust with {1})", mod, a.TheName), m_Session.WorldTime.TurnCounter, Color.White));
+        }
+
+        public void DropCorpse()
+        {
+            // add blood to deadguy.
+            Doll.AddDecoration(DollPart.TORSO, GameImages.BLOODIED);
+
+            // make and add corpse.
+            int corpseHp = ActorMaxHPs();
+            float rotation = DiceRoller.Roll(30, 60);
+            if (DiceRoller.RollChance(50)) rotation = -rotation;
+            float scale = 1.0f;
+            Corpse corpse = new Corpse(this, corpseHp, corpseHp, Location.Map.LocalTime.TurnCounter, rotation, scale);
+            Location.Map.AddCorpseAt(corpse, Location.Position);
         }
     }
 }

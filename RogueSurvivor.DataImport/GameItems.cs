@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Drawing;
 
+using djack.RogueSurvivor.Common;
 using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Data.Items;
-using djack.RogueSurvivor.Engine;
-using djack.RogueSurvivor.Engine.Items;
 
-namespace djack.RogueSurvivor.Gameplay
+namespace djack.RogueSurvivor.DataImport
 {
-    class GameItems : ItemModelDB
+    public class GameItems : ItemModelDB
     {
         #region IDs
         public enum IDs

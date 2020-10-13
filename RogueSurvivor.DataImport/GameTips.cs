@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace djack.RogueSurvivor.Gameplay
+﻿namespace djack.RogueSurvivor.DataImport
 {
-    static class GameTips
+    public static class GameTips
     {
         public static string[] TIPS = 
         {

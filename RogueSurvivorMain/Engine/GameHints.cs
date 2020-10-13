@@ -1,4 +1,6 @@
-﻿using System;
+﻿using djack.RogueSurvivor.Common;
+using djack.RogueSurvivor.Data;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;

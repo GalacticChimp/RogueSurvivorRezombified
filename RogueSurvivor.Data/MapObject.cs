@@ -295,9 +295,9 @@ namespace djack.RogueSurvivor.Data
         private void OneFlag(Flags f) { m_Flags |= f; }
         private void ZeroFlag(Flags f) { m_Flags &= ~f; }
 
-        public bool IsVisibleToPlayer(Actor m_Player)
+        public bool IsVisibleToPlayer()
         {
-            return Location.IsVisibleToPlayer(m_Player);
+            return Location.IsVisibleToPlayer();
         }
     }
 }

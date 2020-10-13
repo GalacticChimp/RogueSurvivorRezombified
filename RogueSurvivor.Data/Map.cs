@@ -1,4 +1,7 @@
-﻿using System;
+﻿using djack.RogueSurvivor.Common;
+using djack.RogueSurvivor.Data.Helpers;
+using djack.RogueSurvivor.Data.Tasks;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.Serialization;
@@ -1343,10 +1346,11 @@ namespace djack.RogueSurvivor.Data
             return true;
         }
 
-        public bool IsVisibleToPlayer(Point position, Actor m_Player)
+        public bool IsVisibleToPlayer(Point position)
         {
-            return m_Player != null
-                && this == m_Player.Location.Map && IsInBounds(position.X, position.Y)
+            var player = Session.Get.Player;
+            return player != null
+                && this == player.Location.Map && IsInBounds(position.X, position.Y)
                 && GetTileAt(position.X, position.Y).IsInView;
         }
 
@@ -1356,6 +1360,97 @@ namespace djack.RogueSurvivor.Data
             if (mobj == null) return false;
             // mobj is either walkable and not a door (eg:bed) or jumpable (eg:table,car...)
             return mobj.IsJumpable || (mobj.IsWalkable && !(mobj is DoorWindow));
+        }
+
+        public void SplatterBlood(Point position)
+        {
+            // splatter floor there.
+            Tile tile = GetTileAt(position.X, position.Y);
+            if (IsWalkable(position.X, position.Y) && !tile.HasDecoration(GameImages.DECO_BLOODIED_FLOOR))
+            {
+                tile.AddDecoration(GameImages.DECO_BLOODIED_FLOOR);
+                AddTimer(new TaskRemoveDecoration(WorldTime.TURNS_PER_DAY, position.X, position.Y, GameImages.DECO_BLOODIED_FLOOR));
+            }
+
+            // splatter adjacent walls.
+            foreach (Direction d in Direction.COMPASS)
+            {
+                if (!DiceRoller.RollChance(Rules.BLOOD_WALL_SPLAT_CHANCE))
+                    continue;
+                Point next = position + d;
+                if (!IsInBounds(next))
+                    continue;
+                Tile tileNext = GetTileAt(next.X, next.Y);
+                if (tileNext.Model.IsWalkable)
+                    continue;
+                if (tileNext.HasDecoration(GameImages.DECO_BLOODIED_WALL))
+                    continue;
+                tileNext.AddDecoration(GameImages.DECO_BLOODIED_WALL);
+                AddTimer(new TaskRemoveDecoration(WorldTime.TURNS_PER_DAY, next.X, next.Y, GameImages.DECO_BLOODIED_WALL));
+            }
+        }
+
+        public void UndeadRemains(Map map, Point position)
+        {
+            // add deco there.
+            Tile tile = map.GetTileAt(position.X, position.Y);
+            if (map.IsWalkable(position.X, position.Y) && !tile.HasDecoration(GameImages.DECO_ZOMBIE_REMAINS))
+                tile.AddDecoration(GameImages.DECO_ZOMBIE_REMAINS);
+        }
+
+        public void OnLoudNoise(Point noisePosition, string noiseName)
+        {
+            ////////////////////////////////////////////
+            // Check if nearby sleeping actors wake up.
+            // Check long wait interruption.
+            ////////////////////////////////////////////
+            int xmin = noisePosition.X - Rules.LOUD_NOISE_RADIUS;
+            int xmax = noisePosition.X + Rules.LOUD_NOISE_RADIUS;
+            int ymin = noisePosition.Y - Rules.LOUD_NOISE_RADIUS;
+            int ymax = noisePosition.Y + Rules.LOUD_NOISE_RADIUS;
+            TrimToBounds(ref xmin, ref ymin);
+            TrimToBounds(ref xmax, ref ymax);
+
+            ///////////////////////////
+            // Waking up nearby actors.
+            ///////////////////////////
+            for (int x = xmin; x <= xmax; x++)
+            {
+                for (int y = ymin; y <= ymax; y++)
+                {
+                    // sleeping actor?
+                    Actor actor = GetActorAt(x, y);
+                    if (actor == null || !actor.IsSleeping)
+                        continue;
+
+                    // ignore if too far.
+                    int noiseDistance = DistanceHelpers.GridDistance(noisePosition, x, y);
+                    if (noiseDistance > Rules.LOUD_NOISE_RADIUS)
+                        continue;
+
+                    // roll chance of waking up.
+                    int wakeupChance = Rules.ActorLoudNoiseWakeupChance(actor, noiseDistance);
+                    if (!DiceRoller.RollChance(wakeupChance))
+                        continue;
+
+                    // wake up!
+                    actor.DoWakeUp();
+                    //if (IsVisibleToPlayer(actor))
+                    //{
+                    //    AddMessage(new Message(String.Format("{0} wakes {1} up!", noiseName, actor.TheName), map.LocalTime.TurnCounter, actor == m_Player ? Color.Red : Color.White));
+                    //    RedrawPlayScreen();
+                    //}
+                }
+            }
+
+            ///////////////////////////
+            // Interrupting long wait.
+            ///////////////////////////
+            //if (m_IsPlayerLongWait && this == m_Player.Location.Map && IsVisibleToPlayer(map, noisePosition))
+            //{
+            //    // interrupt!
+            //    m_IsPlayerLongWaitForcedStop = true;
+            //}
         }
     }
 }

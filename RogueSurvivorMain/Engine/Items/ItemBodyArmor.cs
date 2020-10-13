@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 
 using djack.RogueSurvivor.Data;
+using djack.RogueSurvivor.DataImport;
 using djack.RogueSurvivor.Gameplay;
 
 namespace djack.RogueSurvivor.Engine.Items

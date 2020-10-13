@@ -13,6 +13,7 @@ using djack.RogueSurvivor.UI;
 using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Data.Helpers;
 using djack.RogueSurvivor.Common;
+using djack.RogueSurvivor.DataImport;
 
 namespace djack.RogueSurvivor.Gameplay.Generators
 {

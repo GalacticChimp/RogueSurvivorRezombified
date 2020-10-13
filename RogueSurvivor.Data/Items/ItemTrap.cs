@@ -186,7 +186,7 @@ namespace djack.RogueSurvivor.Data.Items
                     //else if (mobj != null)
                     //    AddMessage(new Message(String.Format("{0} makes a lot of noise!", Capitalize(trap.TheName)), map.LocalTime.TurnCounter));
                 }
-                OnLoudNoise(map, pos, model.NoiseName);
+                map.OnLoudNoise(pos, model.NoiseName);
             }
 
             // if one time trigger = desactivate.

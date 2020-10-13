@@ -4,6 +4,7 @@ using System.Drawing;
 
 using djack.RogueSurvivor.Data.Items;
 using djack.RogueSurvivor.Data.Helpers;
+using djack.RogueSurvivor.Data.Enums;
 using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Data
@@ -88,6 +89,8 @@ namespace djack.RogueSurvivor.Data
         // alpha10 made into constants
         const float FIRING_WHEN_SLP_EXHAUSTED = 0.50f; // -50%
         const float FIRING_WHEN_SLP_SLEEPY = 0.75f; // -25%
+
+        public const int BLOOD_WALL_SPLAT_CHANCE = 20;
 
         public const int BODY_ARMOR_BREAK_CHANCE = 2;
 
@@ -335,13 +338,13 @@ namespace djack.RogueSurvivor.Data
         /// <param name="value"></param>
         /// <param name="deviation">amount (not percentage!) of deviation from value</param>
         /// <returns></returns>
-        public float Randomize(float value, float deviation)
+        public static float Randomize(float value, float deviation)
         {
             float halfDeviation = deviation/2f;
             return value - halfDeviation * DiceRoller.RollFloat() + halfDeviation * DiceRoller.RollFloat();
         }
 
-        public int RollX(Map map)
+        public static int RollX(Map map)
         {
             if (map == null)
                 throw new ArgumentNullException("map");
@@ -349,7 +352,7 @@ namespace djack.RogueSurvivor.Data
             return DiceRoller.Roll(0, map.Width);
         }
 
-        public int RollY(Map map)
+        public static int RollY(Map map)
         {
             if (map == null)
                 throw new ArgumentNullException("map");
@@ -364,14 +367,14 @@ namespace djack.RogueSurvivor.Data
         /// </summary>
         /// <param name="damageValue"></param>
         /// <returns></returns>
-        public int RollDamage(int damageValue)
+        public static int RollDamage(int damageValue)
         {
             if (damageValue <= 0)
                 return 0;
             return DiceRoller.Roll(damageValue / 2, damageValue + 1);
         }
 
-        public Location RollNeighbourInMap(Location from)
+        public static Location RollNeighbourInMap(Location from)
         {
             while (true)
             {
@@ -385,7 +388,7 @@ namespace djack.RogueSurvivor.Data
             }
         }
 
-        public bool RollValidMoveInMap(Actor actor, int maxTries, out Location nextLocation)
+        public static bool RollValidMoveInMap(Actor actor, int maxTries, out Location nextLocation)
         {
             if (actor == null)
                 throw new ArgumentNullException("actor");
@@ -402,7 +405,7 @@ namespace djack.RogueSurvivor.Data
             return false;
         }
 
-        public bool RollValidMoveDirection(Actor actor, int maxTries, out Direction direction)
+        public static bool RollValidMoveDirection(Actor actor, int maxTries, out Direction direction)
         {
             if (actor == null)
                 throw new ArgumentNullException("actor");
@@ -421,7 +424,7 @@ namespace djack.RogueSurvivor.Data
             return false;
         }
 
-        public bool RollValidBumpDirection(Actor actor, int maxTries, out Direction direction)
+        public static bool RollValidBumpDirection(Actor actor, int maxTries, out Direction direction)
         {
             if (actor == null)
                 throw new ArgumentNullException("actor");
@@ -438,14 +441,14 @@ namespace djack.RogueSurvivor.Data
             direction = null;
             return false;
         }
- 
-        public bool IsItemBatteryPowered(Item it)
+
+        public static bool IsItemBatteryPowered(Item it)
         {
             if (it == null) return false;
             return (it is ItemLight || it is ItemTracker);
         }
 
-        public bool IsItemBatteryFull(Item it)
+        public static bool IsItemBatteryFull(Item it)
         {
             if (it == null) return true;
             ItemLight light = it as ItemLight;
@@ -455,7 +458,7 @@ namespace djack.RogueSurvivor.Data
             return false;
         }
 
-        public bool CanActorGiveItemTo(Actor actor, Actor target, Item gift, out string reason)
+        public static bool CanActorGiveItemTo(Actor actor, Actor target, Item gift, out string reason)
         {
             if (actor == null)
                 throw new ArgumentNullException("actor");
@@ -503,7 +506,7 @@ namespace djack.RogueSurvivor.Data
             return true;
         }
 
-        public bool CanActorChatWith(Actor speaker, Actor target, out string reason)
+        public static bool CanActorChatWith(Actor speaker, Actor target, out string reason)
         {
             if (speaker == null)
                 throw new ArgumentNullException("speaker");
@@ -546,7 +549,7 @@ namespace djack.RogueSurvivor.Data
         }
 
         // alpha10
-        public bool CanPullActor(Actor actor, Actor other, Point moveToPos, out string reason)
+        public static bool CanPullActor(Actor actor, Actor other, Point moveToPos, out string reason)
         {
             /////////////////////////////////////////////
             // Basically check if can push and can walk.
@@ -567,7 +570,7 @@ namespace djack.RogueSurvivor.Data
             return true;
         }
 
-        public bool CanActorShove(Actor actor, Actor other, out string reason)
+        public static bool CanActorShove(Actor actor, Actor other, out string reason)
         {
             if (actor == null)
                 throw new ArgumentNullException("actor");
@@ -610,7 +613,7 @@ namespace djack.RogueSurvivor.Data
             return true;
         }
 
-        public bool CanShoveActorTo(Actor actor, Point toPos, out string reason)
+        public static bool CanShoveActorTo(Actor actor, Point toPos, out string reason)
         {
             if (actor == null)
                 throw new ArgumentNullException("actor");
@@ -673,7 +676,7 @@ namespace djack.RogueSurvivor.Data
         /// <param name="actor"></param>
         /// <param name="fov"></param>
         /// <returns></returns>
-        public List<Actor> GetEnemiesInFov(Actor actor, HashSet<Point> fov)
+        public static List<Actor> GetEnemiesInFov(Actor actor, HashSet<Point> fov)
         {
             if (actor == null)
                 throw new ArgumentNullException("actor");
@@ -713,14 +716,14 @@ namespace djack.RogueSurvivor.Data
             return list;
         }
 
-        public int SanityToHoursUntilUnstable(Actor a)
+        public static int SanityToHoursUntilUnstable(Actor a)
         {
             int left = a.Sanity - a.ActorDisturbedLevel();
             if (left <= 0) return 0;
             return left / WorldTime.TURNS_PER_HOUR;
         }
 
-        public bool CanActorCancelLead(Actor actor, Actor target, out string reason)
+        public static bool CanActorCancelLead(Actor actor, Actor target, out string reason)
         {
             if (actor == null)
                 throw new ArgumentNullException("actor");
@@ -752,24 +755,24 @@ namespace djack.RogueSurvivor.Data
             return true;
         }
 
-        public int ActorDamageVsCorpses(Actor a)
+        public static int ActorDamageVsCorpses(Actor a)
         {
             // base = melee HALVED.
             int dmg = a.CurrentMeleeAttack.DamageValue / 2;
 
             // Necrology.
-            dmg += SKILL_NECROLOGY_CORPSE_BONUS * a.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.NECROLOGY);
+            dmg += SKILL_NECROLOGY_CORPSE_BONUS;// * a.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.NECROLOGY);
 
             return dmg;
         }
-        
-        public bool CanActorButcherCorpse(Actor actor, Corpse corpse)
+
+        public static bool CanActorButcherCorpse(Actor actor, Corpse corpse)
         {
             string reason;
             return CanActorButcherCorpse(actor, corpse, out reason);
         }
 
-        public bool CanActorButcherCorpse(Actor actor, Corpse corpse, out string reason)
+        public static bool CanActorButcherCorpse(Actor actor, Corpse corpse, out string reason)
         {
             if (actor == null)
                 throw new ArgumentNullException("actor");
@@ -800,7 +803,7 @@ namespace djack.RogueSurvivor.Data
             return true;
         }
 
-        public Actor GetNextActorToAct(Map map, int turnCounter)
+        public static Actor GetNextActorToAct(Map map, int turnCounter)
         {
             if (map == null)
                 return null;
@@ -819,7 +822,7 @@ namespace djack.RogueSurvivor.Data
             return null;
         }
 
-        public bool CanActorActThisTurn(Actor actor)
+        public static bool CanActorActThisTurn(Actor actor)
         {
             if (actor == null)
                 return false;
@@ -827,7 +830,7 @@ namespace djack.RogueSurvivor.Data
             return actor.ActionPoints > 0;
         }
 
-        public bool CanActorActNextTurn(Actor actor)
+        public static bool CanActorActNextTurn(Actor actor)
         {
             if (actor == null)
                 return false;
@@ -835,7 +838,7 @@ namespace djack.RogueSurvivor.Data
             return actor.ActionPoints + actor.ActorSpeed() > 0;
         }
 
-        public bool WillOtherActTwiceBefore(Actor actor, Actor other)
+        public static bool WillOtherActTwiceBefore(Actor actor, Actor other)
         {
             if (actor.Location.Map.IsActorBeforeInMapList(actor, other))
             {
@@ -853,7 +856,7 @@ namespace djack.RogueSurvivor.Data
             }
         }
 
-        public bool IsMurder(Actor killer, Actor victim)
+        public static bool IsMurder(Actor killer, Actor victim)
         {
             if (killer == null || victim == null)
                 return false;
@@ -878,27 +881,27 @@ namespace djack.RogueSurvivor.Data
             return true;
         }
 
-        public int ActorDamageBonusVsUndeads(Actor actor)
+        public static int ActorDamageBonusVsUndeads(Actor actor)
         {
-            return SKILL_NECROLOGY_UNDEAD_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.NECROLOGY);
+            return SKILL_NECROLOGY_UNDEAD_BONUS;// * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.NECROLOGY);
         }
 
         // alpha10 added mapobject param
-        public Attack ActorMeleeAttack(Actor actor, Attack baseAttack, Actor target, MapObject objToBreak=null)
+        public static Attack ActorMeleeAttack(Actor actor, Attack baseAttack, Actor target, MapObject objToBreak=null)
         {
             float hit = baseAttack.HitValue;
             float dmg = baseAttack.DamageValue;
             int disarmBonus = 0;  // alpha10
 
             // skills bonuses.
-            int hitBonus = SKILL_AGILE_ATK_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.AGILE) +
-                            SKILL_ZAGILE_ATK_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_AGILE);
-            int dmgBonus = SKILL_STRONG_DMG_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.STRONG) +
-                            SKILL_ZSTRONG_DMG_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_STRONG);
+            int hitBonus = 1;//SKILL_AGILE_ATK_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.AGILE) +
+                             //SKILL_ZAGILE_ATK_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_AGILE);
+            int dmgBonus = 1;// SKILL_STRONG_DMG_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.STRONG) +
+                            //SKILL_ZSTRONG_DMG_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_STRONG);
             // martial arts apply only if no weapon equipped.
             if (actor.GetEquippedWeapon() == null)
             {
-                int ma = actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.MARTIAL_ARTS);
+                int ma = 1;// actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.MARTIAL_ARTS);
                 if (ma > 0)
                 {
                     hitBonus += SKILL_MARTIAL_ARTS_ATK_BONUS * ma;
@@ -931,7 +934,7 @@ namespace djack.RogueSurvivor.Data
             disarmChance += disarmBonus;
             // defender strong resist disarm
             if (target != null)
-                disarmChance -= SKILL_STRONG_RESIST_DISARM_BONUS * target.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.STRONG);
+                disarmChance -= SKILL_STRONG_RESIST_DISARM_BONUS;// * target.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.STRONG);
 
             // sleepiness penalties.
             if (actor.IsActorExhausted())
@@ -949,24 +952,24 @@ namespace djack.RogueSurvivor.Data
             return Attack.MeleeAttack(baseAttack.Verb, (int)hit, (int)dmg, baseAttack.StaminaPenalty, (int)disarmChance);
         }
 
-        public int ActorMedicineEffect(Actor actor, int baseEffect)
+        public static int ActorMedicineEffect(Actor actor, int baseEffect)
         {
-            int effectBonus = (int)(Math.Ceiling(SKILL_MEDIC_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.MEDIC) * baseEffect));
+            int effectBonus = (int)SKILL_MEDIC_BONUS;// (int)(Math.Ceiling(SKILL_MEDIC_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.MEDIC) * baseEffect)) ;
             return baseEffect + effectBonus;
         }
 
-        public int ActorHealChanceBonus(Actor actor)
+        public static int ActorHealChanceBonus(Actor actor)
         {
-            int chanceBonus = SKILL_HARDY_HEAL_CHANCE_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.HARDY);
+            int chanceBonus = SKILL_HARDY_HEAL_CHANCE_BONUS;// * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.HARDY);
             return chanceBonus;
         }
 
-        public int ActorBarricadingPoints(Actor actor, int baseBarricadingPoints)
+        public static int ActorBarricadingPoints(Actor actor, int baseBarricadingPoints)
         {
             int barBonus = 0;
-            
+
             // carpentry skill
-            barBonus += (int)(baseBarricadingPoints * SKILL_CARPENTRY_BARRICADING_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.CARPENTRY));
+            barBonus += (int)(baseBarricadingPoints * SKILL_CARPENTRY_BARRICADING_BONUS);// * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.CARPENTRY));;
 
             // alpha10
             // tool build bonus
@@ -979,10 +982,10 @@ namespace djack.RogueSurvivor.Data
             return baseBarricadingPoints + barBonus;
         }
 
-        public int ActorLoudNoiseWakeupChance(Actor actor, int noiseDistance)
+        public static int ActorLoudNoiseWakeupChance(Actor actor, int noiseDistance)
         {
             int baseChance = LOUD_NOISE_BASE_WAKEUP_CHANCE;
-            int skillBonus = SKILL_LIGHT_SLEEPER_WAKEUP_CHANCE_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.LIGHT_SLEEPER);
+            int skillBonus = SKILL_LIGHT_SLEEPER_WAKEUP_CHANCE_BONUS;// * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.LIGHT_SLEEPER);
             int distBonus = Math.Max(0, (LOUD_NOISE_RADIUS - noiseDistance) * LOUD_NOISE_DISTANCE_BONUS);
 
             return baseChance + skillBonus + distBonus;
@@ -990,16 +993,16 @@ namespace djack.RogueSurvivor.Data
 
 
 
-        public int ActorTrustIncrease(Actor actor)
+        public static int ActorTrustIncrease(Actor actor)
         {
-            int skillBonus = SKILL_CHARISMATIC_TRUST_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.CHARISMATIC);
+            int skillBonus = SKILL_CHARISMATIC_TRUST_BONUS;// * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.CHARISMATIC);
 
             return TRUST_BASE_INCREASE + skillBonus;
         }
 
-        public int ActorCharismaticTradeChance(Actor actor)
+        public static int ActorCharismaticTradeChance(Actor actor)
         {
-            return SKILL_CHARISMATIC_TRADE_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.CHARISMATIC);
+            return SKILL_CHARISMATIC_TRADE_BONUS;// * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.CHARISMATIC);
         }
 
 
@@ -1026,7 +1029,6 @@ namespace djack.RogueSurvivor.Data
             return score;
         }
 #endif 
-        #endregion
 
         /// <summary>
         /// 
@@ -1034,7 +1036,7 @@ namespace djack.RogueSurvivor.Data
         /// <param name="actor"></param>
         /// <param name="time"></param>
         /// <returns>penalty as number > 0</returns>
-        public int NightFovPenalty(Actor actor, WorldTime time)
+        public static int NightFovPenalty(Actor actor, WorldTime time)
         {
             if (actor.Model.Abilities.IsUndead)
                 return 0;
@@ -1060,7 +1062,7 @@ namespace djack.RogueSurvivor.Data
         /// <param name="actor"></param>
         /// <param name="weather"></param>
         /// <returns>penalty as number > 0</returns>
-        public int WeatherFovPenalty(Actor actor, Weather weather)
+        public static int WeatherFovPenalty(Actor actor, Weather weather)
         {
             if (actor.Model.Abilities.IsUndead)
                 return 0;
@@ -1075,7 +1077,7 @@ namespace djack.RogueSurvivor.Data
             }
         }
 
-        public bool IsWeatherRain(Weather weather)
+        public static bool IsWeatherRain(Weather weather)
         {
             switch (weather)
             {
@@ -1089,17 +1091,17 @@ namespace djack.RogueSurvivor.Data
             }
         }
 
-        public int DarknessFov(Actor actor)
+        public static int DarknessFov(Actor actor)
         {
             if (actor.Model.Abilities.IsUndead)
                 return actor.Sheet.BaseViewRange;
             else
                 return MINIMAL_FOV;
-        }       
-        
+        }
+
 
         // alpha10
-        public bool CanActorSeeSky(Actor actor)
+        public static bool CanActorSeeSky(Actor actor)
         {
             if (actor.IsDead)
                 return false;
@@ -1108,7 +1110,7 @@ namespace djack.RogueSurvivor.Data
             return actor.Location.Map.Lighting == Lighting.OUTSIDE;
         }
 
-        public bool CanActorKnowTime(Actor actor)
+        public static bool CanActorKnowTime(Actor actor)
         {
             if (actor.IsDead)
                 return false;
@@ -1129,7 +1131,7 @@ namespace djack.RogueSurvivor.Data
         /// </summary>
         /// <param name="map"></param>
         /// <returns>0.0 = not powered at all to 1.0 = 100% power.</returns>
-        public float ComputeMapPowerRatio(Map map)
+        public static float ComputeMapPowerRatio(Map map)
         {
             int totalOn, totalOff;
 
@@ -1155,47 +1157,47 @@ namespace djack.RogueSurvivor.Data
             return ratio;
         }
 
-        public int ActorBiteHpRegen(Actor a, int dmg)
+        public static int ActorBiteHpRegen(Actor a, int dmg)
         {
-            int bonus = (int)(Rules.SKILL_ZEATER_REGEN_BONUS * a.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_EATER) * dmg);
+            int bonus = (int)(Rules.SKILL_ZEATER_REGEN_BONUS);// * a.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_EATER) * dmg);
             return dmg + bonus;
         }
 
-        public int ActorBiteNutritionValue(Actor actor, int baseValue)
+        public static int ActorBiteNutritionValue(Actor actor, int baseValue)
         {
-            float zskillFactor = SKILL_ZLIGHT_EATER_FOOD_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_LIGHT_EATER);
-            float skillFactor = SKILL_LIGHT_EATER_FOOD_BONUS * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.LIGHT_EATER);
+            float zskillFactor = SKILL_ZLIGHT_EATER_FOOD_BONUS;// * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_LIGHT_EATER);
+            float skillFactor = SKILL_LIGHT_EATER_FOOD_BONUS;// * actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.LIGHT_EATER);
 
             return (int)(CORPSE_EATING_NUTRITION_FACTOR + zskillFactor + skillFactor) * baseValue;
         }
 
-        public int CorpseEeatingInfectionTransmission(int infection)
+        public static int CorpseEeatingInfectionTransmission(int infection)
         {
             return (int)(CORPSE_EATING_INFECTION_FACTOR * infection);
         }
 
-        public int ActorInfectionHPs(Actor a)
+        public static int ActorInfectionHPs(Actor a)
         {
             return a.ActorMaxHPs() + a.ActorMaxSTA();
         }
 
         public static int InfectionForDamage(Actor infector, int dmg)
         {
-            float factor = INFECTION_BASE_FACTOR + infector.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_INFECTOR) * SKILL_ZINFECTOR_BONUS;
+            float factor = INFECTION_BASE_FACTOR;// + infector.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.Z_INFECTOR) * SKILL_ZINFECTOR_BONUS;
             return (int)(factor * dmg);
         }
 
-        public int ActorInfectionPercent(Actor a)
+        public static int ActorInfectionPercent(Actor a)
         {
             return (int)(100 * a.Infection / ActorInfectionHPs(a));
         }
 
-        public int InfectionEffectTriggerChance1000(int infectionPercent)
+        public static int InfectionEffectTriggerChance1000(int infectionPercent)
         {
             return INFECTION_EFFECT_TRIGGER_CHANCE_1000 + infectionPercent / 5;
         }
 
-        public int CorpseFreshnessPercent(Corpse c)
+        public static int CorpseFreshnessPercent(Corpse c)
         {
             return (int)(100 * c.HitPoints / c.DeadGuy.ActorMaxHPs());
         }
@@ -1205,7 +1207,7 @@ namespace djack.RogueSurvivor.Data
         /// </summary>
         /// <param name="c"></param>
         /// <returns>[0..5]</returns>
-        public int CorpseRotLevel(Corpse c)
+        public static int CorpseRotLevel(Corpse c)
         {
             int freshP = CorpseFreshnessPercent(c);
             if (freshP < 5)
@@ -1226,7 +1228,7 @@ namespace djack.RogueSurvivor.Data
             return CORPSE_DECAY_PER_TURN;
         }
 
-        public int CorpseZombifyChance(Corpse c, WorldTime timeNow, bool checkDelay = true)
+        public static int CorpseZombifyChance(Corpse c, WorldTime timeNow, bool checkDelay = true)
         {
             float chance;
 
@@ -1266,23 +1268,23 @@ namespace djack.RogueSurvivor.Data
             return intChance;
         }
 
-        public int CorpseReviveChance(Actor actor, Corpse corpse)
+        public static int CorpseReviveChance(Actor actor, Corpse corpse)
         {
             if (!actor.CanActorReviveCorpse(corpse, out string reason))
                 return 0;
             int baseChance = CorpseFreshnessPercent(corpse) / 4;
-            int skillBonus = actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.MEDIC) * SKILL_MEDIC_REVIVE_BONUS;
+            int skillBonus = 1;// actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.MEDIC) * SKILL_MEDIC_REVIVE_BONUS;
             return baseChance + skillBonus;
         }
 
-        public int CorpseReviveHPs(Actor actor, Corpse corpse)
+        public static int CorpseReviveHPs(Actor actor, Corpse corpse)
         {
             int baseHps = 5;
-            int skillBonus = actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.MEDIC);
-            return baseHps + skillBonus;
+            //int skillBonus = actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.MEDIC);
+            return baseHps;// + skillBonus;
         }
 
-        public bool IsTrapTriggeringMapObjectThere(Map map, Point pos)
+        public static bool IsTrapTriggeringMapObjectThere(Map map, Point pos)
         {
             MapObject mobj = map.GetMapObjectAt(pos);
             if (mobj == null) return false;

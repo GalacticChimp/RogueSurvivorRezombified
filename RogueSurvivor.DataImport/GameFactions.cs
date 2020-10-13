@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using djack.RogueSurvivor.Data;
 
-using djack.RogueSurvivor.Data;
-using djack.RogueSurvivor.Engine;
-
-namespace djack.RogueSurvivor.Gameplay
+namespace djack.RogueSurvivor.DataImport
 {
-    class GameFactions : FactionDB
+    public class GameFactions : FactionDB
     {
-        #region IDs
+
         public enum IDs
         {
             _FIRST,
@@ -29,13 +23,9 @@ namespace djack.RogueSurvivor.Gameplay
 
             _COUNT
         }
-        #endregion
 
-        #region Fields
         Faction[] m_Factions = new Faction[(int)IDs._COUNT];
-        #endregion
 
-        #region Properties
         public override Faction this[int id]
         {
             get { return m_Factions[id]; }
@@ -61,7 +51,6 @@ namespace djack.RogueSurvivor.Gameplay
         public Faction ThePsychopaths { get { return this[IDs.ThePsychopaths]; } }
         public Faction TheSurvivors { get { return this[IDs.TheSurvivors]; } }
         public Faction TheFerals { get { return this[IDs.TheFerals]; } }
-        #endregion
 
         public static readonly GameItems.IDs[] BAD_POLICE_OUTFITS = new GameItems.IDs[] 
         { 

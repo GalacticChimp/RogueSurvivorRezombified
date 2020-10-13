@@ -1,22 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
 
-using djack.RogueSurvivor.Engine;
-
-namespace djack.RogueSurvivor.Gameplay
+namespace djack.RogueSurvivor.DataImport
 {
-    static class GameImages
+    public static class GameImages
     {
-        #region Constants
         const float GRAYLEVEL_DIM_FACTOR = 0.55f;
-        #endregion
 
-        #region Images IDs
 
-        #region Icons
         public const string ACTIVITY_CHASING = @"Activities\chasing";
         public const string ACTIVITY_CHASING_PLAYER = @"Activities\chasing_player";
         public const string ACTIVITY_TRACKING = @"Activities\tracking";
@@ -84,9 +76,7 @@ namespace djack.RogueSurvivor.Gameplay
         public const string ICON_BORING_ITEM = @"Icons\boring_item";
         public const string ICON_ZGRAB = @"Icons\zgrab";  // alpha10
 
-        #endregion
 
-        #region Tiles
         public const string TILE_FLOOR_ASPHALT = @"Tiles\floor_asphalt";
         public const string TILE_FLOOR_CONCRETE = @"Tiles\floor_concrete";
         public const string TILE_FLOOR_GRASS = @"Tiles\floor_grass";
@@ -109,9 +99,7 @@ namespace djack.RogueSurvivor.Gameplay
         public const string TILE_WALL_HOSPITAL = @"Tiles\wall_hospital";
         public const string TILE_WALL_SEWER = @"Tiles\wall_sewer";
         public const string TILE_WALL_STONE = @"Tiles\wall_stone";        
-        #endregion
 
-        #region Tile decorations
         public const string DECO_BLOODIED_FLOOR = @"Tiles\Decoration\bloodied_floor";
         public const string DECO_BLOODIED_WALL = @"Tiles\Decoration\bloodied_wall";
         public const string DECO_ZOMBIE_REMAINS = @"Tiles\Decoration\zombie_remains";
@@ -162,9 +150,7 @@ namespace djack.RogueSurvivor.Gameplay
         public const string DECO_POLICE_STATION = @"Tiles\Decoration\police_station";
 
         public const string DECO_HOSPITAL = @"Tiles\Decoration\hospital";
-        #endregion
 
-        #region Map objects
         public const string OBJ_TREE = @"MapObjects\tree";
 
         public const string OBJ_WOODEN_DOOR_CLOSED = @"MapObjects\wooden_door_closed";
@@ -233,9 +219,7 @@ namespace djack.RogueSurvivor.Gameplay
         // alpha10
         public const string OBJ_GARDEN_FENCE = @"MapObjects\garden_fence";
         public const string OBJ_WIRE_FENCE = @"MapObjects\wire_fence";
-        #endregion
 
-        #region Actors
         public const string PLAYER_FOLLOWER = @"Actors\player_follower";
         public const string PLAYER_FOLLOWER_TRUST = @"Actors\player_follower_trust";
         public const string PLAYER_FOLLOWER_BOND = @"Actors\player_follower_bond";
@@ -262,9 +246,7 @@ namespace djack.RogueSurvivor.Gameplay
         public const string ACTOR_ROGUEDJACK = @"Actors\roguedjack";
         public const string ACTOR_DUCKMAN = @"Actors\duckman";
         public const string ACTOR_HANS_VON_HANZ = @"Actors\hans_von_hanz";
-        #endregion
 
-        #region Actor decorations
         public const string BLOODIED = @"Actors\Decoration\bloodied";
 
         public const string MALE_SKIN1 = @"Actors\Decoration\male_skin1";
@@ -366,9 +348,7 @@ namespace djack.RogueSurvivor.Gameplay
         public const string DOG_SKIN1 = @"Actors\Decoration\dog_skin1";
         public const string DOG_SKIN2 = @"Actors\Decoration\dog_skin2";
         public const string DOG_SKIN3 = @"Actors\Decoration\dog_skin3";
-        #endregion
 
-        #region Items
         public const string ITEM_SLOT = @"Items\itemslot";
         public const string ITEM_EQUIPPED = @"Items\itemequipped";
 
@@ -444,14 +424,10 @@ namespace djack.RogueSurvivor.Gameplay
         public const string ITEM_TRUNCHEON = @"Items\item_truncheon";
         public const string ITEM_WOODEN_PLANK = @"Items\item_wooden_plank";
         public const string ITEM_ZTRACKER = @"Items\item_ztracker";
-        #endregion
 
-        #region Effects
         public const string EFFECT_BARRICADED = @"Effects\barricaded";
         public const string EFFECT_ONFIRE = @"Effects\onFire";
-        #endregion
 
-        #region Misc
         public const string UNDEF = @"undef";
         public const string MAP_EXIT = @"map_exit";
         public const string MINI_PLAYER_POSITION = @"mini_player_position";
@@ -484,20 +460,13 @@ namespace djack.RogueSurvivor.Gameplay
         public const string ROT4_2 = @"rot4_2";
         public const string ROT5_1 = @"rot5_1";
         public const string ROT5_2 = @"rot5_2";
-        #endregion
 
-        #endregion
-
-        #region Static fields
         const string FOLDER = @"Resources\Images\";
         static readonly Dictionary<string, Image> s_Images = new Dictionary<string, Image>();
         static readonly Dictionary<string, Image> s_GrayLevelImages = new Dictionary<string, Image>();
-        #endregion
 
-        #region Loading resources
         public static void LoadResources(IRogueUI ui)
         {
-            #region Icons
             Notify(ui, "icons...");
             Load(ACTIVITY_CHASING);
             Load(ACTIVITY_CHASING_PLAYER);
@@ -565,9 +534,7 @@ namespace djack.RogueSurvivor.Gameplay
             Load(ICON_SANITY_DISTURBED);
             Load(ICON_BORING_ITEM);
             Load(ICON_ZGRAB);  // alpha10
-            #endregion
 
-            #region Tiles
             Notify(ui, "tiles...");
             Load(TILE_FLOOR_ASPHALT);
             Load(TILE_FLOOR_CONCRETE);
@@ -592,9 +559,6 @@ namespace djack.RogueSurvivor.Gameplay
             Load(TILE_WALL_SEWER);
             Load(TILE_WALL_STONE);
 
-            #endregion
-
-            #region Tile decorations
             Notify(ui, "tile decorations...");
             Load(DECO_BLOODIED_FLOOR);
             Load(DECO_BLOODIED_WALL);
@@ -646,9 +610,7 @@ namespace djack.RogueSurvivor.Gameplay
             Load(DECO_POLICE_STATION);
 
             Load(DECO_HOSPITAL);
-            #endregion
 
-            #region Map objects
             Notify(ui, "map objects...");
             Load(OBJ_TREE);
 
@@ -719,9 +681,7 @@ namespace djack.RogueSurvivor.Gameplay
             // alpha10
             Load(OBJ_GARDEN_FENCE);
             Load(OBJ_WIRE_FENCE);
-            #endregion
 
-            #region Actors
             Notify(ui, "actors...");
             Load(PLAYER_FOLLOWER);
             Load(PLAYER_FOLLOWER_TRUST);
@@ -749,9 +709,7 @@ namespace djack.RogueSurvivor.Gameplay
             Load(ACTOR_ROGUEDJACK);
             Load(ACTOR_DUCKMAN);
             Load(ACTOR_HANS_VON_HANZ);
-            #endregion
 
-            #region Actor decorations
             Notify(ui, "actor decorations...");
 
             Load(BLOODIED);
@@ -855,9 +813,7 @@ namespace djack.RogueSurvivor.Gameplay
             Load(DOG_SKIN1);
             Load(DOG_SKIN2);
             Load(DOG_SKIN3);
-            #endregion
 
-            #region Items
             Notify(ui, "items...");
             Load(ITEM_SLOT);
             Load(ITEM_EQUIPPED);
@@ -933,16 +889,12 @@ namespace djack.RogueSurvivor.Gameplay
             Load(ITEM_TRUNCHEON);
             Load(ITEM_WOODEN_PLANK);
             Load(ITEM_ZTRACKER);
-            #endregion
 
-            #region Effects
             Notify(ui, "effects...");
 
             Load(EFFECT_BARRICADED);
             Load(EFFECT_ONFIRE);
-            #endregion
 
-            #region Misc
             Notify(ui, "misc...");
             Load(UNDEF);
             Load(MAP_EXIT);
@@ -974,7 +926,6 @@ namespace djack.RogueSurvivor.Gameplay
             Load(ROT5_1);
             Load(ROT5_2);
             Load(CORPSE_DRAGGED);
-            #endregion
 
             Notify(ui, "done!");
         }
@@ -1022,9 +973,7 @@ namespace djack.RogueSurvivor.Gameplay
             ui.UI_DrawStringBold(Color.White, "Loading resources: " + stage, 0, 0);
             ui.UI_Repaint();
         }
-        #endregion
 
-        #region Retrieving resources
         public static Image Get(string imageID)
         {
             Image img;
@@ -1042,7 +991,6 @@ namespace djack.RogueSurvivor.Gameplay
             else
                 return s_GrayLevelImages[UNDEF];
         }
-        #endregion
     }
 }
 

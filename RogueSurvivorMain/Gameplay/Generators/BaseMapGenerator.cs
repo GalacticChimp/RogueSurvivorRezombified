@@ -3,6 +3,7 @@ using System.Drawing;
 using djack.RogueSurvivor.Common;
 using djack.RogueSurvivor.Data;
 using djack.RogueSurvivor.Data.Items;
+using djack.RogueSurvivor.DataImport;
 using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Engine.Items;
 
@@ -16,7 +17,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         #region Init
         protected BaseMapGenerator(RogueGame game)
-            : base(game.Rules)
+            : base()
         {
             m_Game = game;
         }

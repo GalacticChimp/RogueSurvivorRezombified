@@ -67,9 +67,9 @@ namespace djack.RogueSurvivor.Data
             throw new NotImplementedException();
         }
 
-        public bool IsVisibleToPlayer(Actor m_Player)
+        public bool IsVisibleToPlayer()
         {
-            return Map.IsVisibleToPlayer(Position, m_Player);
+            return Map.IsVisibleToPlayer(Position);
         }
 
         public void UntriggerAllTrapsHere()
