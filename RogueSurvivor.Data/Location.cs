@@ -1,4 +1,5 @@
-﻿using System;
+﻿using djack.RogueSurvivor.Data.Items;
+using System;
 using System.Drawing;
 
 namespace djack.RogueSurvivor.Data
@@ -64,6 +65,24 @@ namespace djack.RogueSurvivor.Data
         {
             //TODO
             throw new NotImplementedException();
+        }
+
+        public bool IsVisibleToPlayer(Actor m_Player)
+        {
+            return Map.IsVisibleToPlayer(Position, m_Player);
+        }
+
+        public void UntriggerAllTrapsHere()
+        {
+            Inventory itemsThere = Map.GetItemsAt(Position);
+            if (itemsThere == null) return;
+            foreach (Item it in itemsThere.Items)
+            {
+                ItemTrap trap = it as ItemTrap;
+                if (trap == null || !trap.IsTriggered)
+                    continue;
+                trap.IsTriggered = false;
+            }
         }
     }
 }

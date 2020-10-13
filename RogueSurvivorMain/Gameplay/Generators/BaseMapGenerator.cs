@@ -295,13 +295,13 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public void RecomputeActorStartingStats(Actor actor)
         {
-            actor.HitPoints = m_Rules.ActorMaxHPs(actor);
-            actor.StaminaPoints = m_Rules.ActorMaxSTA(actor);
-            actor.FoodPoints = m_Rules.ActorMaxFood(actor);
-            actor.SleepPoints = m_Rules.ActorMaxSleep(actor);
-            actor.Sanity = m_Rules.ActorMaxSanity(actor);
+            actor.HitPoints = actor.ActorMaxHPs();
+            actor.StaminaPoints = actor.ActorMaxSTA();
+            actor.FoodPoints = actor.ActorMaxFood();
+            actor.SleepPoints = actor.ActorMaxSleep();
+            actor.Sanity = actor.ActorMaxSanity();
             if (actor.Inventory != null)
-                actor.Inventory.MaxCapacity = m_Rules.ActorMaxInv(actor);
+                actor.Inventory.MaxCapacity = actor.ActorMaxInv();
         }
         #endregion
 
@@ -633,7 +633,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             return new ItemMedicine(m_Game.GameItems.BANDAGE)
             {
-                Quantity = m_Rules.Roll(1, m_Game.GameItems.BANDAGE.StackingLimit)
+                Quantity = DiceRoller.Roll(1, m_Game.GameItems.BANDAGE.StackingLimit)
             };
         }
 
@@ -646,7 +646,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             return new ItemMedicine(m_Game.GameItems.PILLS_STA)
             {
-                Quantity = m_Rules.Roll(1, m_Game.GameItems.PILLS_STA.StackingLimit)
+                Quantity = DiceRoller.Roll(1, m_Game.GameItems.PILLS_STA.StackingLimit)
             };
         }
 
@@ -654,7 +654,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             return new ItemMedicine(m_Game.GameItems.PILLS_SLP)
             {
-                Quantity = m_Rules.Roll(1, m_Game.GameItems.PILLS_SLP.StackingLimit)
+                Quantity = DiceRoller.Roll(1, m_Game.GameItems.PILLS_SLP.StackingLimit)
             };
         }
 
@@ -662,7 +662,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             return new ItemMedicine(m_Game.GameItems.PILLS_SAN)
             {
-                Quantity = m_Rules.Roll(1, m_Game.GameItems.PILLS_SAN.StackingLimit)
+                Quantity = DiceRoller.Roll(1, m_Game.GameItems.PILLS_SAN.StackingLimit)
             };
         }
 
@@ -670,7 +670,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             return new ItemMedicine(m_Game.GameItems.PILLS_ANTIVIRAL)
             {
-                Quantity = m_Rules.Roll(1, m_Game.GameItems.PILLS_ANTIVIRAL.StackingLimit)
+                Quantity = DiceRoller.Roll(1, m_Game.GameItems.PILLS_ANTIVIRAL.StackingLimit)
             };
         }
 
@@ -682,7 +682,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             int max = WorldTime.TURNS_PER_DAY * m_Game.GameItems.GROCERIES.BestBeforeDays;
             int min = max / 2;
-            int freshUntil = timeNow + m_Rules.Roll(min, max);
+            int freshUntil = timeNow + DiceRoller.Roll(min, max);
 
             return new ItemFood(m_Game.GameItems.GROCERIES, freshUntil);
         }
@@ -692,7 +692,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             // canned food not perishable.
             return new ItemFood(m_Game.GameItems.CANNED_FOOD)
             {
-                Quantity = m_Rules.Roll(1, m_Game.GameItems.CANNED_FOOD.StackingLimit)
+                Quantity = DiceRoller.Roll(1, m_Game.GameItems.CANNED_FOOD.StackingLimit)
             };
         }
 
@@ -700,7 +700,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             return new ItemMeleeWeapon(m_Game.GameItems.CROWBAR)
             {
-                Quantity = m_Rules.Roll(1, m_Game.GameItems.CROWBAR.StackingLimit)
+                Quantity = DiceRoller.Roll(1, m_Game.GameItems.CROWBAR.StackingLimit)
             };
         }
 
@@ -794,7 +794,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
         public Item MakeItemRandomPistol()
         {
-            return m_Game.Rules.RollChance(50) ? MakeItemPistol() : MakeItemKoltRevolver();
+            return DiceRoller.RollChance(50) ? MakeItemPistol() : MakeItemKoltRevolver();
         }
 
         public Item MakeItemLightPistolAmmo()
@@ -854,7 +854,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             // random color.
             ItemSprayPaintModel paintModel;
-            int roll = m_Game.Rules.Roll(0, 4);
+            int roll = DiceRoller.Roll(0, 4);
             switch (roll)
             {
                 case 0: paintModel = m_Game.GameItems.SPRAY_PAINT1; break;
@@ -941,7 +941,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             return new ItemGrenade(m_Game.GameItems.GRENADE, m_Game.GameItems.GRENADE_PRIMED)
             {
-                Quantity = m_Rules.Roll(1, m_Game.GameItems.GRENADE.StackingLimit)
+                Quantity = DiceRoller.Roll(1, m_Game.GameItems.GRENADE.StackingLimit)
             };
         }
 
@@ -954,7 +954,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             return new ItemTrap(m_Game.GameItems.SPIKES)
             {
-                Quantity = m_Rules.Roll(1, m_Game.GameItems.BARBED_WIRE.StackingLimit)
+                Quantity = DiceRoller.Roll(1, m_Game.GameItems.BARBED_WIRE.StackingLimit)
             };
         }
 
@@ -962,7 +962,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             return new ItemTrap(m_Game.GameItems.BARBED_WIRE)
             {
-                Quantity = m_Rules.Roll(1, m_Game.GameItems.BARBED_WIRE.StackingLimit)
+                Quantity = DiceRoller.Roll(1, m_Game.GameItems.BARBED_WIRE.StackingLimit)
             };
         }
 
@@ -975,7 +975,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         {
             return new ItemEntertainment(m_Game.GameItems.MAGAZINE)
             {
-                Quantity = m_Rules.Roll(1, m_Game.GameItems.MAGAZINE.StackingLimit)
+                Quantity = DiceRoller.Roll(1, m_Game.GameItems.MAGAZINE.StackingLimit)
             };
         }
         #endregion

@@ -159,21 +159,22 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 List<Percept> trespassers = Filter(nonEnemies, (p) =>
                 {
                     Actor other = (p.Percepted as Actor);
-                    if (other.Faction == game.GameFactions.TheCHARCorporation)
-                        return false;
+                    // TODO
+                    //if (other.Faction == game.GameFactions.TheCHARCorporation)
+                    //    return false;
 
                     // alpha10 bug fix only if visible right now!
                     if (p.Turn != m_Actor.Location.Map.LocalTime.TurnCounter)
                         return false;
 
-                    return game.IsInCHARProperty(other.Location);
+                    return true;// TODO game.IsInCHARProperty(other.Location);
                 });
                 if (trespassers != null)
                 {
                     // Hey YOU!
                     Actor trespasser = FilterNearest(trespassers).Percepted as Actor;
 
-                    game.DoMakeAggression(m_Actor, trespasser);
+                    m_Actor.DoMakeAggression(trespasser);
 
                     m_Actor.Activity = Activity.FIGHTING;
                     m_Actor.TargetActor = trespasser;

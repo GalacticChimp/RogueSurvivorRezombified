@@ -298,7 +298,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             #endregion
 
             // 9 drop light/tracker with no batteries
-            ActorAction dropOutOfBatteries = BehaviorDropUselessItem(game);
+            ActorAction dropOutOfBatteries = BehaviorDropUselessItem();
             if (dropOutOfBatteries != null)
             {
                 m_Actor.Activity = Activity.IDLE;
@@ -351,7 +351,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             if (!hasCurrentEnemies)
             {
                 // alpha10 new common behaviour code, also used by CivilianAI, but Gangs can break and push
-                ActorAction getItemAction = BehaviorGoGetInterestingItems(game, mapPercepts,
+                ActorAction getItemAction = BehaviorGoGetInterestingItems(mapPercepts,
                      true, true, CANT_GET_ITEM_EMOTE, false, ref m_DummyPerceptLastItemsSaw);
 
                 if (getItemAction != null)
@@ -391,7 +391,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                             // unnoticed.
                             return false;
                         }
-                        return HasAnyInterestingItem(game, a.Inventory, ItemSource.ANOTHER_ACTOR);
+                        return HasAnyInterestingItem(a.Inventory, ItemSource.ANOTHER_ACTOR);
                     });
 
                 if (mayStealFrom != null)
@@ -408,10 +408,10 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         // get data.
                         Percept nearest = FilterNearest(mayStealFrom);
                         Actor victim = nearest.Percepted as Actor;
-                        Item wantIt = FirstInterestingItem(game, victim.Inventory, ItemSource.ANOTHER_ACTOR);
+                        Item wantIt = FirstInterestingItem(victim.Inventory, ItemSource.ANOTHER_ACTOR);
 
                         // make an enemy of him.
-                        game.DoMakeAggression(m_Actor, victim);
+                        m_Actor.DoMakeAggression(victim);
 
                         // declare my evil intentions.
                         m_Actor.Activity = Activity.CHASING;

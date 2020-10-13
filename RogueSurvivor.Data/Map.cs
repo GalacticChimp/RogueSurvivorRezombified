@@ -792,6 +792,42 @@ namespace djack.RogueSurvivor.Data
                 return null;
         }
 
+        // alpha10
+        public int OdorsDecay(Point pos, Weather weather)
+        {
+            int decay;
+
+            // base decay
+            decay = 1;
+
+            // sewers?
+            if (this == District.SewersMap)
+            {
+                decay += 2;
+            }
+            // outside? = weather affected.
+            else if (!GetTileAt(pos).IsInside)  // alpha10 weather affect only outside tiles
+            {
+                switch (weather)
+                {
+                    case Weather.CLEAR:
+                    case Weather.CLOUDY:
+                        // default decay.
+                        break;
+                    case Weather.RAIN:
+                        decay += 1;
+                        break;
+                    case Weather.HEAVY_RAIN:
+                        decay += 2;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("unhandled weather");
+                }
+            }
+
+            return decay;
+        }
+
         void AddNewScent(OdorScent scent)
         {
             // list
@@ -1305,6 +1341,21 @@ namespace djack.RogueSurvivor.Data
 
             // by default, assume yes.
             return true;
+        }
+
+        public bool IsVisibleToPlayer(Point position, Actor m_Player)
+        {
+            return m_Player != null
+                && this == m_Player.Location.Map && IsInBounds(position.X, position.Y)
+                && GetTileAt(position.X, position.Y).IsInView;
+        }
+
+        public bool IsTrapCoveringMapObjectThere(Point pos)
+        {
+            MapObject mobj = GetMapObjectAt(pos);
+            if (mobj == null) return false;
+            // mobj is either walkable and not a door (eg:bed) or jumpable (eg:table,car...)
+            return mobj.IsJumpable || (mobj.IsWalkable && !(mobj is DoorWindow));
         }
     }
 }

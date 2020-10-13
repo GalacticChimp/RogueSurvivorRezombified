@@ -9,3 +9,6 @@ A project aiming to upgrade and modernise Rogue Survivor, a 2D roguelike about l
 
 ## Stuff done so far:
 - succesfully migrated djack's latest version to .Net Core 3.1
+
+## Notes
+- IsVisibleToPlayer should probably be moved to PlayerController or a new Player object

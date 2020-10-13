@@ -5134,7 +5134,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         Actor CreateNewHospitalPatient(int spawnTime)
         {
             // decide model.
-            ActorModel model = m_Rules.Roll(0, 2) == 0 ? m_Game.GameActors.MaleCivilian : m_Game.GameActors.FemaleCivilian;
+            ActorModel model = DiceRoller.Roll(0, 2) == 0 ? m_Game.GameActors.MaleCivilian : m_Game.GameActors.FemaleCivilian;
 
             // create.
             Actor patient = model.CreateNumberedName(m_Game.GameFactions.TheCivilians, 0);
@@ -5386,7 +5386,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         public Actor CreateNewSurvivor(int spawnTime)
         {
             // decide model.
-            bool isMale = m_Rules.Roll(0, 2) == 0;
+            bool isMale = DiceRoller.Roll(0, 2) == 0;
             ActorModel model = isMale ? m_Game.GameActors.MaleCivilian : m_Game.GameActors.FemaleCivilian;
 
             // create.
@@ -5442,9 +5442,9 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // slightly randomize Food and Sleep - 0..25%.
             int foodDeviation = (int)(0.25f * survivor.FoodPoints);
-            survivor.FoodPoints = survivor.FoodPoints - m_Rules.Roll(0, foodDeviation);
+            survivor.FoodPoints = survivor.FoodPoints - DiceRoller.Roll(0, foodDeviation);
             int sleepDeviation = (int)(0.25f * survivor.SleepPoints);
-            survivor.SleepPoints = survivor.SleepPoints - m_Rules.Roll(0, sleepDeviation);
+            survivor.SleepPoints = survivor.SleepPoints - DiceRoller.Roll(0, sleepDeviation);
 
             // done.
             return survivor;
@@ -5453,7 +5453,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         public Actor CreateNewNakedHuman(int spawnTime, int itemsToCarry, int skills)
         {
             // decide model.
-            ActorModel model = m_Rules.Roll(0, 2) == 0 ? m_Game.GameActors.MaleCivilian : m_Game.GameActors.FemaleCivilian;
+            ActorModel model = DiceRoller.Roll(0, 2) == 0 ? m_Game.GameActors.MaleCivilian : m_Game.GameActors.FemaleCivilian;
 
             // create.
             Actor civilian = model.CreateNumberedName(m_Game.GameFactions.TheCivilians, spawnTime);
@@ -5465,7 +5465,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
         public Actor CreateNewCivilian(int spawnTime, int itemsToCarry, int skills)
         {
             // decide model.
-            ActorModel model = m_Rules.Roll(0, 2) == 0 ? m_Game.GameActors.MaleCivilian : m_Game.GameActors.FemaleCivilian;
+            ActorModel model = DiceRoller.Roll(0, 2) == 0 ? m_Game.GameActors.MaleCivilian : m_Game.GameActors.FemaleCivilian;
 
             // create.
             Actor civilian = model.CreateNumberedName(m_Game.GameFactions.TheCivilians, spawnTime);
@@ -5480,9 +5480,9 @@ namespace djack.RogueSurvivor.Gameplay.Generators
 
             // slightly randomize Food and Sleep - 0..25%.
             int foodDeviation = (int)(0.25f * civilian.FoodPoints);
-            civilian.FoodPoints = civilian.FoodPoints - m_Rules.Roll(0, foodDeviation);
+            civilian.FoodPoints = civilian.FoodPoints - DiceRoller.Roll(0, foodDeviation);
             int sleepDeviation = (int)(0.25f * civilian.SleepPoints);
-            civilian.SleepPoints = civilian.SleepPoints - m_Rules.Roll(0, sleepDeviation);
+            civilian.SleepPoints = civilian.SleepPoints - DiceRoller.Roll(0, sleepDeviation);
 
             // done.
             return civilian;
@@ -5541,7 +5541,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
             {
                 // decide model.
                 ActorModel undeadModel;
-                int chance = m_Rules.Roll(0, 100);
+                int chance = DiceRoller.Roll(0, 100);
                 undeadModel = (chance < RogueGame.Options.SpawnSkeletonChance ? m_Game.GameActors.Skeleton :
                     chance < RogueGame.Options.SpawnSkeletonChance + RogueGame.Options.SpawnZombieChance ? m_Game.GameActors.Zombie :
                     chance < RogueGame.Options.SpawnSkeletonChance + RogueGame.Options.SpawnZombieChance + RogueGame.Options.SpawnZombieMasterChance ? m_Game.GameActors.ZombieMaster :
@@ -5561,7 +5561,7 @@ namespace djack.RogueSurvivor.Gameplay.Generators
                 {
                     for (int i = 0; i < nbSkills; i++)
                     {
-                        Skills.IDs? zombifiedSkill = m_Game.ZombifySkill((Skills.IDs)m_Rules.Roll(0, (int)Skills.IDs._COUNT));
+                        Skills.IDs? zombifiedSkill = m_Game.ZombifySkill((Skills.IDs)DiceRoller.Roll(0, (int)Skills.IDs._COUNT));
                         if (zombifiedSkill.HasValue)
                             m_Game.SkillUpgrade(newUndead, zombifiedSkill.Value);
                     }

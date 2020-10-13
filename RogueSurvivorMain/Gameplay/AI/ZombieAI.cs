@@ -10,6 +10,7 @@ using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
 using djack.RogueSurvivor.Gameplay.AI.Sensors;
 using djack.RogueSurvivor.Data.Helpers;
+using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Gameplay.AI
 {
@@ -62,7 +63,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             return list;
         }
 
-        protected override ActorAction SelectAction(RogueGame game, List<Percept> percepts)
+        protected override ActorAction SelectAction(World world, List<Percept> percepts)
         {
             HashSet<Point> fov = (m_MemLOSSensor.Sensor as LOSSensor).FOV;
             List<Percept> mapPercepts = FilterSameMap(percepts);
@@ -105,7 +106,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         float distance = DistanceHelpers.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
                         if (distance < closest)
                         {
-                            ActorAction bumpAction = BehaviorStupidBumpToward(game, enemyP.Location.Position, true, true);
+                            ActorAction bumpAction = BehaviorStupidBumpToward(enemyP.Location.Position, true, true);
                             if (bumpAction != null)
                             {
                                 closest = distance;
@@ -136,7 +137,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         float distance = DistanceHelpers.GridDistance(m_Actor.Location.Position, enemyP.Location.Position);
                         if (distance < closest)
                         {
-                            ActorAction bumpAction = BehaviorStupidBumpToward(game, enemyP.Location.Position, true, true);
+                            ActorAction bumpAction = BehaviorStupidBumpToward(enemyP.Location.Position, true, true);
                             if (bumpAction != null)
                             {
                                 closest = distance;
@@ -160,7 +161,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             List<Percept> corpses = FilterCorpses(mapPercepts);
             if (corpses != null)
             {
-                ActorAction eatCorpses = BehaviorGoEatCorpse(game, corpses);
+                ActorAction eatCorpses = BehaviorGoEatCorpse(corpses);
                 if (eatCorpses != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -171,9 +172,9 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // 3 use exit (if ability)
             #region
             // move before following scents so the AI is more likely to move into basements etc...
-            if (m_Actor.Model.Abilities.AI_CanUseAIExits && game.Rules.RollChance(USE_EXIT_CHANCE))
+            if (m_Actor.Model.Abilities.AI_CanUseAIExits && DiceRoller.RollChance(USE_EXIT_CHANCE))
             {
-                ActorAction useExit = BehaviorUseExit(game, UseExitFlags.ATTACK_BLOCKING_ENEMIES | UseExitFlags.BREAK_BLOCKING_OBJECTS | UseExitFlags.DONT_BACKTRACK);
+                ActorAction useExit = BehaviorUseExit(UseExitFlags.ATTACK_BLOCKING_ENEMIES | UseExitFlags.BREAK_BLOCKING_OBJECTS | UseExitFlags.DONT_BACKTRACK);
                 if (useExit != null)
                 {
                     // memory is obsolete, clear it.
@@ -191,7 +192,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 Percept nearestMaster = FilterNearest(FilterActors(mapPercepts, (a) => a.Model.Abilities.IsUndeadMaster));
                 if (nearestMaster != null)
                 {
-                    ActorAction bumpAction = BehaviorStupidBumpToward(game, RandomPositionNear(game.Rules, m_Actor.Location.Map, nearestMaster.Location.Position, 3), true, true);
+                    ActorAction bumpAction = BehaviorStupidBumpToward(RandomPositionNear(m_Actor.Location.Map, nearestMaster.Location.Position, 3), true, true);
                     if (bumpAction != null)
                     {
                         // MAASTEERRR!
@@ -207,7 +208,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             #region
             if (!m_Actor.Model.Abilities.IsUndeadMaster)
             {
-                ActorAction trackMasterAction = BehaviorTrackScent(game, m_MasterSmellSensor.Scents);
+                ActorAction trackMasterAction = BehaviorTrackScent(m_MasterSmellSensor.Scents);
                 if (trackMasterAction != null)
                 {
                     m_Actor.Activity = Activity.TRACKING;
@@ -218,7 +219,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 6 move to highest living scent
             #region
-            ActorAction trackLivingAction = BehaviorTrackScent(game, m_LivingSmellSensor.Scents);
+            ActorAction trackLivingAction = BehaviorTrackScent(m_LivingSmellSensor.Scents);
             if (trackLivingAction != null)
             {
                 m_Actor.Activity = Activity.TRACKING;
@@ -227,32 +228,12 @@ namespace djack.RogueSurvivor.Gameplay.AI
             #endregion
 
             // 7 **DISABLED** assault breakables (if ability)
-#if false
-            #region
-            if (m_Actor.Model.Abilities.ZombieAI_AssaultBreakables)
-            {
-                ActorAction assaultAction = BehaviorAssaultBreakables(game, fov);
-                if (assaultAction != null)
-                {
-                    m_Actor.Activity = Activity.IDLE;
-                    return assaultAction;
-                }
-            }
-            #endregion
-#endif
 
             // 8 randomly push objects around (if ability OR skill STRONG)
             #region
-            if (game.Rules.HasActorPushAbility(m_Actor) && game.Rules.RollChance(PUSH_OBJECT_CHANCE))
+            if (m_Actor.HasActorPushAbility() && DiceRoller.RollChance(PUSH_OBJECT_CHANCE))
             {
-#if false 
-                special ZM case disabled
-                // zm push any pushable to open up a path for other zombies.
-                // non-zm push only blocking objects.
-                ActorAction pushAction = m_Actor.Model.Abilities.IsUndeadMaster ? BehaviorPushAnyObject(game) : BehaviorPushBlockingObject(game);
-#else
-                ActorAction pushAction = BehaviorPushNonWalkableObject(game);
-#endif
+                ActorAction pushAction = BehaviorPushNonWalkableObject();
                 if (pushAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -265,7 +246,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             #region
             if (m_Actor.Model.Abilities.ZombieAI_Explore)
             {
-                ActorAction exploreAction = BehaviorExplore(game, m_Exploration);
+                ActorAction exploreAction = BehaviorExplore(m_Exploration);
                 if (exploreAction != null)
                 {
                     m_Actor.Activity = Activity.IDLE;
@@ -276,7 +257,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 9 wander
             m_Actor.Activity = Activity.IDLE;
-            return BehaviorWander(game, null);
+            return BehaviorWander(null);
         }
         #endregion
     }

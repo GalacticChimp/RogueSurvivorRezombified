@@ -1295,7 +1295,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         #endregion
 
         #region Getting items
-        protected ActorAction BehaviorGrabFromStack(RogueGame game, Point position, Inventory stack, bool canBreak, bool canPush)
+        protected ActorAction BehaviorGrabFromStack(Point position, Inventory stack, bool canBreak, bool canPush)
         {
             // ignore empty stacks.
             if (stack == null || stack.IsEmpty)
@@ -1323,7 +1323,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 if (!m_Actor.CanActorGetItem(it, out string reason))
                     continue;
                 // if not interesting, ignore.
-                if (!IsInterestingItemToOwn(game, it, ItemSource.GROUND_STACK))
+                if (!IsInterestingItemToOwn(it, ItemSource.GROUND_STACK))
                     continue;
                 // gettable and interesting, get it.
                 goodItem = it;
@@ -1349,7 +1349,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         }
 
         // alpha10 made improved get item rule into a new behaviour; need taboo tile upkeep by caller though!
-        protected ActorAction BehaviorGoGetInterestingItems(RogueGame game, List<Percept> mapPercepts, bool canBreak, bool canPush, string cantGetItemEmote, bool setLastItemsSaw, ref Percept lastItemsSaw)
+        protected ActorAction BehaviorGoGetInterestingItems(List<Percept> mapPercepts, bool canBreak, bool canPush, string cantGetItemEmote, bool setLastItemsSaw, ref Percept lastItemsSaw)
         {
             RouteFinder.SpecialActions allowedActions = RouteFinder.SpecialActions.JUMP | RouteFinder.SpecialActions.DOORS;
 
@@ -1364,7 +1364,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         return true;
                     if (IsTileTaboo(p.Location.Position))
                         return true;
-                    if (!HasAnyInterestingItem(game, p.Percepted as Inventory, ItemSource.GROUND_STACK))
+                    if (!HasAnyInterestingItem(p.Percepted as Inventory, ItemSource.GROUND_STACK))
                         return true;
                     // alpha10 check reachability
                     RouteFinder.SpecialActions a = allowedActions;
@@ -1385,7 +1385,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 lastItemsSaw = nearestStack;
 
             // make room for food if needed.
-            ActorAction makeRoomForFood = BehaviorMakeRoomForFood(game, interestingReachableStacks);
+            ActorAction makeRoomForFood = BehaviorMakeRoomForFood(interestingReachableStacks);
             if (makeRoomForFood != null)
             {
                 m_Actor.Activity = Activity.IDLE;
@@ -1393,7 +1393,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // try to grab.
-            ActorAction grabAction = BehaviorGrabFromStack(game, nearestStack.Location.Position, nearestStack.Percepted as Inventory, canBreak, canPush);
+            ActorAction grabAction = BehaviorGrabFromStack(nearestStack.Location.Position, nearestStack.Percepted as Inventory, canBreak, canPush);
             if (grabAction != null)
             {
                 m_Actor.Activity = Activity.IDLE;
@@ -1439,7 +1439,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             return null;
         }
 
-        protected ActorAction BehaviorDropUselessItem(RogueGame game)
+        protected ActorAction BehaviorDropUselessItem()
         {
             if (m_Actor.Inventory.IsEmpty)
                 return null;
@@ -1491,11 +1491,11 @@ namespace djack.RogueSurvivor.Gameplay.AI
                         }
                     }
                 }
-                // alpha10 empty cans!
-                else if (it.Model == game.GameItems.EMPTY_CAN) // comparing model instead of attributes is bad but makes sense in this case
-                {
-                    dropIt = true;
-                }
+                // alpha10 empty cans! TODO
+                //else if (it.Model == game.GameItems.EMPTY_CAN) // comparing model instead of attributes is bad but makes sense in this case
+                //{
+                //    dropIt = true;
+                //}
 
                 if (dropIt)
                     return BehaviorDropItem(it);
@@ -1606,7 +1606,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             return sum;
         }
 
-        protected ActorAction BehaviorBuildTrap(RogueGame game)
+        protected ActorAction BehaviorBuildTrap()
         {
             // don't bother if we don't have a trap.
             ItemTrap trap = m_Actor.Inventory.GetFirstByType(typeof(ItemTrap)) as ItemTrap;
@@ -1692,7 +1692,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             return true;
         }
 
-        protected ActorAction BehaviorBuildSmallFortification(RogueGame game)
+        protected ActorAction BehaviorBuildSmallFortification()
         {
             // don't bother if no carpentry skill or not enough material.
             if (m_Actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.CARPENTRY) == 0)
@@ -1746,7 +1746,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         /// </summary>
         /// <param name="game"></param>
         /// <returns></returns>
-        protected ActorAction BehaviorBuildLargeFortification(RogueGame game, int startLineChance)
+        protected ActorAction BehaviorBuildLargeFortification(int startLineChance)
         {
             // don't bother if no carpentry skill or not enough material.
             if (m_Actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.CARPENTRY) == 0)
@@ -1888,7 +1888,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         #endregion
 
         #region Pushing
-        protected ActorAction BehaviorPushNonWalkableObject(RogueGame game)
+        protected ActorAction BehaviorPushNonWalkableObject()
         {
             // check ability.
             if (!m_Actor.HasActorPushAbility())
@@ -2045,7 +2045,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             return null;
         }
 
-        protected ActorAction BehaviorHangAroundActor(RogueGame game, Actor other, Point otherPosition, int minDist, int maxDist)
+        protected ActorAction BehaviorHangAroundActor(Actor other, Point otherPosition, int minDist, int maxDist)
         {
             // if no other or dead, don't.
             if (other == null || other.IsDead)
@@ -2999,7 +2999,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             return runAway;
         }
 
-        protected ActorAction BehaviorThrowGrenade(RogueGame game, HashSet<Point> fov, List<Percept> enemies)
+        protected ActorAction BehaviorThrowGrenade(HashSet<Point> fov, List<Percept> enemies)
         {
             // don't bother if no enemies.
             if (enemies == null || enemies.Count == 0)
@@ -3114,7 +3114,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         #endregion
 
         #region Inventory management
-        protected ActorAction BehaviorMakeRoomForFood(RogueGame game, List<Percept> stacks)
+        protected ActorAction BehaviorMakeRoomForFood(List<Percept> stacks)
         {
             // if no items in view, fail.
             if (stacks == null || stacks.Count == 0)
@@ -3158,7 +3158,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             Inventory myInv = m_Actor.Inventory;
 
             // 1. get rid of not interesting item.
-            Item notInteresting = myInv.GetFirstMatching((it) => !IsInterestingItemToOwn(game, it, ItemSource.OWNED));
+            Item notInteresting = myInv.GetFirstMatching((it) => !IsInterestingItemToOwn(it, ItemSource.OWNED));
             if (notInteresting != null)
                 return BehaviorDropItem(notInteresting);
 
@@ -3311,7 +3311,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         #endregion
 
         #region Law enforcement
-        protected ActorAction BehaviorEnforceLaw(RogueGame game, List<Percept> percepts, out Actor target)
+        protected ActorAction BehaviorEnforceLaw(List<Percept> percepts, out Actor target)
         {
             target = null;
 
@@ -3354,7 +3354,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 return null;
 
             // make him our enemy and tell him!
-            game.DoMakeAggression(m_Actor, target);
+            m_Actor.DoMakeAggression(target);
             return new ActionSay(m_Actor, target,
                 String.Format("HEY! YOU ARE WANTED FOR {0} MURDER{1}!", target.MurdersCounter, target.MurdersCounter > 1 ? "s" : ""), Sayflags.IS_IMPORTANT | Sayflags.IS_DANGER);
         }
@@ -3429,7 +3429,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         /// <param name="game"></param>
         /// <param name="corpsesPercepts"></param>
         /// <returns></returns>
-        protected ActorAction BehaviorGoReviveCorpse(RogueGame game, List<Percept> corpsesPercepts)
+        protected ActorAction BehaviorGoReviveCorpse(List<Percept> corpsesPercepts)
         {
             // nope if no percepts.
             if (corpsesPercepts == null)
@@ -3438,8 +3438,9 @@ namespace djack.RogueSurvivor.Gameplay.AI
             // make sure we have the basics : medic skill & medikit item.
             if (m_Actor.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.MEDIC) == 0)
                 return null;
-            if (!HasItemOfModel(game.GameItems.MEDIKIT))
-                return null;
+            // TODO restore this
+            //if (!HasItemOfModel(game.GameItems.MEDIKIT))
+            //    return null;
 
             // keep only corpses stacks where we can revive at least one corpse.
             List<Percept> revivables = Filter(corpsesPercepts, (p) =>
@@ -3829,7 +3830,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         /// <returns></returns>
         /// <see cref="RateItem(RogueGame, Item, bool)"/>
         /// <see cref="RateTradeOffer(RogueGame, Actor, Item, Item)"/>
-        public bool IsInterestingItemToOwn(RogueGame game, Item it, ItemSource itemSrc)
+        public bool IsInterestingItemToOwn(Item it, ItemSource itemSrc)
         {
             // alpha10 base idea is any non-junk non-taboo item is interesting.
             // using itemrating is consistent with new trade logic.
@@ -3857,28 +3858,28 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // then use normal rating as if was trading and accept anything non-junk.
-            ItemRating rating = RateItem(game, it, false);
+            ItemRating rating = RateItem(it, false);
             return rating != ItemRating.JUNK;
         }
 
-        public bool HasAnyInterestingItem(RogueGame game, Inventory inv, ItemSource inventorySrc)
+        public bool HasAnyInterestingItem(Inventory inv, ItemSource inventorySrc)
         {
             if (inv == null)
                 return false;
             bool owned = (inv == m_Actor.Inventory);
             foreach (Item it in inv.Items)
-                if (IsInterestingItemToOwn(game, it, inventorySrc))
+                if (IsInterestingItemToOwn(it, inventorySrc))
                     return true;
             return false;
         }
 
-        protected Item FirstInterestingItem(RogueGame game, Inventory inv, ItemSource inventorySrc)
+        protected Item FirstInterestingItem(Inventory inv, ItemSource inventorySrc)
         {
             if (inv == null)
                 return null;
             bool owned = (inv == m_Actor.Inventory);
             foreach (Item it in inv.Items)
-                if (IsInterestingItemToOwn(game, it, inventorySrc))
+                if (IsInterestingItemToOwn(it, inventorySrc))
                     return it;
             return null;
         }
@@ -4050,7 +4051,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             return 10000 * mSpray.Strength + spray.SprayQuantity;
         }
 
-        protected int GetItemNutritionValue(RogueGame game, Item it)
+        protected int GetItemNutritionValue(Item it)
         {
             ItemFood itFood = it as ItemFood;
             if (itFood == null)
@@ -4058,12 +4059,12 @@ namespace djack.RogueSurvivor.Gameplay.AI
             return m_Actor.ActorItemNutritionValue(itFood.Nutrition);
         }
 
-        protected int GetTotalNutritionInInventory(RogueGame game)
+        protected int GetTotalNutritionInInventory()
         {
             int total = 0;
 
             foreach (Item it in m_Actor.Inventory.Items)
-                total += GetItemNutritionValue(game, it);
+                total += GetItemNutritionValue(it);
 
             return total;
         }
@@ -4154,7 +4155,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         /// <see cref="RateTradeOffer(RogueGame, Actor, Item, Item)"/>
         /// <see cref="IsInterestingItemToOwn(RogueGame, Item, bool)"/>
         /// <see cref="RateItemExhange(RogueGame, Item, Item)"/>
-        public ItemRating RateItem(RogueGame game, Item it, bool owned)
+        public ItemRating RateItem(Item it, bool owned)
         {
             //////////////////////////////////////////////////////
             // Junk :
@@ -4216,8 +4217,8 @@ namespace djack.RogueSurvivor.Gameplay.AI
             if (it is ItemTrap)
             {
                 ItemTrap tr = it as ItemTrap;
-                if (tr.Model == game.GameItems.EMPTY_CAN)
-                    return ItemRating.JUNK;
+                //if (tr.Model == game.GameItems.EMPTY_CAN) // TODO
+                //    return ItemRating.JUNK;
                 if (tr.IsActivated && !m_Actor.IsSafeFromTrap(tr))
                     return ItemRating.JUNK;
             }
@@ -4356,9 +4357,9 @@ namespace djack.RogueSurvivor.Gameplay.AI
             {
                 if (m_Actor.IsActorHungry())
                     return ItemRating.NEED;
-                int nutritionPoints = GetTotalNutritionInInventory(game);
+                int nutritionPoints = GetTotalNutritionInInventory();
                 if (owned)
-                    nutritionPoints -= GetItemNutritionValue(game, it as ItemFood);
+                    nutritionPoints -= GetItemNutritionValue(it as ItemFood);
                 // rule of thumb: has to cover 25% more than hungry level
                 if (nutritionPoints <= ((5 * Rules.FOOD_HUNGRY_LEVEL) / 4))
                     return ItemRating.NEED;
@@ -4516,8 +4517,8 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 return TradeRating.REFUSE;
 
             // not a special case, compare item ratings.
-            ItemRating offeredRating = RateItem(game, offered, false);
-            ItemRating askedRating = RateItem(game, asked, true);
+            ItemRating offeredRating = RateItem(offered, false);
+            ItemRating askedRating = RateItem(asked, true);
             // compare ratings with matrix (lazy way of doing lots of if/else)
             return TRADE_RATING_MATRIX[(int)offeredRating, (int)askedRating];
         }
@@ -4537,8 +4538,8 @@ namespace djack.RogueSurvivor.Gameplay.AI
         protected TradeRating RateItemExhange(RogueGame game, Item oIt, Item nIt)
         {
             // first reject/accept if one is junk and not the other
-            ItemRating oRating = RateItem(game, oIt, true);
-            ItemRating nRating = RateItem(game, nIt, false);
+            ItemRating oRating = RateItem(oIt, true);
+            ItemRating nRating = RateItem(nIt, false);
             if (nRating == ItemRating.JUNK && oRating != ItemRating.JUNK) return TradeRating.REFUSE;
             if (oRating == ItemRating.JUNK && nRating != ItemRating.JUNK) return TradeRating.ACCEPT;
 
@@ -4612,8 +4613,8 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 ItemFood nFood = nIt as ItemFood;
 
                 // prefer food with more nutrition
-                int oNut = GetItemNutritionValue(game, oFood);
-                int nNut = GetItemNutritionValue(game, nFood);
+                int oNut = GetItemNutritionValue(oFood);
+                int nNut = GetItemNutritionValue(nFood);
 
                 return nNut > oNut ? TradeRating.ACCEPT :
                     nNut < oNut ? TradeRating.REFUSE :
@@ -5172,7 +5173,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
         /// </summary>
         /// <param name="a"></param>
         /// <returns></returns>
-        protected bool IsValidWanderAction(RogueGame game, ActorAction a)
+        protected bool IsValidWanderAction(ActorAction a)
         {
             return a != null &&
                 (a is ActionMoveStep ||
@@ -5183,7 +5184,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
                 a is ActionBashDoor ||
                 a is ActionBreak ||  // alpha10.1 prevent rare cases of getting stuck or going back and forth but we rate it very very low
                 a is ActionBashDoor || // alpha10.1 prevent rare cases of getting stuck or going back and forth but we rate it very low
-                (a is ActionGetFromContainer && IsInterestingItemToOwn(game, (a as ActionGetFromContainer).Item, ItemSource.GROUND_STACK)) ||
+                (a is ActionGetFromContainer && IsInterestingItemToOwn((a as ActionGetFromContainer).Item, ItemSource.GROUND_STACK)) ||
                 a is ActionBarricadeDoor);
         }
 

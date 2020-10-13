@@ -294,5 +294,10 @@ namespace djack.RogueSurvivor.Data
         private void SetFlag(Flags f, bool value) { if (value) m_Flags |= f; else m_Flags &= ~f; }
         private void OneFlag(Flags f) { m_Flags |= f; }
         private void ZeroFlag(Flags f) { m_Flags &= ~f; }
+
+        public bool IsVisibleToPlayer(Actor m_Player)
+        {
+            return Location.IsVisibleToPlayer(m_Player);
+        }
     }
 }

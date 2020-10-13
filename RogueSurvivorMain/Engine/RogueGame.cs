@@ -670,7 +670,6 @@ namespace djack.RogueSurvivor.Engine
 
         #region Fields
         readonly IRogueUI m_UI;
-        Rules m_Rules;
         Session m_Session;
         HiScoreTable m_HiScoreTable;
         MessageManager m_MessageManager;
@@ -718,11 +717,6 @@ namespace djack.RogueSurvivor.Engine
         public Session Session
         {
             get { return m_Session; }
-        }
-
-        public Rules Rules
-        {
-            get { return m_Rules; }
         }
 
         public IRogueUI UI
@@ -808,7 +802,6 @@ namespace djack.RogueSurvivor.Engine
 
             m_Session = Session.Get;
             Logger.WriteLine(Logger.Stage.INIT_MAIN, "creating Rules");
-            m_Rules = new Rules();
 
             BaseTownGenerator.Parameters genParams = BaseTownGenerator.DEFAULT_PARAMS;
             genParams.MapWidth = genParams.MapHeight = 100;
@@ -917,7 +910,7 @@ namespace djack.RogueSurvivor.Engine
         /// <returns>"someone" if not visible to the player; TheName if visible.</returns>
         string ActorVisibleIdentity(Actor actor)
         {
-            return IsVisibleToPlayer(actor) ? actor.TheName : "someone";
+            return actor.IsVisibleToPlayer(m_Player) ? actor.TheName : "someone";
         }
 
         /// <summary>
@@ -927,7 +920,7 @@ namespace djack.RogueSurvivor.Engine
         /// <returns>"someone" if not visible to the player; TheName if visible.</returns>
         string ObjectVisibleIdentity(MapObject mapObj)
         {
-            return IsVisibleToPlayer(mapObj) ? mapObj.TheName : "something";
+            return mapObj.IsVisibleToPlayer(m_Player) ? mapObj.TheName : "something";
         }
 
         Message MakeMessage(Actor actor, string doWhat)
@@ -2919,7 +2912,7 @@ namespace djack.RogueSurvivor.Engine
                     ++m_Session.WorldTime.TurnCounter;
 
                     // sunrise/sunset.
-                    bool canSeeSky = m_Rules.CanActorSeeSky(m_Player);  // alpha10 message ony if can see sky
+                    bool canSeeSky = Rules.CanActorSeeSky(m_Player);  // alpha10 message ony if can see sky
                     bool isNight = m_Session.WorldTime.IsNight;
                     DayPhase newPhase = m_Session.WorldTime.Phase;
                     if (wasNight && !isNight)
@@ -3058,7 +3051,7 @@ namespace djack.RogueSurvivor.Engine
 
             // 1. Get next actor to Act.
             #region
-            Actor actor = m_Rules.GetNextActorToAct(map, map.LocalTime.TurnCounter);
+            Actor actor = Rules.GetNextActorToAct(map, map.LocalTime.TurnCounter);
 
             // alpha10 ai loop bug detection 
             if (actor != null && !actor.IsPlayer)
@@ -3101,7 +3094,7 @@ namespace djack.RogueSurvivor.Engine
             actor.PreviousStaminaPoints = actor.StaminaPoints;
             if (actor.Controller == null)
             {
-                SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+                actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
             }
             else if (actor.IsPlayer)
             {
@@ -3123,59 +3116,7 @@ namespace djack.RogueSurvivor.Engine
             #endregion
         }
 
-        void SpendActorActionPoints(Actor actor, int actionCost)
-        {
-            actor.ActionPoints -= actionCost;
-            actor.LastActionTurn = actor.Location.Map.LocalTime.TurnCounter;
-        }
 
-        void SpendActorStaminaPoints(Actor actor, int staminaCost)
-        {
-            if (actor.Model.Abilities.CanTire)
-            {
-                // night penalty?
-                if (actor.Location.Map.LocalTime.IsNight && staminaCost > 0)
-                    staminaCost += m_Rules.NightStaminaPenalty(actor);
-
-                // exhausted?
-                if (actor.IsActorExhausted())
-                    staminaCost *= 2;
-
-                // apply.
-                actor.StaminaPoints -= staminaCost;
-            }
-            else
-                actor.StaminaPoints = Rules.STAMINA_INFINITE;
-        }
-
-        void RegenActorStaminaPoints(Actor actor, int staminaRegen)
-        {
-            if (actor.Model.Abilities.CanTire)
-                actor.StaminaPoints = Math.Min(actor.ActorMaxSTA(), actor.StaminaPoints + staminaRegen);
-            else
-                actor.StaminaPoints = Rules.STAMINA_INFINITE;
-        }
-
-        void RegenActorHitPoints(Actor actor, int hpRegen)
-        {
-            actor.HitPoints = Math.Min(actor.ActorMaxHPs(), actor.HitPoints + hpRegen);
-        }
-
-        void RegenActorSleep(Actor actor, int sleepRegen)
-        {
-            actor.SleepPoints = Math.Min(actor.ActorMaxSleep(), actor.SleepPoints + sleepRegen);
-        }
-
-        void SpendActorSanity(Actor actor, int sanCost)
-        {
-            actor.Sanity -= sanCost;
-            if (actor.Sanity < 0) actor.Sanity = 0;
-        }
-
-        void RegenActorSanity(Actor actor, int sanRegen)
-        {
-            actor.Sanity = Math.Min(actor.ActorMaxSanity(), actor.Sanity + sanRegen);
-        }
 
         void NextMapTurn(Map map, SimFlags sim)
         {
@@ -3245,7 +3186,7 @@ namespace djack.RogueSurvivor.Engine
                         foreach (Corpse c in map.Corpses)
                         {
                             // zombify?
-                            int chanceZombify = m_Rules.CorpseZombifyChance(c, map.LocalTime);
+                            int chanceZombify = Rules.CorpseZombifyChance(c, map.LocalTime);
                             if (DiceRoller.RollChance(chanceZombify))
                             {
                                 // zombify this one.
@@ -3307,10 +3248,10 @@ namespace djack.RogueSurvivor.Engine
                         {
                             if (a.Infection >= Rules.INFECTION_LEVEL_1_WEAK && !a.Model.Abilities.IsUndead)
                             {
-                                int infectionP = m_Rules.ActorInfectionPercent(a);
+                                int infectionP = Rules.ActorInfectionPercent(a);
 
                                 #region
-                                if (DiceRoller.Roll(0, 1000) < m_Rules.InfectionEffectTriggerChance1000(infectionP))
+                                if (DiceRoller.Roll(0, 1000) < Rules.InfectionEffectTriggerChance1000(infectionP))
                                 {
                                     bool isVisible = IsVisibleToPlayer(a);
                                     bool isPlayer = a.IsPlayer;  // alpha10.1 consistency fix
@@ -3359,7 +3300,7 @@ namespace djack.RogueSurvivor.Engine
                                     }
                                     else if (infectionP >= Rules.INFECTION_LEVEL_2_TIRED)
                                     {
-                                        SpendActorStaminaPoints(a, Rules.INFECTION_LEVEL_2_TIRED_STA);
+                                        a.SpendActorStaminaPoints(Rules.INFECTION_LEVEL_2_TIRED_STA);
                                         a.SleepPoints -= Rules.INFECTION_LEVEL_2_TIRED_SLP;
                                         if (a.SleepPoints < 0) a.SleepPoints = 0;
                                         if (isVisible)
@@ -3375,7 +3316,7 @@ namespace djack.RogueSurvivor.Engine
                                     }
                                     else if (infectionP >= Rules.INFECTION_LEVEL_1_WEAK)
                                     {
-                                        SpendActorStaminaPoints(a, Rules.INFECTION_LEVEL_1_WEAK_STA);
+                                        a.SpendActorStaminaPoints(Rules.INFECTION_LEVEL_1_WEAK_STA);
                                         if (isVisible)
                                         {
                                             if (isPlayer) ClearMessages();
@@ -3458,7 +3399,7 @@ namespace djack.RogueSurvivor.Engine
                 foreach (OdorScent scent in map.Scents)
                 {
                     // alpha10
-                    int decay = m_Rules.OdorsDecay(map, scent.Position, m_Session.World.Weather);
+                    int decay = map.OdorsDecay(scent.Position, m_Session.World.Weather);
 
                     // decay.
                     map.ModifyScentAt(scent.Odor, -decay, scent.Position);
@@ -3483,8 +3424,8 @@ namespace djack.RogueSurvivor.Engine
                 foreach (Actor actor in map.Actors)
                 {
                     // alpha10
-                    DropActorScents(actor);
-                    DecayActorScents(actor);
+                    actor.DropActorScents();
+                    actor.DecayActorScents(m_Session.World);
                 }
                 #endregion
 
@@ -3497,7 +3438,7 @@ namespace djack.RogueSurvivor.Engine
                         actor.ActionPoints += actor.ActorSpeed();
 
                     if (actor.StaminaPoints < actor.ActorMaxSTA())
-                        RegenActorStaminaPoints(actor, Rules.STAMINA_REGEN_PER_TURN);
+                        actor.RegenActorStaminaPoints(Rules.STAMINA_REGEN_PER_TURN);
                 }
                 // reset actor index.
                 map.CheckNextActorIndex = 0;
@@ -3599,8 +3540,8 @@ namespace djack.RogueSurvivor.Engine
                                 actor.DoShout("NO! LEAVE ME ALONE!");
                                 actor.SleepPoints -= Rules.SANITY_NIGHTMARE_SLP_LOSS;
                                 if (actor.SleepPoints < 0) actor.SleepPoints = 0;
-                                SpendActorSanity(actor, Rules.SANITY_NIGHTMARE_SAN_LOSS);
-                                SpendActorStaminaPoints(actor, Rules.SANITY_NIGHTMARE_STA_LOSS);
+                                actor.SpendActorSanity(Rules.SANITY_NIGHTMARE_SAN_LOSS);
+                                actor.SpendActorStaminaPoints(Rules.SANITY_NIGHTMARE_STA_LOSS);
                                 // msg.
                                 if (IsVisibleToPlayer(actor))
                                     AddMessage(MakeMessage(actor, String.Format("{0} from a horrible nightmare!", Conjugate(actor, VERB_WAKE_UP))));
@@ -3640,7 +3581,7 @@ namespace djack.RogueSurvivor.Engine
                             if (actor.HitPoints < actor.ActorMaxHPs())
                             {
                                 int healChance = (isOnCouch ? Rules.SLEEP_ON_COUCH_HEAL_CHANCE : 0);
-                                healChance += m_Rules.ActorHealChanceBonus(actor);
+                                healChance += Rules.ActorHealChanceBonus(actor);
                                 if (DiceRoller.RollChance(healChance))
                                     RegenActorHitPoints(actor, Rules.SLEEP_HEAL_HITPOINTS);
                             }
@@ -3721,12 +3662,12 @@ namespace djack.RogueSurvivor.Engine
                     if (actor.HasLeader)
                     {
                         // trust.
-                        ModifyActorTrustInLeader(actor, m_Rules.ActorTrustIncrease(actor.Leader), false);
+                        ModifyActorTrustInLeader(actor, Rules.ActorTrustIncrease(actor.Leader), false);
                         // bond with leader.
-                        if (m_Rules.HasActorBondWith(actor, actor.Leader) && DiceRoller.RollChance(Rules.SANITY_RECOVER_BOND_CHANCE))
+                        if (Rules.HasActorBondWith(actor, actor.Leader) && DiceRoller.RollChance(Rules.SANITY_RECOVER_BOND_CHANCE))
                         {
-                            RegenActorSanity(actor, Rules.SANITY_RECOVER_BOND);
-                            RegenActorSanity(actor.Leader, Rules.SANITY_RECOVER_BOND);
+                            actor.RegenActorSanity(Rules.SANITY_RECOVER_BOND);
+                            actor.Leader.RegenActorSanity( Rules.SANITY_RECOVER_BOND);
                             if (IsVisibleToPlayer(actor))
                                 AddMessage(MakeMessage(actor, String.Format("{0} reassured knowing {1} is with {2}.",
                                             Conjugate(actor, VERB_FEEL), actor.Leader.Name, HimOrHer(actor))));
@@ -3944,7 +3885,7 @@ namespace djack.RogueSurvivor.Engine
                 // FIXME there still the weather bug when simulating = weather used is current world weather, not map weather.
                 #region
                 // Check?
-                if (m_Rules.IsWeatherRain(m_Session.World.Weather) && DiceRoller.RollChance(Rules.FIRE_RAIN_TEST_CHANCE))
+                if (Rules.IsWeatherRain(m_Session.World.Weather) && DiceRoller.RollChance(Rules.FIRE_RAIN_TEST_CHANCE))
                 {
                     // 7.1.1 Burning objects?
                     foreach (MapObject obj in map.MapObjects)
@@ -4007,37 +3948,6 @@ namespace djack.RogueSurvivor.Engine
             #endregion
         }
 
-        // alpha10
-        void DropActorScents(Actor actor)
-        {
-            // alpha10 dont drop if odor suppressed
-            if (actor.OdorSuppressorCounter > 0)
-                return;
-
-            if (actor.Model.Abilities.IsUndead)
-            {
-                // ZM scent?
-                if (actor.Model.Abilities.IsUndeadMaster)
-                    actor.Location.Map.RefreshScentAt(Odor.UNDEAD_MASTER, Rules.UNDEAD_MASTER_SCENT_DROP, actor.Location.Position);
-            }
-            else
-            {
-                // Living scent.
-                actor.Location.Map.RefreshScentAt(Odor.LIVING, Rules.LIVING_SCENT_DROP, actor.Location.Position);
-            }
-        }
-
-        // alpha10
-        void DecayActorScents(Actor actor)
-        {
-            // decay suppressor
-            if (actor.OdorSuppressorCounter > 0)
-            {
-                int decay = m_Rules.OdorsDecay(actor.Location.Map, actor.Location.Position, m_Session.World.Weather);
-                actor.OdorSuppressorCounter -= decay;
-                if (actor.OdorSuppressorCounter < 0) actor.OdorSuppressorCounter = 0;
-            }
-        }
 
         void ModifyActorTrustInLeader(Actor a, int mod, bool addMessage)
         {
@@ -4230,7 +4140,7 @@ namespace djack.RogueSurvivor.Engine
         bool CheckForEvent_SubwayInvasion(Map map)
         {
             // randomly.
-            if (!m_Rules.RollChance(SUBWAY_INVASION_CHANCE))
+            if (!Rules.RollChance(SUBWAY_INVASION_CHANCE))
                 return false;
 
             // if not enough zombies only.
@@ -4625,8 +4535,8 @@ namespace djack.RogueSurvivor.Engine
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
                 // roll.
-                dropPoint.X = m_Rules.RollX(map);
-                dropPoint.Y = m_Rules.RollY(map);
+                dropPoint.X = Rules.RollX(map);
+                dropPoint.Y = Rules.RollY(map);
 
                 // suitable?
                 if (!IsSuitableDropSuppliesPoint(map, dropPoint.X, dropPoint.Y))
@@ -5001,9 +4911,9 @@ namespace djack.RogueSurvivor.Engine
                 int x = (DiceRoller.RollChance(50) ? 0 : map.Width - 1);
                 int y = (DiceRoller.RollChance(50) ? 0 : map.Height - 1);
                 if (DiceRoller.RollChance(50))
-                    x = m_Rules.RollX(map);
+                    x = Rules.RollX(map);
                 else
-                    y = m_Rules.RollY(map);
+                    y = Rules.RollY(map);
 
                 // must be free, (outside), far enough to player and not adjacent to an enemy.
                 pos.X = x;
@@ -5020,7 +4930,7 @@ namespace djack.RogueSurvivor.Engine
                 // success!                
                 map.PlaceActorAt(actorToSpawn, pos);
                 // trigger stuff
-                OnActorEnterTile(actorToSpawn);
+                actorToSpawn.OnActorEnterTile();
                 return true;
             }
             while (i <= maxTries);
@@ -6929,7 +6839,7 @@ namespace djack.RogueSurvivor.Engine
             }
             else
             {
-                if (m_Rules.CanActorButcherCorpse(m_Player, c, out reason))
+                if (Rules.CanActorButcherCorpse(m_Player, c, out reason))
                 {
                     DoButcherCorpse(m_Player, c);
                     return true;
@@ -6989,13 +6899,13 @@ namespace djack.RogueSurvivor.Engine
             bool isVisible = IsVisibleToPlayer(a);
 
             // spend ap.
-            SpendActorActionPoints(a, Rules.BASE_ACTION_COST);
+            a.SpendActorActionPoints(Rules.BASE_ACTION_COST);
 
             // cause insanity.
             SeeingCauseInsanity(a, a.Location, Rules.SANITY_HIT_BUTCHERING_CORPSE, String.Format("{0} butchering {1}", a.Name, c.DeadGuy.Name));
 
             // damage.
-            int dmg = m_Rules.ActorDamageVsCorpses(a);
+            int dmg = Rules.ActorDamageVsCorpses(a);
 
             if (isVisible)
                 AddMessage(MakeMessage(a, String.Format("{0} {1} corpse for {2} damage.", Conjugate(a, VERB_BUTCHER), c.DeadGuy.Name, dmg)));
@@ -7225,7 +7135,7 @@ namespace djack.RogueSurvivor.Engine
                         if (other != null)
                         {
                             string reason;
-                            if (m_Rules.CanActorGiveItemTo(player, other, gift, out reason))
+                            if (Rules.CanActorGiveItemTo(player, other, gift, out reason))
                             {
                                 // do it.
                                 actionDone = true;
@@ -7270,7 +7180,7 @@ namespace djack.RogueSurvivor.Engine
             }
 
             // roll charisma to later accept or refuse "maybe" deal.
-            int charismaChance = m_Rules.ActorCharismaticTradeChance(player);
+            int charismaChance = Rules.ActorCharismaticTradeChance(player);
             bool charismaSuccess = m_Session.Player_TurnCharismaRoll < charismaChance;
 
             // remember if player is trusted leader to notify him.
@@ -7428,12 +7338,12 @@ namespace djack.RogueSurvivor.Engine
                         // abused by the player as a refused trade doesnt end the turn.
                         if (player.Model.Abilities.HasSanity)
                         {
-                            RegenActorSanity(player, Rules.SANITY_RECOVER_CHAT_OR_TRADE);
+                            player.RegenActorSanity(Rules.SANITY_RECOVER_CHAT_OR_TRADE);
                             AddMessage(MakeMessage(player, string.Format("{0} better after chatting with", Conjugate(player, VERB_FEEL)), npc));
                         }
                         if (npc.Model.Abilities.HasSanity)
                         {
-                            RegenActorSanity(npc, Rules.SANITY_RECOVER_CHAT_OR_TRADE);
+                            npc.RegenActorSanity(Rules.SANITY_RECOVER_CHAT_OR_TRADE);
                             AddMessage(MakeMessage(npc, string.Format("{0} better after chatting with", Conjugate(npc, VERB_FEEL)), player));
                         }
                     }
@@ -7527,7 +7437,7 @@ namespace djack.RogueSurvivor.Engine
 
             // if trade done, spend player ap.
             if (actionDone)
-                SpendActorActionPoints(player, Rules.BASE_ACTION_COST);
+                player.SpendActorActionPoints(Rules.BASE_ACTION_COST);
 
             // alpha10.1
             // cleanup
@@ -7975,7 +7885,7 @@ namespace djack.RogueSurvivor.Engine
 
             // Get targeting data.
             HashSet<Point> fov = LOS.ComputeFOVFor(player, m_Session.WorldTime, m_Session.World.Weather);
-            List<Actor> potentialTargets = m_Rules.GetEnemiesInFov(player, fov);
+            List<Actor> potentialTargets = Rules.GetEnemiesInFov(player, fov);
 
             if (potentialTargets == null || potentialTargets.Count == 0)
             {
@@ -8160,7 +8070,7 @@ namespace djack.RogueSurvivor.Engine
                     if (allowed)
                     {
                         AddMessage(new Message(String.Format("{0} is now a personal enemy.", currentActor.TheName), m_Session.WorldTime.TurnCounter, Color.Orange));
-                        DoMakeAggression(player, currentActor);
+                        player.DoMakeAggression(currentActor);
                     }
                 }
             }
@@ -8439,7 +8349,7 @@ namespace djack.RogueSurvivor.Engine
                             }
                             else if (other.Leader == player)
                             {
-                                if (m_Rules.CanActorCancelLead(player, other, out reason))
+                                if (Rules.CanActorCancelLead(player, other, out reason))
                                 {
                                     // ask for confirmation.
                                     AddMessage(MakeYesNoMessage(String.Format("Really ask {0} to leave", other.TheName)));
@@ -8534,7 +8444,7 @@ namespace djack.RogueSurvivor.Engine
                         if (other != null)
                         {
                             // shove.
-                            if (m_Rules.CanActorShove(player, other, out reason))
+                            if (Rules.CanActorShove(player, other, out reason))
                             {
                                 if (HandlePlayerShoveActor(player, other))
                                 {
@@ -8669,7 +8579,7 @@ namespace djack.RogueSurvivor.Engine
                     if (player.Location.Map.IsInBounds(movePos))
                     {
                         string reason;
-                        if (m_Rules.CanShoveActorTo(other, movePos, out reason))
+                        if (Rules.CanShoveActorTo(other, movePos, out reason))
                         {
                             DoShove(player, other, movePos);
                             loop = false;
@@ -8749,7 +8659,7 @@ namespace djack.RogueSurvivor.Engine
                         if (other != null)
                         {
                             // pull-shove.
-                            if (m_Rules.CanActorShove(player, other, out reason))  // if can shove, can pull-shove.
+                            if (Rules.CanActorShove(player, other, out reason))  // if can shove, can pull-shove.
                             {
                                 if (HandlePlayerPullActor(player, other))
                                 {
@@ -8885,7 +8795,7 @@ namespace djack.RogueSurvivor.Engine
                     if (player.Location.Map.IsInBounds(moveToPos))
                     {
                         string reason;
-                        if (m_Rules.CanPullActor(player, other, moveToPos, out reason))
+                        if (Rules.CanPullActor(player, other, moveToPos, out reason))
                         {
                             DoPullActor(player, other, moveToPos);
                             loop = false;
@@ -10106,7 +10016,7 @@ namespace djack.RogueSurvivor.Engine
 
                     // try to do it.
                     string reason;
-                    if (m_Rules.CanActorGiveItemTo(follower, player, it, out reason))
+                    if (Rules.CanActorGiveItemTo(follower, player, it, out reason))
                     {
                         DoGiveItemTo(follower, m_Player, it);
                         loop = false;
@@ -10149,7 +10059,7 @@ namespace djack.RogueSurvivor.Engine
                 else
                 {
                     // AI attempted illegal action.                    
-                    SpendActorActionPoints(aiActor, Rules.BASE_ACTION_COST);
+                    aiActor.SpendActorActionPoints( Rules.BASE_ACTION_COST);
 
                     // alpha10.1 
                     // in debug build, throw exception.
@@ -10526,7 +10436,7 @@ namespace djack.RogueSurvivor.Engine
                     });
 
                 case AdvisorHint.RAIN:  // rainy weather, wait a bit.
-                    return m_Rules.IsWeatherRain(m_Session.World.Weather) && map.LocalTime.TurnCounter >= 2 * WorldTime.TURNS_PER_HOUR;
+                    return Rules.IsWeatherRain(m_Session.World.Weather) && map.LocalTime.TurnCounter >= 2 * WorldTime.TURNS_PER_HOUR;
 
                 case AdvisorHint.SPRAYS_PAINT:    // using spraypaint.
                     return m_Player.Inventory.HasItemOfType(typeof(ItemSprayPaint));
@@ -11319,10 +11229,10 @@ namespace djack.RogueSurvivor.Engine
                             lines.Add("Ordered to not follow you.");
                     }
                     // gauges.
-                    lines.Add(String.Format("Foo : {0} {1}h", actor.FoodPoints, FoodToHoursUntilHungry(actor.FoodPoints)));
+                    lines.Add(String.Format("Foo : {0} {1}h", actor.FoodPoints, actor.FoodToHoursUntilHungry(actor.FoodPoints)));
                     lines.Add(String.Format("Slp : {0} {1}h", actor.SleepPoints, actor.SleepToHoursUntilSleepy(actor.SleepPoints, actor.Location.Map.LocalTime.IsNight)));
-                    lines.Add(String.Format("San : {0} {1}h", actor.Sanity, m_Rules.SanityToHoursUntilUnstable(actor)));
-                    lines.Add(String.Format("Inf : {0} {1}%", actor.Infection, m_Rules.ActorInfectionPercent(actor)));
+                    lines.Add(String.Format("San : {0} {1}h", actor.Sanity, Rules.SanityToHoursUntilUnstable(actor)));
+                    lines.Add(String.Format("Inf : {0} {1}%", actor.Infection, Rules.ActorInfectionPercent(actor)));
                 }
                 else
                     lines.Add(String.Format("Leader : {0}.", Capitalize(actor.Leader.Name)));
@@ -11410,7 +11320,7 @@ namespace djack.RogueSurvivor.Engine
             lines.Add(sb.ToString());
 
             // 5. Attack, Dmg, Defence.
-            Attack attack = m_Rules.ActorMeleeAttack(actor, actor.CurrentMeleeAttack, null);
+            Attack attack = Rules.ActorMeleeAttack(actor, actor.CurrentMeleeAttack, null);
             lines.Add(String.Format("Atk : {0:D2} Dmg : {1:D2}", attack.HitValue, attack.DamageValue));
             Defence defence = actor.ActorDefence(actor.CurrentDefence);
             lines.Add(String.Format("Def : {0:D2}", defence.Value));
@@ -11586,7 +11496,7 @@ namespace djack.RogueSurvivor.Engine
                     lines.Add("Currently ON.");
                 else
                     lines.Add("Currently OFF.");
-                float powerRatio = m_Rules.ComputeMapPowerRatio(obj.Location.Map);
+                float powerRatio = Rules.ComputeMapPowerRatio(obj.Location.Map);
                 lines.Add(String.Format("The power gauge reads {0}%.", (int)(100 * powerRatio)));
             }
             else if (obj is Board)
@@ -11680,7 +11590,7 @@ namespace djack.RogueSurvivor.Engine
             string infectionEst = "???";
             if (necrology >= Rules.SKILL_NECROLOGY_LEVEL_FOR_INFECTION)
             {
-                int infectionP = m_Rules.ActorInfectionPercent(c.DeadGuy);
+                int infectionP = Rules.ActorInfectionPercent(c.DeadGuy);
                 if (infectionP == 0) infectionEst = "0/7 - none";
                 else if (infectionP < 5) infectionEst = "1/7 - traces";
                 else if (infectionP < 15) infectionEst = "2/7 - minor";
@@ -11695,7 +11605,7 @@ namespace djack.RogueSurvivor.Engine
             string riseEst = "???";
             if (necrology >= Rules.SKILL_NECROLOGY_LEVEL_FOR_RISE)
             {
-                int riseP = 2 * m_Rules.CorpseZombifyChance(c, c.DeadGuy.Location.Map.LocalTime, false);
+                int riseP = 2 * Rules.CorpseZombifyChance(c, c.DeadGuy.Location.Map.LocalTime, false);
                 if (riseP < 5) riseEst = "0/6 - extremely unlikely";
                 else if (riseP < 20) riseEst = "1/6 - unlikely";
                 else if (riseP < 40) riseEst = "2/6 - possible";
@@ -11725,7 +11635,7 @@ namespace djack.RogueSurvivor.Engine
             int medic = m_Player.Sheet.SkillTable.GetSkillLevel((int)Skills.IDs.MEDIC);
             if (medic >= Rules.SKILL_MEDIC_LEVEL_FOR_REVIVE_EST)
             {
-                int reviveP = m_Rules.CorpseReviveChance(m_Player, c);
+                int reviveP = Rules.CorpseReviveChance(m_Player, c);
                 if (reviveP == 0) reviveEst = "impossible";
                 else if (reviveP < 5) reviveEst = "0/6 - extremely unlikely";
                 else if (reviveP < 20) reviveEst = "1/6 - unlikely";
@@ -12100,7 +12010,7 @@ namespace djack.RogueSurvivor.Engine
 
             // alpha10 dont add lines for zero values
 
-            int healingForPlayer = (m_Player == null ? m.Healing : m_Rules.ActorMedicineEffect(m_Player, m.Healing));
+            int healingForPlayer = (m_Player == null ? m.Healing : Rules.ActorMedicineEffect(m_Player, m.Healing));
             if (m.Healing != 0)
             {
                 if (healingForPlayer == m.Healing)
@@ -12109,7 +12019,7 @@ namespace djack.RogueSurvivor.Engine
                     lines.Add(String.Format("Healing : +{0} (+{1})", healingForPlayer, m.Healing));
             }
 
-            int staminaForPlayer = (m_Player == null ? m.StaminaBoost : m_Rules.ActorMedicineEffect(m_Player, m.StaminaBoost));
+            int staminaForPlayer = (m_Player == null ? m.StaminaBoost : Rules.ActorMedicineEffect(m_Player, m.StaminaBoost));
             if (m.StaminaBoost != 0)
             {
                 if (staminaForPlayer == m.StaminaBoost)
@@ -12118,7 +12028,7 @@ namespace djack.RogueSurvivor.Engine
                     lines.Add(String.Format("Stamina : +{0} (+{1})", staminaForPlayer, m.StaminaBoost));
             }
 
-            int sleepForPlayer = (m_Player == null ? m.SleepBoost : m_Rules.ActorMedicineEffect(m_Player, m.SleepBoost));
+            int sleepForPlayer = (m_Player == null ? m.SleepBoost : Rules.ActorMedicineEffect(m_Player, m.SleepBoost));
             if (m.SleepBoost != 0)
             {
                 if (sleepForPlayer == m.SleepBoost)
@@ -12127,7 +12037,7 @@ namespace djack.RogueSurvivor.Engine
                     lines.Add(String.Format("Sleep   : +{0} (+{1})", sleepForPlayer, m.SleepBoost));
             }
 
-            int sanForPlayer = (m_Player == null ? m.SanityCure : m_Rules.ActorMedicineEffect(m_Player, m.SanityCure));
+            int sanForPlayer = (m_Player == null ? m.SanityCure : Rules.ActorMedicineEffect(m_Player, m.SanityCure));
             if (m.SanityCure != 0)
             {
                 if (sanForPlayer == m.SanityCure)
@@ -12138,7 +12048,7 @@ namespace djack.RogueSurvivor.Engine
 
             if (Rules.HasInfection(m_Session.GameMode))
             {
-                int cureForPlayer = (m_Player == null ? m.InfectionCure : m_Rules.ActorMedicineEffect(m_Player, m.InfectionCure));
+                int cureForPlayer = (m_Player == null ? m.InfectionCure : Rules.ActorMedicineEffect(m_Player, m.InfectionCure));
                 if (m.InfectionCure != 0)
                 {
                     if (cureForPlayer == m.InfectionCure)
@@ -12160,7 +12070,7 @@ namespace djack.RogueSurvivor.Engine
             lines.Add("> barricade material");
 
             // 1. Barricading value.
-            int barForPlayer = (m_Player == null ? m.BarricadingValue : m_Rules.ActorBarricadingPoints(m_Player, m.BarricadingValue));
+            int barForPlayer = (m_Player == null ? m.BarricadingValue : Rules.ActorBarricadingPoints(m_Player, m.BarricadingValue));
             if (barForPlayer == m.BarricadingValue)
                 lines.Add(String.Format("Barricading : +{0}", m.BarricadingValue));
             else
@@ -12335,7 +12245,7 @@ namespace djack.RogueSurvivor.Engine
                 }
             }
             // alpha10
-            lines.Add(string.Format("Trigger chance for you : {0}%.", m_Rules.GetTrapTriggerChance(tr, m_Player)));
+            lines.Add(string.Format("Trigger chance for you : {0}%.", tr.GetTrapTriggerChance(m_Player)));
 
             // 2. Flags
             if (m.IsOneTimeUse) lines.Add("Desactives when triggered.");
@@ -12501,35 +12411,9 @@ namespace djack.RogueSurvivor.Engine
             return batteries / WorldTime.TURNS_PER_HOUR;
         }
 
-        int FoodToHoursUntilHungry(int food)
-        {
-            int left = food - Rules.FOOD_HUNGRY_LEVEL;
-            if (left <= 0)
-                return 0;
-            return left / WorldTime.TURNS_PER_HOUR;
-        }
 
-        int FoodToHoursUntilRotHungry(int food)
-        {
-            int left = food - Rules.ROT_HUNGRY_LEVEL;
-            if (left <= 0)
-                return 0;
-            return left / WorldTime.TURNS_PER_HOUR;
-        }
 
-        public bool IsAlmostHungry(Actor actor)
-        {
-            if (!actor.Model.Abilities.HasToEat)
-                return false;
-            return FoodToHoursUntilHungry(actor.FoodPoints) <= 3;
-        }
 
-        public bool IsAlmostRotHungry(Actor actor)
-        {
-            if (!actor.Model.Abilities.IsRotting)
-                return false;
-            return FoodToHoursUntilRotHungry(actor.FoodPoints) <= 3;
-        }
         #endregion
 
         #region Translating commands
@@ -12566,195 +12450,13 @@ namespace djack.RogueSurvivor.Engine
 
         #region Movement
 
-        public void OnActorEnterTile(Actor actor)
-        {
-            Map map = actor.Location.Map;
-            Point pos = actor.Location.Position;
 
-            // Check traps.
-            // Don't check if there is a covering mobj there.
-            if (!m_Rules.IsTrapCoveringMapObjectThere(map, pos))
-            {
-                Inventory itemsThere = map.GetItemsAt(pos);
-                if (itemsThere != null)
-                {
-                    List<Item> removeThem = null;
-                    foreach (Item it in itemsThere.Items)
-                    {
-                        ItemTrap trap = it as ItemTrap;
-                        if (trap == null || !trap.IsActivated)
-                            continue;
-                        if (TryTriggerTrap(trap, actor))
-                        {
-                            if (removeThem == null) removeThem = new List<Item>(itemsThere.CountItems);
-                            removeThem.Add(it);
-                        }
-                    }
-                    if (removeThem != null)
-                    {
-                        foreach (Item it in removeThem)
-                            map.RemoveItemAt(it, pos);
-                    }
-                    // Kill actor?
-                    if (actor.HitPoints <= 0)
-                        KillActor(null, actor, "trap");
-                }
-            }
-        }
-
-        bool TryActorLeaveTile(Actor actor)
-        {
-            Map map = actor.Location.Map;
-            Point pos = actor.Location.Position;
-            bool canLeave = true;
-
-            // Check traps.
-            if (!m_Rules.IsTrapCoveringMapObjectThere(map, pos))
-            {
-                Inventory itemsThere = map.GetItemsAt(pos);
-                if (itemsThere != null)
-                {
-                    List<Item> removeThem = null;
-                    bool hasTriggeredTraps = false;
-                    foreach (Item it in itemsThere.Items)
-                    {
-                        ItemTrap trap = it as ItemTrap;
-                        if (trap == null || !trap.IsTriggered)
-                            continue;
-                        hasTriggeredTraps = true;
-                        bool isDestroyed = false;
-                        if (!TryEscapeTrap(trap, actor, out isDestroyed))
-                        {
-                            canLeave = false;
-                            continue;
-                        }
-                        if (isDestroyed)
-                        {
-                            if (removeThem == null) removeThem = new List<Item>(itemsThere.CountItems);
-                            removeThem.Add(it);
-                        }
-                    }
-                    if (removeThem != null)
-                    {
-                        foreach (Item it in removeThem)
-                            map.RemoveItemAt(it, pos);
-                    }
-                    // if can leave, force un-trigger all traps.
-                    if (canLeave && hasTriggeredTraps)
-                        UntriggerAllTrapsHere(actor.Location);
-                }
-            }
-
-            // Check adjacent Z-Grabs
-            bool visible = IsVisibleToPlayer(actor);
-            map.ForEachAdjacentInMap(pos, (adj) =>
-            {
-                Actor grabber = map.GetActorAt(adj);
-                if (grabber == null)
-                    return;
-                if (!grabber.Model.Abilities.IsUndead)
-                    return;
-                if (!grabber.IsEnemiesWith(actor))
-                    return;
-                int chance = m_Rules.ZGrabChance(grabber, actor);
-                if (chance == 0)
-                    return;
-                if (DiceRoller.RollChance(m_Rules.ZGrabChance(grabber, actor)))
-                {
-                    // grabbed!
-                    if (visible)
-                        AddMessage(MakeMessage(grabber, Conjugate(grabber, VERB_GRAB), actor));
-                    // stuck there!
-                    canLeave = false;
-                }
-            });
-
-            return canLeave;
-        }
         #endregion
 
         #region Traps
-        /// <summary>
-        /// @return true if item must be removed (destroyed).
-        /// </summary>
-        /// <param name="trap"></param>
-        /// <returns></returns>
-        bool TryTriggerTrap(ItemTrap trap, Actor victim)
-        {
-            // check trigger chance.
-            if (m_Rules.CheckTrapTriggers(trap, victim))
-                DoTriggerTrap(trap, victim.Location.Map, victim.Location.Position, victim, null);
-            else
-            {
-                if (IsVisibleToPlayer(victim))
-                    AddMessage(MakeMessage(victim, String.Format("safely {0} {1}.", Conjugate(victim, VERB_AVOID), trap.TheName)));
-            }
-            // destroy?
-            return trap.Quantity == 0;
-        }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="trap"></param>
-        /// <param name="victim"></param>
-        /// <param name="isDestroyed"></param>
-        /// <returns>true succesful escape</returns>
-        bool TryEscapeTrap(ItemTrap trap, Actor victim, out bool isDestroyed)
-        {
-            isDestroyed = false;
-            ItemTrapModel model = trap.TrapModel;
 
-            // no brainer.
-            if (model.BlockChance <= 0)
-                return true;
 
-            bool visible = IsVisibleToPlayer(victim);
-            bool canEscape = false;
-
-            // check escape chance.
-            if (m_Rules.CheckTrapEscape(trap, victim))
-            {
-                // un-triggered and escape.
-                trap.IsTriggered = false;
-                canEscape = true;
-
-                // tell
-                if (visible)
-                    AddMessage(MakeMessage(victim, String.Format("{0} {1}.", Conjugate(victim, VERB_ESCAPE), trap.TheName)));
-
-                // then check break on escape chance.
-                if (m_Rules.CheckTrapEscapeBreaks(trap, victim))
-                {
-                    if (visible)
-                        AddMessage(MakeMessage(victim, String.Format("{0} {1}.", Conjugate(victim, VERB_BREAK), trap.TheName)));
-                    --trap.Quantity;
-                    isDestroyed = trap.Quantity <= 0;
-                }
-            }
-            else
-            {
-                // tell
-                if (visible)
-                    AddMessage(MakeMessage(victim, String.Format("is trapped by {0}!", trap.TheName)));
-            }
-
-            // escape?
-            return canEscape;
-        }
-
-        void UntriggerAllTrapsHere(Location loc)
-        {
-            Inventory itemsThere = loc.Map.GetItemsAt(loc.Position);
-            if (itemsThere == null) return;
-            foreach (Item it in itemsThere.Items)
-            {
-                ItemTrap trap = it as ItemTrap;
-                if (trap == null || !trap.IsTriggered)
-                    continue;
-                trap.IsTriggered = false;
-            }
-        }
 
         /// <summary>
         /// Checks that there is a map object that triggers the traps there.
@@ -12764,7 +12466,7 @@ namespace djack.RogueSurvivor.Engine
         /// <param name="pos"></param>
         void CheckMapObjectTriggersTraps(Map map, Point pos)
         {
-            if (!m_Rules.IsTrapTriggeringMapObjectThere(map, pos))
+            if (!Rules.IsTrapTriggeringMapObjectThere(map, pos))
                 return;
 
             MapObject mobj = map.GetMapObjectAt(pos);
@@ -12778,7 +12480,7 @@ namespace djack.RogueSurvivor.Engine
                 ItemTrap trap = it as ItemTrap;
                 if (trap == null || !trap.IsActivated)
                     continue;
-                DoTriggerTrap(trap, map, pos, null, mobj);
+                trap.DoTriggerTrap(map, pos, null, mobj);
                 if (trap.Quantity <= 0)
                 {
                     if (removeThem == null) removeThem = new List<Item>(itemsThere.CountItems);
@@ -12792,68 +12494,7 @@ namespace djack.RogueSurvivor.Engine
             }
         }
 
-        /// <summary>
-        /// Trigger a trap by an actor or a map object.
-        /// </summary>
-        /// <param name="trap"></param>
-        /// <param name="map"></param>
-        /// <param name="pos"></param>
-        /// <param name="victim"></param>
-        /// <param name="mobj"></param>
-        void DoTriggerTrap(ItemTrap trap, Map map, Point pos, Actor victim, MapObject mobj)
-        {
-            ItemTrapModel model = trap.TrapModel;
-            bool visible = IsVisibleToPlayer(map, pos);
 
-            // flag.
-            trap.IsTriggered = true;
-
-            // effect: damage on victim? (actor)
-            int damage = model.Damage * trap.Quantity;
-            if (damage > 0 && victim != null)
-            {
-                InflictDamage(victim, damage);
-                if (visible)
-                {
-                    AddMessage(MakeMessage(victim, String.Format("is hurt by {0} for {1} damage!", trap.AName, damage)));
-                    AddOverlay(new OverlayImage(MapToScreen(victim.Location.Position), GameImages.ICON_MELEE_DAMAGE));
-                    AddOverlay(new OverlayText(MapToScreen(victim.Location.Position).Add(DAMAGE_DX, DAMAGE_DY), Color.White, damage.ToString(), Color.Black));
-                    RedrawPlayScreen();
-                    AnimDelay(victim.IsPlayer ? DELAY_NORMAL : DELAY_SHORT);
-                    ClearOverlays();
-                    RedrawPlayScreen();
-                }
-            }
-            // effect: noise? (actor, mobj)
-            if (model.IsNoisy)
-            {
-                if (visible)
-                {
-                    if (victim != null)
-                        AddMessage(MakeMessage(victim, String.Format("stepping on {0} makes a bunch of noise!", trap.AName)));
-                    else if (mobj != null)
-                        AddMessage(new Message(String.Format("{0} makes a lot of noise!", Capitalize(trap.TheName)), map.LocalTime.TurnCounter));
-                }
-                OnLoudNoise(map, pos, model.NoiseName);
-            }
-
-            // if one time trigger = desactivate.
-            if (model.IsOneTimeUse)
-                trap.Desactivate();  //alpha10 //trap.IsActivated = false;
-
-            // then check break chance (actor, mobj)
-            if (m_Rules.CheckTrapStepOnBreaks(trap, mobj))
-            {
-                if (visible)
-                {
-                    if (victim != null)
-                        AddMessage(MakeMessage(victim, String.Format("{0} {1}.", Conjugate(victim, VERB_CRUSH), trap.TheName)));
-                    else if (mobj != null)
-                        AddMessage(new Message(String.Format("{0} breaks the {1}.", Capitalize(mobj.TheName), trap.TheName), map.LocalTime.TurnCounter));
-                }
-                --trap.Quantity;
-            }
-        }
         #endregion
 
         #region Leaving maps & Using exits.
@@ -12889,14 +12530,14 @@ namespace djack.RogueSurvivor.Engine
                 {
                     // can follow, do it now.
                     // Try to leave tile.
-                    if (TryActorLeaveTile(fo))
+                    if (fo.TryActorLeaveTile())
                     {
                         Point spot = adjList[DiceRoller.Roll(0, adjList.Count)];
                         fromMap.RemoveActor(fo);
                         toMap.PlaceActorAt(fo, spot);
                         toMap.MoveActorToFirstPosition(fo);
                         // Trigger stuff.
-                        OnActorEnterTile(fo);
+                        fo.OnActorEnterTile();
                     }
                 }
             }
@@ -12951,7 +12592,7 @@ namespace djack.RogueSurvivor.Engine
         public void DoCancelLead(Actor actor, Actor follower)
         {
             // spend AP.
-            SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+            actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
 
             // remove lead.
             actor.RemoveFollower(follower);
@@ -13012,7 +12653,7 @@ namespace djack.RogueSurvivor.Engine
                 //DoorWindow door = player.Location.Map.GetMapObjectAt(player.Location.Position + direction) as DoorWindow;
                 //if (door != null && door.IsBarricaded && !player.Model.Abilities.IsUndead)
                 //{
-                //    if (!m_Rules.IsActorTired(player))
+                //    if (!Rules.IsActorTired(player))
                 //    {
                 //        // ask for confirmation.
                 //        AddMessage(MakeYesNoMessage("Really tear down the barricade"));
@@ -13051,47 +12692,7 @@ namespace djack.RogueSurvivor.Engine
         #endregion
 
         #region Making enemies & Attacking
-        public void DoMakeAggression(Actor aggressor, Actor target)
-        {
-            // no need if in enemy factions.
-            if (aggressor.Faction.IsEnemyOf(target.Faction))
-                return;
-
-            bool alreadyEnemies = aggressor.IsAggressorOf(target) || target.IsAggressorOf(aggressor);
-
-            // if target is AI and has not aggressor as enemy, emote.
-            if (!target.IsPlayer && !target.IsSleeping && !aggressor.IsAggressorOf(target) && !target.IsAggressorOf(aggressor))
-                target.DoSay(aggressor, "BASTARD! TRAITOR!", Sayflags.IS_FREE_ACTION | Sayflags.IS_DANGER);
-
-            // aggressor and selfdefence
-            aggressor.MarkAsAgressorOf(target);
-            target.MarkAsSelfDefenceFrom(aggressor);
-
-
-            // then handle special cases.
-            // make enemy of all faction actors on maps:
-            // 1. Making an enemy of cops.
-            // 2. Making an enemy of soldiers.
-            #region
-            if (!target.IsSleeping)
-            {
-                Faction tFaction = target.Faction;
-                // 1. Making an enemy of cops.
-                if (tFaction == GameFactions.ThePolice)
-                {
-                    // only non-law enforcers or murderers make enemies of cops by attacking cops.
-                    if (!aggressor.Model.Abilities.IsLawEnforcer || m_Rules.IsMurder(aggressor, target))
-                        OnMakeEnemyOfCop(aggressor, target, alreadyEnemies);
-                }
-                // 2. Making an enemy of soldiers.
-                else if (tFaction == GameFactions.TheArmy)
-                {
-                    OnMakeEnemyOfSoldier(aggressor, target, alreadyEnemies);
-                }
-            }
-            #endregion
-        }
-
+ 
         // FIXME factorize common code with OnMakeEnemyOfSoldier
         void OnMakeEnemyOfCop(Actor aggressor, Actor cop, bool wasAlreadyEnemy)
         {
@@ -13221,12 +12822,12 @@ namespace djack.RogueSurvivor.Engine
             Defence defence = defender.ActorDefence(defender.CurrentDefence);
 
             // spend STA.
-            SpendActorStaminaPoints(attacker, attack.StaminaPenalty);
+            attacker.SpendActorStaminaPoints(attack.StaminaPenalty);
 
             // Firearms weapon jam?
             if (attack.Kind == AttackKind.FIREARM)
             {
-                int jamChances = m_Rules.IsWeatherRain(m_Session.World.Weather) ? Rules.FIREARM_JAM_CHANCE_RAIN : Rules.FIREARM_JAM_CHANCE_NO_RAIN;
+                int jamChances = Rules.IsWeatherRain(m_Session.World.Weather) ? Rules.FIREARM_JAM_CHANCE_RAIN : Rules.FIREARM_JAM_CHANCE_NO_RAIN;
                 if (DiceRoller.RollChance(jamChances))
                 {
                     if (IsVisibleToPlayer(attacker))
@@ -13283,7 +12884,7 @@ namespace djack.RogueSurvivor.Engine
             if (hitRoll > defRoll)
             {
                 // roll damage - double potential if def is sleeping.
-                int dmgRoll = m_Rules.RollDamage(defender.IsSleeping ? attack.DamageValue * 2 : attack.DamageValue) - defence.Protection_Shot;
+                int dmgRoll = Rules.RollDamage(defender.IsSleeping ? attack.DamageValue * 2 : attack.DamageValue) - defence.Protection_Shot;
                 if (dmgRoll > 0)
                 {
                     // inflict dmg.
@@ -13295,7 +12896,7 @@ namespace djack.RogueSurvivor.Engine
                         // show.
                         if (isDefVisible)
                         {
-                            AddMessage(MakeMessage(attacker, Conjugate(attacker, defender.Model.Abilities.IsUndead ? VERB_DESTROY : m_Rules.IsMurder(attacker, defender) ? VERB_MURDER : VERB_KILL), defender, " !"));
+                            AddMessage(MakeMessage(attacker, Conjugate(attacker, defender.Model.Abilities.IsUndead ? VERB_DESTROY : Rules.IsMurder(attacker, defender) ? VERB_MURDER : VERB_KILL), defender, " !"));
                             AddOverlay(new OverlayImage(MapToScreen(defender.Location.Position), GameImages.ICON_KILLED));
                             RedrawPlayScreen();
                             AnimDelay(DELAY_LONG);
@@ -13756,14 +13357,14 @@ namespace djack.RogueSurvivor.Engine
         public void DoGiveItemTo(Actor actor, Actor target, Item gift)
         {
             // spend APs.
-            SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+            actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
 
             // if leader give to follower, improve trust.
             if (target.Leader == actor)
             {
                 // interesting item?
                 BaseAI ai = target.Controller as BaseAI;
-                bool isInterestingItem = (ai != null && ai.IsInterestingItemToOwn(this, gift, BaseAI.ItemSource.ANOTHER_ACTOR));
+                bool isInterestingItem = (ai != null && ai.IsInterestingItemToOwn(gift, BaseAI.ItemSource.ANOTHER_ACTOR));
 
                 // emote.
                 if (isInterestingItem)
@@ -13912,7 +13513,7 @@ namespace djack.RogueSurvivor.Engine
             }
 
             // spend APs.
-            SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+            actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
 
             // recover food points.
             int baseNutrition = food.FoodItemNutrition(actor.Location.Map.LocalTime.TurnCounter);
@@ -13990,14 +13591,14 @@ namespace djack.RogueSurvivor.Engine
             }
 
             // spend APs.
-            SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+            actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
 
             // recover HPs, STA, SLP, INF, SAN.
-            actor.HitPoints = Math.Min(actor.HitPoints + m_Rules.ActorMedicineEffect(actor, med.Healing), actor.ActorMaxHPs());
-            actor.StaminaPoints = Math.Min(actor.StaminaPoints + m_Rules.ActorMedicineEffect(actor, med.StaminaBoost), actor.ActorMaxSTA());
-            actor.SleepPoints = Math.Min(actor.SleepPoints + m_Rules.ActorMedicineEffect(actor, med.SleepBoost), actor.ActorMaxSleep());
-            actor.Infection = Math.Max(0, actor.Infection - m_Rules.ActorMedicineEffect(actor, med.InfectionCure));
-            actor.Sanity = Math.Min(actor.Sanity + m_Rules.ActorMedicineEffect(actor, med.SanityCure), actor.ActorMaxSanity());
+            actor.HitPoints = Math.Min(actor.HitPoints + Rules.ActorMedicineEffect(actor, med.Healing), actor.ActorMaxHPs());
+            actor.StaminaPoints = Math.Min(actor.StaminaPoints + Rules.ActorMedicineEffect(actor, med.StaminaBoost), actor.ActorMaxSTA());
+            actor.SleepPoints = Math.Min(actor.SleepPoints + Rules.ActorMedicineEffect(actor, med.SleepBoost), actor.ActorMaxSleep());
+            actor.Infection = Math.Max(0, actor.Infection - Rules.ActorMedicineEffect(actor, med.InfectionCure));
+            actor.Sanity = Math.Min(actor.Sanity + Rules.ActorMedicineEffect(actor, med.SanityCure), actor.ActorMaxSanity());
 
             // consume it.
             actor.Inventory.Consume(med);
@@ -14010,7 +13611,7 @@ namespace djack.RogueSurvivor.Engine
         void DoUseAmmoItem(Actor actor, ItemAmmo ammoItem)
         {
             // spend APs.
-            SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+            actor.SpendActorActionPoints( Rules.BASE_ACTION_COST);
 
             // get weapon.
             ItemRangedWeapon ranged = actor.GetEquippedWeapon() as ItemRangedWeapon;
@@ -14036,33 +13637,10 @@ namespace djack.RogueSurvivor.Engine
             }
         }
 
-        // alpha10 obsolete
-#if false
-        void DoUseSprayScentItem(Actor actor, ItemSprayScent spray)
-        {
-            // spend APs.
-            SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
-
-            // consume spray.
-            --spray.SprayQuantity;
-
-            // add odor.
-            Map map = actor.Location.Map;
-            ItemSprayScentModel model = spray.Model as ItemSprayScentModel;
-            map.ModifyScentAt(model.Odor, model.Strength, actor.Location.Position);
-
-            // message.
-            if (IsVisibleToPlayer(actor))
-            {
-                AddMessage(MakeMessage(actor, Conjugate(actor, VERB_SPRAY), spray));
-            }
-        }
-#endif
-
         void DoUseTrapItem(Actor actor, ItemTrap trap)
         {
             // spend APs.
-            SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+            actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
 
             // toggle activation.
             // alpha10 //trap.IsActivated = !trap.IsActivated;
@@ -14081,10 +13659,10 @@ namespace djack.RogueSurvivor.Engine
             bool visible = IsVisibleToPlayer(actor);
 
             // spend APs.
-            SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+            actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
 
             // recover san.
-            RegenActorSanity(actor, ent.EntertainmentModel.Value);
+            actor.RegenActorSanity(ent.EntertainmentModel.Value);
 
             // message.
             if (visible)
@@ -14199,8 +13777,8 @@ namespace djack.RogueSurvivor.Engine
                 foreach (Actor h in helpers)
                 {
                     // spend fo AP & STA.
-                    SpendActorActionPoints(h, Rules.BASE_ACTION_COST);
-                    SpendActorStaminaPoints(h, staCost);
+                    h.SpendActorActionPoints( Rules.BASE_ACTION_COST);
+                    h.SpendActorStaminaPoints( staCost);
                     // message.
                     if (isVisibleMobj || IsVisibleToPlayer(h))
                         AddMessage(MakeMessage(h, String.Format("{0} {1} {2} {3}.", Conjugate(h, VERB_HELP), actor.Name, (isPulling ? "pulling" : "pushing"), mapObj.TheName)));
@@ -14212,16 +13790,16 @@ namespace djack.RogueSurvivor.Engine
         public void DoShove(Actor actor, Actor target, Point toPos)
         {
             // Target try to leave tile.
-            if (!TryActorLeaveTile(target))
+            if (!target.TryActorLeaveTile())
             {
                 // waste ap.
-                SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+                actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
                 return;
             }
 
             // spend AP & STA.
-            SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
-            SpendActorStaminaPoints(actor, Rules.DEFAULT_ACTOR_WEIGHT);
+            actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
+            actor.SpendActorStaminaPoints(Rules.DEFAULT_ACTOR_WEIGHT);
 
             // force target to stop dragging corpses.
             target.DoStopDraggingCorpses();
@@ -14234,12 +13812,12 @@ namespace djack.RogueSurvivor.Engine
             {
                 // shoving away, need to follow.
                 // Try to leave tile.
-                if (TryActorLeaveTile(actor))  // alpha10
+                if (actor.TryActorLeaveTile())  // alpha10
                 {
                     map.RemoveActor(actor);
                     map.PlaceActorAt(actor, prevTargetPos);
                     // Trigger stuff.
-                    OnActorEnterTile(actor);
+                    actor.OnActorEnterTile();
                 }
             }
 
@@ -14256,7 +13834,7 @@ namespace djack.RogueSurvivor.Engine
                 DoWakeUp(target);
 
             // Trigger stuff.
-            OnActorEnterTile(target);
+            target.OnActorEnterTile();
         }
 
 
@@ -14266,22 +13844,22 @@ namespace djack.RogueSurvivor.Engine
             bool isVisible = IsVisibleToPlayer(actor) || IsVisibleToPlayer(target);
 
             // try leaving tile, both actors and target
-            if (!TryActorLeaveTile(actor))
+            if (!actor.TryActorLeaveTile())
             {
                 // waste ap.
-                SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+                actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
                 return;
             }
-            if (!TryActorLeaveTile(target))
+            if (!target.TryActorLeaveTile())
             {
                 // waste ap.
-                SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+                actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
                 return;
             }
 
             // spend AP & STA.
-            SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
-            SpendActorStaminaPoints(actor, Rules.DEFAULT_ACTOR_WEIGHT);
+            actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
+            actor.SpendActorStaminaPoints(Rules.DEFAULT_ACTOR_WEIGHT);
 
             // force target to stop dragging corpses.
             target.DoStopDraggingCorpses();
@@ -14308,29 +13886,8 @@ namespace djack.RogueSurvivor.Engine
             }
 
             // Trigger stuff.
-            OnActorEnterTile(actor);
-            OnActorEnterTile(target);
-        }
-        #endregion
-
-        #region Sleeping & Waking up
-
-
-        public void DoWakeUp(Actor actor)
-        {
-            // set activity & state.
-            actor.Activity = Activity.IDLE;
-            actor.IsSleeping = false;
-
-            // message.
-            if (IsVisibleToPlayer(actor))
-            {
-                AddMessage(MakeMessage(actor, String.Format("{0}.", Conjugate(actor, VERB_WAKE_UP))));
-            }
-
-            // stop sleep music if player.
-            if (actor.IsPlayer && m_MusicManager.Music == GameMusics.SLEEP)
-                m_MusicManager.Stop();
+            actor.OnActorEnterTile();
+            target.OnActorEnterTile();
         }
         #endregion
 
@@ -14338,7 +13895,7 @@ namespace djack.RogueSurvivor.Engine
         void DoTag(Actor actor, ItemSprayPaint spray, Point pos)
         {
             // spend AP.
-            SpendActorActionPoints(actor, Rules.BASE_ACTION_COST);
+            actor.SpendActorActionPoints(Rules.BASE_ACTION_COST);
 
             // spend paint.
             --spray.PaintQuantity;
@@ -14360,7 +13917,7 @@ namespace djack.RogueSurvivor.Engine
         void DoGiveOrderTo(Actor master, Actor slave, ActorOrder order)
         {
             // master spend AP.
-            SpendActorActionPoints(master, Rules.BASE_ACTION_COST);
+            master.SpendActorActionPoints(Rules.BASE_ACTION_COST);
 
             // refuse if :
             // - master is not slave leader.
@@ -14394,7 +13951,7 @@ namespace djack.RogueSurvivor.Engine
         void DoCancelOrder(Actor master, Actor slave)
         {
             // master spend AP.
-            SpendActorActionPoints(master, Rules.BASE_ACTION_COST);
+            master.SpendActorActionPoints(Rules.BASE_ACTION_COST);
 
             // get AI.
             AIController ai = slave.Controller as AIController;
@@ -14446,7 +14003,7 @@ namespace djack.RogueSurvivor.Engine
                         continue;
 
                     // roll chance of waking up.
-                    int wakeupChance = m_Rules.ActorLoudNoiseWakeupChance(actor, noiseDistance);
+                    int wakeupChance = Rules.ActorLoudNoiseWakeupChance(actor, noiseDistance);
                     if (!DiceRoller.RollChance(wakeupChance))
                         continue;
 
@@ -14472,328 +14029,6 @@ namespace djack.RogueSurvivor.Engine
         #endregion
 
         #region Damaging, Killing & Disarming actors
-        void InflictDamage(Actor actor, int dmg)
-        {
-            // HP.
-            actor.HitPoints -= dmg;
-
-            // Stamina.
-            if (actor.Model.Abilities.CanTire)
-            {
-                actor.StaminaPoints -= dmg;
-            }
-
-            // Body armor breaks?
-            Item torsoItem = actor.GetEquippedItem(DollPart.TORSO);
-            if (torsoItem != null && torsoItem is ItemBodyArmor)
-            {
-                if (DiceRoller.RollChance(Rules.BODY_ARMOR_BREAK_CHANCE))
-                {
-                    // do it.
-                    OnUnequipItem(actor, torsoItem);
-                    actor.Inventory.RemoveAllQuantity(torsoItem);
-
-                    // message.
-                    if (IsVisibleToPlayer(actor))
-                    {
-                        AddMessage(MakeMessage(actor, String.Format(": {0} breaks and is now useless!", torsoItem.TheName)));
-                        RedrawPlayScreen();
-                        AnimDelay(actor.IsPlayer ? DELAY_NORMAL : DELAY_SHORT);
-                    }
-                }
-            }
-
-            // If sleeping, wake up dude!
-            if (actor.IsSleeping)
-                DoWakeUp(actor);
-        }
-
-        // alpha10 drop corpse optional
-        public void KillActor(Actor killer, Actor deadGuy, string reason, bool canDropCorpse = true)
-        {
-            // Sanity check.
-#if false
-            for some reason, this can happen with starved actors. no f*****g idea why since this is the only place where we set the dead flag.
-            if (deadGuy.IsDead)
-                throw new InvalidOperationException(String.Format("killing deadGuy that is already dead : killer={0} deadGuy={1} reason={2}", (
-                    killer == null ? "N/A" : killer.TheName), deadGuy.TheName, reason));
-#endif
-
-            // Set dead flag.
-            deadGuy.IsDead = true;
-
-            // force to stop dragging corpses.
-            deadGuy.DoStopDraggingCorpses();
-
-            // untrigger all traps here.
-            UntriggerAllTrapsHere(deadGuy.Location);
-
-            // living killing undead = restore sanity.
-            if (killer != null && !killer.Model.Abilities.IsUndead && killer.Model.Abilities.HasSanity && deadGuy.Model.Abilities.IsUndead)
-                RegenActorSanity(killer, Rules.SANITY_RECOVER_KILL_UNDEAD);
-
-            // death of bonded leader/follower hits sanity.
-            if (deadGuy.HasLeader)
-            {
-                if (m_Rules.HasActorBondWith(deadGuy.Leader, deadGuy))
-                {
-                    SpendActorSanity(deadGuy.Leader, Rules.SANITY_HIT_BOND_DEATH);
-                    if (IsVisibleToPlayer(deadGuy.Leader))
-                    {
-                        if (deadGuy.Leader.IsPlayer && !deadGuy.Leader.IsBotPlayer) ClearMessages();
-                        AddMessage(MakeMessage(deadGuy.Leader, String.Format("{0} deeply disturbed by {1} sudden death!",
-                            Conjugate(deadGuy.Leader, VERB_BE), deadGuy.Name)));
-                        if (deadGuy.Leader.IsPlayer && !deadGuy.Leader.IsBotPlayer) AddMessagePressEnter();
-                    }
-                }
-            }
-            else if (deadGuy.CountFollowers > 0)
-            {
-                foreach (Actor fo in deadGuy.Followers)
-                {
-                    if (m_Rules.HasActorBondWith(fo, deadGuy))
-                    {
-                        SpendActorSanity(fo, Rules.SANITY_HIT_BOND_DEATH);
-                        if (IsVisibleToPlayer(fo))
-                        {
-                            if (fo.IsPlayer && !fo.IsBotPlayer) ClearMessages();
-                            AddMessage(MakeMessage(fo, String.Format("{0} deeply disturbed by {1} sudden death!",
-                                Conjugate(fo, VERB_BE), deadGuy.Name)));
-                            if (fo.IsPlayer && !fo.IsBotPlayer) AddMessagePressEnter();
-                        }
-                    }
-                }
-            }
-
-            // Unique actor?
-            if (deadGuy.IsUnique)
-            {
-                if (killer != null)
-                    m_Session.Scoring.AddEvent(deadGuy.Location.Map.LocalTime.TurnCounter,
-                        String.Format("* {0} was killed by {1} {2}! *", deadGuy.TheName, killer.Model.Name, killer.TheName));
-                else
-                    m_Session.Scoring.AddEvent(deadGuy.Location.Map.LocalTime.TurnCounter,
-                        String.Format("* {0} died by {1}! *", deadGuy.TheName, reason));
-            }
-
-            // Player dead?
-            // BEFORE removing followers & dropping items.
-            if (deadGuy == m_Player)
-                PlayerDied(killer, reason);
-
-            // Remove followers.
-            deadGuy.RemoveAllFollowers();
-
-            // Remove from leader.
-            #region
-            if (deadGuy.Leader != null)
-            {
-                // player's follower killed : scoring and message.
-                if (deadGuy.Leader.IsPlayer)
-                {
-                    string deathEvent;
-                    if (killer != null)
-                        deathEvent = String.Format("Follower {0} was killed by {1} {2}!", deadGuy.TheName, killer.Model.Name, killer.TheName);
-                    else
-                        deathEvent = String.Format("Follower {0} died by {1}!", deadGuy.TheName, reason);
-                    m_Session.Scoring.AddEvent(deadGuy.Location.Map.LocalTime.TurnCounter, deathEvent);
-                }
-
-                deadGuy.Leader.RemoveFollower(deadGuy);
-            }
-            #endregion
-
-            // Remove aggressor & self defence relations.
-            bool wasMurder = (killer != null && m_Rules.IsMurder(killer, deadGuy));
-            deadGuy.RemoveAllAgressorSelfDefenceRelations();
-
-            // Remove from map.
-            deadGuy.Location.Map.RemoveActor(deadGuy);
-
-            // Drop some inventory items.
-            #region
-            if (deadGuy.Inventory != null && !deadGuy.Inventory.IsEmpty)
-            {
-                int deadItemsCount = deadGuy.Inventory.CountItems;
-                Item[] dropThem = new Item[deadItemsCount];
-                for (int i = 0; i < dropThem.Length; i++)
-                    dropThem[i] = deadGuy.Inventory[i];
-                for (int i = 0; i < dropThem.Length; i++)
-                {
-                    Item it = dropThem[i];
-                    int chance = (it is ItemAmmo || it is ItemFood) ? Rules.VICTIM_DROP_AMMOFOOD_ITEM_CHANCE : Rules.VICTIM_DROP_GENERIC_ITEM_CHANCE;
-                    if (it.Model.IsUnbreakable || it.IsUnique || DiceRoller.RollChance(chance))
-                        DropItem(deadGuy, it);
-                }
-            }
-            #endregion
-
-            // Blood splat/Remains
-            if (!deadGuy.Model.Abilities.IsUndead)
-                SplatterBlood(deadGuy.Location.Map, deadGuy.Location.Position);
-#if false
-            disabled: avoid unecessary large saved games
-            if (deadGuy.Model.Abilities.IsUndead)
-                UndeadRemains(deadGuy.Location.Map, deadGuy.Location.Position);
-            else
-                SplatterBlood(deadGuy.Location.Map, deadGuy.Location.Position);
-#endif
-
-            // Corpse?
-            if (Rules.HasCorpses(m_Session.GameMode))
-            {
-                if (!deadGuy.Model.Abilities.IsUndead && canDropCorpse)
-                {
-                    DropCorpse(deadGuy);
-                }
-            }
-
-            // One more kill
-            if (killer != null)
-                ++killer.KillsCount;
-
-            // Player scoring
-            if (killer == m_Player)
-                PlayerKill(deadGuy);
-
-            // Undead level up?
-            #region
-            if (killer != null && Rules.HasEvolution(m_Session.GameMode))
-            {
-                if (killer.Model.Abilities.IsUndead)
-                {
-                    #region
-                    // check for evolution.
-                    ActorModel levelUpModel = CheckUndeadEvolution(killer);
-                    if (levelUpModel != null)
-                    {
-                        // Remember skills if any.
-                        SkillTable savedSkills = null;
-                        if (killer.Sheet.SkillTable != null && killer.Sheet.SkillTable.Skills != null)
-                            savedSkills = new SkillTable(killer.Sheet.SkillTable.Skills);
-
-                        // Do the transformation.
-                        killer.Model = levelUpModel;
-
-                        // If player, make sure it is setup properly.
-                        if (killer.IsPlayer)
-                            PrepareActorForPlayerControl(killer);
-
-                        // If had skills, give them back.
-                        if (savedSkills != null)
-                        {
-                            foreach (Skill s in savedSkills.Skills)
-                                for (int i = 0; i < s.Level; i++)
-                                {
-                                    killer.Sheet.SkillTable.AddOrIncreaseSkill(s.ID);
-                                    OnSkillUpgrade(killer, (Skills.IDs)s.ID);
-                                }
-                            m_TownGenerator.RecomputeActorStartingStats(killer);
-                        }
-
-                        // Message.
-                        if (IsVisibleToPlayer(killer))
-                        {
-                            AddOverlay(new OverlayRect(Color.Yellow, new Rectangle(MapToScreen(killer.Location.Position), new Size(TILE_SIZE, TILE_SIZE))));
-                            AddMessage(MakeMessage(killer, String.Format("{0} a {1} horror!", Conjugate(killer, VERB_TRANSFORM_INTO), levelUpModel.Name)));
-                            RedrawPlayScreen();
-                            AnimDelay(DELAY_LONG);
-                            ClearOverlays();
-                        }
-                    }
-                    #endregion
-                }
-            }
-            #endregion
-
-            // Trust : leader killing a follower target or adjacent enemy.
-            if (killer != null && killer.CountFollowers > 0)
-            {
-                foreach (Actor fo in killer.Followers)
-                {
-                    bool gainTrust = false;
-                    if (fo.TargetActor == deadGuy || (fo.IsEnemiesWith(deadGuy) && fo.Location.IsAdjacent(deadGuy.Location)))
-                        gainTrust = true;
-
-                    if (gainTrust)
-                    {
-                        fo.DoSay(killer, "That was close! Thanks for the help!!", Sayflags.IS_FREE_ACTION);
-                        ModifyActorTrustInLeader(fo, Rules.TRUST_LEADER_KILL_ENEMY, true);
-                    }
-                }
-            }
-
-            // Murder?
-            #region
-            if (wasMurder)
-            {
-                // one more murder.
-                ++killer.MurdersCounter;
-
-                // if player, log.
-                if (killer.IsPlayer)
-                    m_Session.Scoring.AddEvent(m_Session.WorldTime.TurnCounter, String.Format("Murdered {0} a {1}!", deadGuy.TheName, deadGuy.Model.Name));
-                // message.
-                if (IsVisibleToPlayer(killer))
-                    AddMessage(MakeMessage(killer, String.Format("murdered {0}!!", deadGuy.Name)));
-
-                // check for npcs law enforcers witnessing the murder.
-                Map map = killer.Location.Map;
-                Point killerPos = killer.Location.Position;
-                foreach (Actor a in map.Actors)
-                {
-                    // check ability and state/relationship
-                    if (!a.Model.Abilities.IsLawEnforcer || a.IsDead || a.IsSleeping || a.IsPlayer ||
-                        a == killer || a == deadGuy || a.Leader == killer || killer.Leader == a)
-                        continue;
-
-                    // do as less computations as possible : we don't need all the actor f*****g fov, just the line to the murderer.
-
-                    // fov range check. 
-                    if (DistanceHelpers.GridDistance(a.Location.Position, killerPos) > a.ActorFOV(map.LocalTime, m_Session.World.Weather))
-                        continue;
-
-                    // LOS check.
-                    if (!LOS.CanTraceViewLine(a.Location, killerPos))
-                        continue;
-
-                    // we see the murderer!
-                    // make enemy and emote.
-                    a.DoSay(killer, String.Format("MURDER! {0} HAS KILLED {1}!", killer.TheName, deadGuy.TheName), Sayflags.IS_FREE_ACTION | Sayflags.IS_IMPORTANT);
-                    DoMakeAggression(a, killer);
-                }
-            }
-            #endregion
-
-            // Emote: a law enforcer killing a murderer feels warm and fuzzy inside.
-            #region
-            if (killer != null && deadGuy.MurdersCounter > 0 && killer.Model.Abilities.IsLawEnforcer && !killer.Faction.IsEnemyOf(deadGuy.Faction))
-            {
-                if (killer.IsPlayer)
-                    AddMessage(new Message("You feel like you did your duty with killing a murderer.", m_Session.WorldTime.TurnCounter, Color.White));
-                else
-                    killer.DoSay(deadGuy, "Good riddance, murderer!", Sayflags.IS_FREE_ACTION | Sayflags.IS_DANGER);
-            }
-            #endregion
-
-            //////////////////////////////////////////////
-            // Player or Player Followers Killing Uniques
-            //////////////////////////////////////////////
-            #region
-            // The Sewers Thing
-            if (deadGuy == m_Session.UniqueActors.TheSewersThing.TheActor)
-            {
-                if (killer == m_Player || killer.Leader == m_Player)
-                {
-                    // scoring.
-                    m_Session.Scoring.SetCompletedAchievement(Achievement.IDs.KILLED_THE_SEWERS_THING);
-
-                    // achievement!
-                    ShowNewAchievement(Achievement.IDs.KILLED_THE_SEWERS_THING);
-                }
-            }
-            #endregion
-        }
 
         // alpha10
         /// <summary>
@@ -15056,7 +14291,7 @@ namespace djack.RogueSurvivor.Engine
             }
             if (killer != null)
                 m_Session.Scoring.DeathReason = String.Format("{0} by {1} {2}",
-                    m_Rules.IsMurder(killer, m_Player) ? "Murdered" : "Killed", killer.Model.Name, killer.TheName);
+                    Rules.IsMurder(killer, m_Player) ? "Murdered" : "Killed", killer.Model.Name, killer.TheName);
             else
                 m_Session.Scoring.DeathReason = String.Format("Death by {0}", reason);
             m_Session.Scoring.AddEvent(m_Session.WorldTime.TurnCounter, "Died.");
@@ -16050,7 +15285,7 @@ namespace djack.RogueSurvivor.Engine
 
         void ChangeWeather()
         {
-            bool canSeeWeather = m_Rules.CanActorSeeSky(m_Player); // alpha10
+            bool canSeeWeather = Rules.CanActorSeeSky(m_Player); // alpha10
 
             // roll & annouce new weather.
             string desc;
@@ -16122,7 +15357,7 @@ namespace djack.RogueSurvivor.Engine
         #region Infection & Zombification
         void InfectActor(Actor actor, int addInfection)
         {
-            actor.Infection = Math.Min(m_Rules.ActorInfectionHPs(actor), actor.Infection + addInfection);
+            actor.Infection = Math.Min(Rules.ActorInfectionHPs(actor), actor.Infection + addInfection);
         }
 
         /// <summary>
@@ -16238,8 +15473,8 @@ namespace djack.RogueSurvivor.Engine
         public void RedrawPlayScreen()
         {
             // alpha10 dont display some infos
-            bool canSeeSky = m_Rules.CanActorSeeSky(m_Player);
-            bool canKnowTime = m_Rules.CanActorKnowTime(m_Player);
+            bool canSeeSky = Rules.CanActorSeeSky(m_Player);
+            bool canKnowTime = Rules.CanActorKnowTime(m_Player);
 
             // get mutex.
             Monitor.Enter(m_UI);
@@ -16292,7 +15527,7 @@ namespace djack.RogueSurvivor.Engine
                 if (canKnowTime)
                 {
                     dayPhaseString = DescribeDayPhase(m_Session.WorldTime.Phase);
-                    int timeFovPenalty = m_Rules.NightFovPenalty(m_Player, m_Session.WorldTime);
+                    int timeFovPenalty = Rules.NightFovPenalty(m_Player, m_Session.WorldTime);
                     if (timeFovPenalty != 0)
                         dayPhaseString += "  fov -" + timeFovPenalty;
                 }
@@ -16310,11 +15545,11 @@ namespace djack.RogueSurvivor.Engine
                     case Lighting.OUTSIDE:
                         weatherOrLightingColor = WeatherColor(m_Session.World.Weather);
                         // alpha10 only show weather if can see it
-                        if (m_Rules.CanActorSeeSky(m_Player))
+                        if (Rules.CanActorSeeSky(m_Player))
                         {
                             weatherOrLightingString = DescribeWeather(m_Session.World.Weather);
                             // alpha10 desc weather fov effect
-                            int fovPenalty = m_Rules.WeatherFovPenalty(m_Player, m_Session.World.Weather);
+                            int fovPenalty = Rules.WeatherFovPenalty(m_Player, m_Session.World.Weather);
                             if (fovPenalty != 0)
                                 weatherOrLightingString += "  fov -" + fovPenalty;
                         }
@@ -16325,7 +15560,7 @@ namespace djack.RogueSurvivor.Engine
                         weatherOrLightingColor = Color.Blue;
                         weatherOrLightingString = "Darkness";
                         // alpha10 desc darkness fov effect
-                        int darknessFov = m_Rules.DarknessFov(m_Player);
+                        int darknessFov = Rules.DarknessFov(m_Player);
                         if (darknessFov != m_Player.Sheet.BaseViewRange)
                             weatherOrLightingString += "  fov " + darknessFov;
                         break;
@@ -16735,7 +15970,7 @@ namespace djack.RogueSurvivor.Engine
             // player follower?
             if (actor.Leader != null && actor.Leader == m_Player)
             {
-                if (m_Rules.HasActorBondWith(actor, m_Player))
+                if (Rules.HasActorBondWith(actor, m_Player))
                     m_UI.UI_DrawImage(GameImages.PLAYER_FOLLOWER_BOND, gx, gy, tint);
                 else if (actor.IsActorTrustingLeader())
                     m_UI.UI_DrawImage(GameImages.PLAYER_FOLLOWER_TRUST, gx, gy, tint);
@@ -16883,7 +16118,7 @@ namespace djack.RogueSurvivor.Engine
                     m_UI.UI_DrawImage(GameImages.ICON_FOOD_STARVING, gx, gy, tint);
                 else if (actor.IsActorHungry())
                     m_UI.UI_DrawImage(GameImages.ICON_FOOD_HUNGRY, gx, gy, tint);
-                else if (IsAlmostHungry(actor))
+                else if (actor.IsAlmostHungry())
                     m_UI.UI_DrawImage(GameImages.ICON_FOOD_ALMOST_HUNGRY, gx, gy, tint);
             }
             else if (actor.Model.Abilities.IsRotting)
@@ -16892,7 +16127,7 @@ namespace djack.RogueSurvivor.Engine
                     m_UI.UI_DrawImage(GameImages.ICON_ROT_STARVING, gx, gy, tint);
                 else if (actor.IsRottingActorHungry())
                     m_UI.UI_DrawImage(GameImages.ICON_ROT_HUNGRY, gx, gy, tint);
-                else if (IsAlmostRotHungry(actor))
+                else if (actor.IsAlmostRotHungry())
                     m_UI.UI_DrawImage(GameImages.ICON_ROT_ALMOST_HUNGRY, gx, gy, tint);
             }
 
@@ -16920,7 +16155,7 @@ namespace djack.RogueSurvivor.Engine
                 m_UI.UI_DrawImage(GameImages.ICON_ODOR_SUPPRESSED, gx, gy, tint);
 
             // sleep-healing icon.
-            if (actor.IsSleeping && (actor.IsOnCouch() || m_Rules.ActorHealChanceBonus(actor) > 0))
+            if (actor.IsSleeping && (actor.IsOnCouch() || Rules.ActorHealChanceBonus(actor) > 0))
                 m_UI.UI_DrawImage(GameImages.ICON_HEALING, gx, gy, tint);
 
             // is a leader icon.
@@ -16939,7 +16174,7 @@ namespace djack.RogueSurvivor.Engine
                 {
                     if (m_Player.WillActorActAgainBefore(actor))
                         m_UI.UI_DrawImage(GameImages.ICON_THREAT_SAFE, gx, gy, tint);
-                    else if (m_Rules.WillOtherActTwiceBefore(m_Player, actor))
+                    else if (Rules.WillOtherActTwiceBefore(m_Player, actor))
                         m_UI.UI_DrawImage(GameImages.ICON_THREAT_HIGH_DANGER, gx, gy, tint);
                     else
                         m_UI.UI_DrawImage(GameImages.ICON_THREAT_DANGER, gx, gy, tint);
@@ -17484,7 +16719,7 @@ namespace djack.RogueSurvivor.Engine
                         m_UI.UI_DrawStringBold(Color.Yellow, "Hungry", gx + BOLD_LINE_SPACING * 9 + 100, gy);
                 }
                 else
-                    m_UI.UI_DrawStringBold(Color.White, String.Format("{0}h", FoodToHoursUntilHungry(actor.FoodPoints)), gx + BOLD_LINE_SPACING * 9 + 100, gy);
+                    m_UI.UI_DrawStringBold(Color.White, String.Format("{0}h", actor.FoodToHoursUntilHungry(actor.FoodPoints)), gx + BOLD_LINE_SPACING * 9 + 100, gy);
             }
             else if (actor.Model.Abilities.IsRotting)
             {
@@ -17500,7 +16735,7 @@ namespace djack.RogueSurvivor.Engine
                         m_UI.UI_DrawStringBold(Color.Yellow, "Hungry", gx + BOLD_LINE_SPACING * 9 + 100, gy);
                 }
                 else
-                    m_UI.UI_DrawStringBold(Color.White, String.Format("{0}h", FoodToHoursUntilRotHungry(actor.FoodPoints)), gx + BOLD_LINE_SPACING * 9 + 100, gy);
+                    m_UI.UI_DrawStringBold(Color.White, String.Format("{0}h", actor.FoodToHoursUntilRotHungry(actor.FoodPoints)), gx + BOLD_LINE_SPACING * 9 + 100, gy);
             }
 
             gy += BOLD_LINE_SPACING;
@@ -17536,23 +16771,23 @@ namespace djack.RogueSurvivor.Engine
                         m_UI.UI_DrawStringBold(Color.Yellow, "Disturbed", gx + BOLD_LINE_SPACING * 9 + 100, gy);
                 }
                 else
-                    m_UI.UI_DrawStringBold(Color.White, String.Format("{0}h", m_Rules.SanityToHoursUntilUnstable(actor)), gx + BOLD_LINE_SPACING * 9 + 100, gy);
+                    m_UI.UI_DrawStringBold(Color.White, String.Format("{0}h", Rules.SanityToHoursUntilUnstable(actor)), gx + BOLD_LINE_SPACING * 9 + 100, gy);
             }
 
             if (Rules.HasInfection(m_Session.GameMode) && !actor.Model.Abilities.IsUndead)
             {
-                int maxInf = m_Rules.ActorInfectionHPs(actor);
+                int maxInf = Rules.ActorInfectionHPs(actor);
                 int refInf = (Rules.INFECTION_LEVEL_1_WEAK * maxInf) / 100;
                 gy += BOLD_LINE_SPACING;
                 m_UI.UI_DrawStringBold(Color.White, String.Format("INF {0}", actor.Infection), gx, gy);
                 DrawBar(actor.Infection, actor.Infection, maxInf, refInf, 100, BOLD_LINE_SPACING, gx + BOLD_LINE_SPACING * 5, gy, Color.Purple, Color.Black, Color.Black, Color.Gray);
-                m_UI.UI_DrawStringBold(Color.White, String.Format("{0}%", m_Rules.ActorInfectionPercent(actor)), gx + BOLD_LINE_SPACING * 6 + 100, gy);
+                m_UI.UI_DrawStringBold(Color.White, String.Format("{0}%", Rules.ActorInfectionPercent(actor)), gx + BOLD_LINE_SPACING * 6 + 100, gy);
             }
 
             // 3. Melee & Ranged Attacks.
             gy += BOLD_LINE_SPACING;
-            Attack melee = m_Rules.ActorMeleeAttack(actor, actor.CurrentMeleeAttack, null);
-            int dmgBonusVsUndead = m_Rules.ActorDamageBonusVsUndeads(actor);
+            Attack melee = Rules.ActorMeleeAttack(actor, actor.CurrentMeleeAttack, null);
+            int dmgBonusVsUndead = Rules.ActorDamageBonusVsUndeads(actor);
             m_UI.UI_DrawStringBold(Color.White, String.Format("Melee  Atk {0:D2}  Dmg {1:D2}/{2:D2}", melee.HitValue, melee.DamageValue, melee.DamageValue + dmgBonusVsUndead), gx, gy);
 
             gy += BOLD_LINE_SPACING;
@@ -17589,14 +16824,14 @@ namespace djack.RogueSurvivor.Engine
                     (float)actor.ActorSpeed() / (float)Rules.BASE_SPEED,
                     actor.ActorFOV(m_Session.WorldTime, m_Session.World.Weather),
                     actor.Sheet.BaseViewRange,
-                    actor.CountFollowers, m_Rules.ActorMaxFollowers(actor)),
+                    actor.CountFollowers, actor.ActorMaxFollowers()),
                     gx, gy);
             }
 
             // 5. Odor suppressor // alpha10
             gy += BOLD_LINE_SPACING;
             if (actor.OdorSuppressorCounter > 0)
-                m_UI.UI_DrawStringBold(Color.LightBlue, string.Format("Odor suppr : {0} -{1}", actor.OdorSuppressorCounter, m_Rules.OdorsDecay(actor.Location.Map, actor.Location.Position, m_Session.World.Weather)), gx, gy);
+                m_UI.UI_DrawStringBold(Color.LightBlue, string.Format("Odor suppr : {0} -{1}", actor.OdorSuppressorCounter, actor.Location.Map.OdorsDecay(actor.Location.Position, m_Session.World.Weather)), gx, gy);
         }
 
         public void DrawInventory(Inventory inventory, string title, bool drawSlotsNumbers, int slotsPerLine, int maxSlots, int gx, int gy)
@@ -17889,28 +17124,6 @@ namespace djack.RogueSurvivor.Engine
         #endregion
 
         #region Visibility/Smell & memory helpers
-        bool IsVisibleToPlayer(Location location)
-        {
-            return IsVisibleToPlayer(location.Map, location.Position);
-        }
-
-        bool IsVisibleToPlayer(Map map, Point position)
-        {
-            return m_Player != null
-                && map == m_Player.Location.Map && map.IsInBounds(position.X, position.Y)
-                && map.GetTileAt(position.X, position.Y).IsInView;
-        }
-
-        bool IsVisibleToPlayer(Actor actor)
-        {
-            return actor == m_Player || IsVisibleToPlayer(actor.Location);
-        }
-
-        bool IsVisibleToPlayer(MapObject mapObj)
-        {
-            return IsVisibleToPlayer(mapObj.Location);
-        }
-
         bool IsKnownToPlayer(Map map, Point position)
         {
             return map.IsInBounds(position.X, position.Y) && map.GetTileAt(position.X, position.Y).IsVisited;
@@ -18057,7 +17270,7 @@ namespace djack.RogueSurvivor.Engine
             if (!loaded)
                 return false;
             m_Session = Session.Get;
-            m_Rules = new Rules();
+            Rules = new Rules();
 
             RefreshPlayer();
 
@@ -20670,7 +19883,7 @@ namespace djack.RogueSurvivor.Engine
                                 actor.TrustInLeader = Rules.TRUST_NEUTRAL;
                             }
                             // agress.
-                            DoMakeAggression(actor, a);
+                            actor.DoMakeAggression(a);
                             return new ActionSay(actor, a, "YOU ARE ONE OF THEM!!", Sayflags.IS_IMPORTANT | Sayflags.IS_DANGER);
                         }
                     }
@@ -20693,7 +19906,7 @@ namespace djack.RogueSurvivor.Engine
                 if (!LOS.CanTraceViewLine(loc, a.Location.Position, fov)) continue;
 
                 // san hit.
-                SpendActorSanity(a, sanCost);
+                a.SpendActorSanity(sanCost);
 
                 // msg.
                 if (whoDoesTheAction == a)
@@ -20734,7 +19947,7 @@ namespace djack.RogueSurvivor.Engine
                 lock (m_Session) // thread safe
                 {
                     // check all power generators are on.
-                    bool allAreOn = m_Rules.ComputeMapPowerRatio(map) >= 1.0f;
+                    bool allAreOn = Rules.ComputeMapPowerRatio(map) >= 1.0f;
 
                     // change map lighting.
                     if (allAreOn)
@@ -20789,7 +20002,7 @@ namespace djack.RogueSurvivor.Engine
                 lock (m_Session) // thread safe
                 {
                     // check all power generators are on.
-                    bool allAreOn = m_Rules.ComputeMapPowerRatio(map) >= 1.0f;
+                    bool allAreOn = Rules.ComputeMapPowerRatio(map) >= 1.0f;
 
                     // change map lighting, open/close fences.
                     if (allAreOn)
@@ -20844,7 +20057,7 @@ namespace djack.RogueSurvivor.Engine
                 lock (m_Session) // thread safe
                 {
                     // check all power generators are on.
-                    bool allAreOn = m_Rules.ComputeMapPowerRatio(map) >= 1.0f;
+                    bool allAreOn = Rules.ComputeMapPowerRatio(map) >= 1.0f;
 
                     // open/close cells.
                     if (allAreOn)
@@ -20884,7 +20097,7 @@ namespace djack.RogueSurvivor.Engine
                 lock (m_Session) // thread safe
                 {
                     // check all power generators are on.
-                    bool allAreOn = m_Rules.ComputeMapPowerRatio(map) >= 1.0f;
+                    bool allAreOn = Rules.ComputeMapPowerRatio(map) >= 1.0f;
 
                     // open/close cells.
                     if (allAreOn)
@@ -20978,7 +20191,7 @@ namespace djack.RogueSurvivor.Engine
                 if (obj.ImageID == GameImages.OBJ_GATE_OPEN)
                 {
                     // alpha10.1
-                    if (CheckForGateClosingCrush(obj, Rules.CRUSHING_GATES_DAMAGE))
+                    if (CheckForGateClosingCrush(obj, ItemTrap.CRUSHING_GATES_DAMAGE))
                     {
                         obj.IsWalkable = false;
                         obj.ImageID = GameImages.OBJ_GATE_CLOSED;
@@ -21020,7 +20233,7 @@ namespace djack.RogueSurvivor.Engine
                 if (obj.ImageID == GameImages.OBJ_GATE_OPEN)
                 {
                     // alpha10.1
-                    if (CheckForGateClosingCrush(obj, Rules.CRUSHING_GATES_DAMAGE))
+                    if (CheckForGateClosingCrush(obj, ItemTrap.CRUSHING_GATES_DAMAGE))
                     {
                         obj.IsWalkable = false;
                         obj.ImageID = GameImages.OBJ_GATE_CLOSED;

@@ -9,7 +9,7 @@ using djack.RogueSurvivor.Engine;
 using djack.RogueSurvivor.Engine.Actions;
 using djack.RogueSurvivor.Engine.AI;
 using djack.RogueSurvivor.Gameplay.AI.Sensors;
-
+using djack.RogueSurvivor.Common;
 
 namespace djack.RogueSurvivor.Gameplay.AI
 {
@@ -38,7 +38,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             return m_LOSSensor.Sense(world, m_Actor);
         }
 
-        protected override ActorAction SelectAction(RogueGame game, List<Percept> percepts)
+        protected override ActorAction SelectAction(World world, List<Percept> percepts)
         {
             List<Percept> mapPercepts = FilterSameMap(percepts);
 
@@ -52,7 +52,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             Percept nearestEnemy = FilterNearest(FilterEnemies(mapPercepts));
             if (nearestEnemy != null)
             {
-                ActorAction bumpAction = BehaviorStupidBumpToward(game, nearestEnemy.Location.Position, true, false);
+                ActorAction bumpAction = BehaviorStupidBumpToward(nearestEnemy.Location.Position, true, false);
                 if (bumpAction != null)
                 {
                     m_Actor.Activity = Activity.CHASING;
@@ -62,7 +62,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
             }
 
             // 2 idle? % chance.
-            if (game.Rules.RollChance(IDLE_CHANCE))
+            if (DiceRoller.RollChance(IDLE_CHANCE))
             {
                 m_Actor.Activity = Activity.IDLE;
                 return new ActionWait(m_Actor);
@@ -70,7 +70,7 @@ namespace djack.RogueSurvivor.Gameplay.AI
 
             // 3 wander
             m_Actor.Activity = Activity.IDLE;
-            return BehaviorWander(game, null);
+            return BehaviorWander(null);
         }
         #endregion
     }

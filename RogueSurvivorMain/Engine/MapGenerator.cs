@@ -13,7 +13,7 @@ namespace djack.RogueSurvivor.Engine
     abstract class MapGenerator
     {
         #region Fields
-        protected readonly Rules m_Rules;
+        protected readonly Rules Rules;
         #endregion
 
         #region Init
@@ -22,7 +22,7 @@ namespace djack.RogueSurvivor.Engine
             if (rules == null)
                 throw new ArgumentNullException("rules");
 
-            m_Rules = rules;
+            Rules = rules;
         }
         #endregion
 
